@@ -1,0 +1,3016 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Premium Navy/Grey Theme */
+    --bg-main: #0b1121;
+    --bg-secondary: #0f172a;
+    --surface: rgba(15, 23, 42, 0.7);
+    --surface-hover: rgba(30, 41, 59, 0.8);
+
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+
+    --border-color: rgba(255, 255, 255, 0.06);
+    --glow-color: rgba(56, 189, 248, 0.15);
+
+    --primary: #38bdf8;
+    --income: #10b981;
+    --income-bg: rgba(16, 185, 129, 0.15);
+    --expense: #ef4444;
+    --expense-bg: rgba(239, 68, 68, 0.15);
+
+    --font-stack: 'Outfit', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-stack);
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    color-scheme: dark;
+    line-height: 1.6;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05), transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(30, 64, 175, 0.05), transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1), #0b1121);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+.dashboard-container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 30px 30px 100px;
+}
+
+.dashboard-layout {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+}
+
+/* --- COMPACT TRANSACTION FEED (RIGHT) --- */
+.right-sidebar {
+    flex: 0 0 350px !important;
+    background: rgba(15, 23, 42, 0.4);
+    border-left: 1px solid var(--border-color);
+    padding: 20px 15px;
+    height: calc(100vh - 180px);
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.transaction-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 10px;
+    padding-bottom: 50px;
+    /* เพิ่มพื้นที่ล่างสุด */
+}
+
+.transaction-card {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* ห้ามบีบการ์ดให้แบน */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 100px;
+    /* กำหนดความสูงขั้นต่ำ */
+}
+
+.transaction-card:hover {
+    background: rgba(30, 41, 59, 0.8);
+    transform: translateX(-3px);
+    border-color: var(--primary);
+}
+
+
+.t-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.t-card-date {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.t-card-type {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.t-card-type.income {
+    background: var(--income-bg);
+    color: var(--income);
+}
+
+.t-card-type.expense {
+    background: var(--expense-bg);
+    color: var(--expense);
+}
+
+.t-card-desc {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.t-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.t-card-bank {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.t-card-amount {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.t-card-amount.income {
+    color: var(--income);
+}
+
+.t-card-amount.expense {
+    color: var(--expense);
+}
+
+/* ปรับ Left Panel ให้กว้างขึ้น */
+.left-panel-content {
+    flex: 1;
+    padding: 0 10px 0 0;
+}
+
+.left-panel-content .summary-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    /* กลับเป็น 4 คอลัมน์เหมือนเดิม */
+}
+
+/* Glassmorphism utility */
+.glass {
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    padding: 20px 30px;
+    gap: 20px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
+    padding-bottom: 10px;
+    /* เพิ่มช่องว่างด้านล่าง */
+}
+
+.dashboard-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+}
+
+/* Inline Filter Bar in Header */
+.header-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+    background: rgba(15, 23, 42, 0.3);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    /* ให้แผ่เต็มพื้นที่ */
+    margin-bottom: 10px;
+}
+
+.hfilter-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.hfilter-group select,
+.hfilter-group input[type="text"] {
+    background-color: #0d1625 !important;
+    border: 1px solid var(--border-color);
+    color: #f8fafc !important;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s ease;
+    min-width: 110px;
+    max-width: 160px;
+    color-scheme: dark;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+}
+
+.hfilter-group select option,
+select option {
+    background-color: #0d1625 !important;
+    color: #f8fafc !important;
+    padding: 8px !important;
+}
+
+.hfilter-group select option:checked,
+.hfilter-group select option:hover,
+select option:checked,
+select option:hover {
+    background-color: #1e3a5f !important;
+    color: #ffffff !important;
+}
+
+.hfilter-group input[type="text"] {
+    min-width: 140px;
+}
+
+.hfilter-group select:focus,
+.hfilter-group input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--glow-color);
+}
+
+.btn-reset {
+    align-self: flex-end;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--primary);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-reset:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--primary);
+    transform: scale(1.03);
+}
+
+/* --- Autocomplete Dropdown --- */
+.autocomplete-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 280px;
+    max-width: 380px;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #0f1a2e;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.08);
+    z-index: 99999;
+    animation: dropdownOpen 0.15s ease;
+}
+
+.autocomplete-dropdown.open {
+    display: block;
+}
+
+@keyframes dropdownOpen {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.autocomplete-item {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #cbd5e1;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.12s, color 0.12s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--primary);
+}
+
+.autocomplete-item mark {
+    background: transparent;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.autocomplete-empty {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* --- Multi-Select Checkbox Styles --- */
+.multi-select-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.search-trigger-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(15, 22, 35, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 2px 10px;
+    width: 250px;
+    /* ขยายกว้างขึ้นนิดนึงเพื่อให้เห็นชื่อยาวๆ */
+    transition: all 0.2s ease;
+}
+
+.input-ghost-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.search-trigger-box input {
+    width: 100%;
+    background: transparent !important;
+    border: none !important;
+    color: #fff !important;
+    padding: 8px 0 !important;
+    font-size: 13px !important;
+    outline: none !important;
+    position: relative;
+    z-index: 2;
+}
+
+.ghost-text {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.2);
+    /* สีเทาจางๆ */
+    font-size: 13px;
+    font-family: inherit;
+    pointer-events: none;
+    z-index: 1;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.selected-badge {
+    background: var(--primary);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    margin-left: 8px;
+    pointer-events: none;
+}
+
+.ms-dropdown {
+    width: 320px;
+    padding: 0;
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 10000;
+    background: #0f1a2e;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+.ms-dropdown.open {
+    display: flex;
+}
+
+.ms-search-container {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ms-search-container input {
+    width: 100%;
+    background: #0d1625 !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    color: #fff !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    outline: none !important;
+    font-size: 13px !important;
+}
+
+.ms-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(56, 189, 248, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ms-action-btn {
+    font-size: 12px;
+    color: var(--primary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.ms-action-btn:hover {
+    text-decoration: underline;
+}
+
+.ms-list {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.ms-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    transition: background 0.1s;
+}
+
+.ms-item:hover {
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.ms-checkbox {
+    margin-right: 10px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.ms-item-name {
+    font-size: 13px;
+    color: #cbd5e1;
+    word-break: break-word;
+}
+
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.user-profile::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    box-shadow: 0 0 15px var(--glow-color);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+/* ========== Refresh Data Button ========== */
+.btn-refresh-data {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.15));
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--primary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.btn-refresh-data:hover {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(129, 140, 248, 0.25));
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+}
+
+.btn-refresh-data:active {
+    transform: translateY(0);
+}
+
+.btn-refresh-data:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-refresh-data .refresh-icon {
+    font-size: 14px;
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+/* Animation: หมุนไอคอนตอนกำลังโหลด */
+.btn-refresh-data.is-loading .refresh-icon {
+    animation: spin-refresh 1s linear infinite;
+}
+
+@keyframes spin-refresh {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========== Toast Notification ========== */
+.refresh-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--text-primary);
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 90vw;
+}
+
+.refresh-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.refresh-toast-success {
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-left: 4px solid var(--income);
+}
+
+.refresh-toast-error {
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-left: 4px solid var(--expense);
+}
+
+@media (max-width: 640px) {
+    .refresh-toast {
+        bottom: 80px;
+        right: 15px;
+        left: 15px;
+        text-align: center;
+    }
+}
+
+.header-net-balance {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.net-balance-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.net-balance-amount {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.net-balance-amount::before {
+    content: '฿';
+    font-size: 14px;
+    margin-right: 4px;
+    color: var(--text-muted);
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* บังคับ 2 คอลัมน์เท่าๆ กัน */
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 25px;
+}
+
+.card {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 140px;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+    background: var(--surface-hover);
+}
+
+.card h3 {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card h3::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.income-card::before {
+    background: linear-gradient(90deg, var(--income), transparent);
+}
+
+.income-card h3::before {
+    background-color: var(--income);
+    box-shadow: 0 0 10px var(--income);
+}
+
+.expense-card::before {
+    background: linear-gradient(90deg, var(--expense), transparent);
+}
+
+.expense-card h3::before {
+    background-color: var(--expense);
+    box-shadow: 0 0 10px var(--expense);
+}
+
+.plan-card {
+    border: 1px dashed var(--border-color);
+    background: rgba(15, 22, 35, 0.4);
+}
+
+.plan-card::before {
+    background: linear-gradient(90deg, var(--text-muted), transparent);
+}
+
+.plan-card h3::before {
+    background-color: var(--text-muted);
+    box-shadow: none;
+}
+
+.card .amount {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+/* Premium Charts Section */
+.charts-section {
+    padding: 30px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: visible;
+}
+
+.charts-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), #818cf8, transparent);
+    border-radius: 16px 16px 0 0;
+}
+
+#comparison-chart {
+    min-height: 380px;
+    margin-top: 15px;
+    border-radius: 12px;
+}
+
+/* Bank Balances Section */
+.bank-balances-section {
+    margin-bottom: 40px;
+}
+
+/* Header row: title + date filters side by side */
+.bank-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.bank-header-summary {
+    display: flex;
+    align-items: center;
+}
+
+.bh-horizontal-pill {
+    background: linear-gradient(135deg, rgba(30, 20, 10, 0.8) 0%, rgba(69, 39, 0, 0.9) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(251, 191, 36, 0.15);
+    padding: 10px 24px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+    border-left: 4px solid #f59e0b;
+}
+
+.bh-horizontal-pill:hover {
+    transform: translateY(-2px) scale(1.02);
+    border-color: #fbbf24;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(251, 191, 36, 0.25);
+}
+
+.bh-pillar {
+    display: flex;
+    flex-direction: column;
+}
+
+.bh-pillar-main {
+    min-width: 180px;
+}
+
+.bh-separator {
+    width: 2px;
+    height: 32px;
+    background: rgba(251, 191, 36, 0.2);
+    border-radius: 2px;
+}
+
+.bh-label {
+    font-size: 10px;
+    color: #fcd34d;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+.bh-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #f59e0b;
+    line-height: 1;
+    text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+.bh-value::before {
+    content: '฿';
+    font-size: 16px;
+    margin-right: 6px;
+    color: rgba(245, 158, 11, 0.6);
+}
+
+.bh-pillar-date {
+    min-width: 100px;
+}
+
+.bh-info-label {
+    font-size: 11px;
+    color: #fcd34d;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+}
+
+.bh-info-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1f5f9;
+    white-space: nowrap;
+}
+
+.bank-section-header .section-title {
+    margin: 0;
+    font-size: 20px;
+    white-space: nowrap;
+}
+
+.bank-date-filters {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+}
+
+.bank-section-header .section-title {
+    margin-bottom: 0;
+}
+
+/* Date filter bar inside bank section */
+.header-filters {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.bank-balances-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+/* Vertical single-column variant for sidebar list */
+.bank-balances-container.vertical {
+    flex-direction: column !important;
+}
+.bank-balances-container.vertical .bank-card {
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+/* Prevent horizontal scrolling in sidebar and ensure bank cards stretch full width */
+.right-sidebar {
+    overflow-x: hidden;
+}
+
+.bank-balances-container.vertical {
+    width: 100%;
+    overflow-x: hidden; /* never allow horizontal scroll */
+    overflow-y: auto;   /* allow vertical scroll */
+}
+
+.bank-balances-container.vertical .bank-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important; /* allow shrinking inside flex container */
+    box-sizing: border-box;
+    flex: 0 0 auto !important;
+    align-self: stretch;
+    overflow: hidden;
+}
+
+.bank-card {
+    min-width: 0;
+}
+
+.bank-info {
+    min-width: 0; /* prevent long account text from forcing width */
+}
+
+.bank-account {
+    white-space: normal; /* allow account number to wrap */
+    word-break: break-word;
+}
+
+/* Fixed-height scrollable container for sidebar bank list */
+.bank-list-scroll {
+    max-height: calc(100vh - 260px); /* adjust to leave room for header and total card */
+    overflow-y: auto;
+    overflow-x: hidden; /* prevent horizontal scroll */
+    padding-right: 8px; /* room for scrollbar */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Slightly tighten card styles for clean stacked look */
+.sidebar-total-card .amount {
+    font-size: 22px;
+}
+.bank-card {
+    padding: 14px; /* slightly smaller padding to fit sidebar */
+    border-radius: 10px;
+}
+
+.bank-card {
+    flex: 1 1 230px;
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.bank-card:hover {
+    transform: translateY(-4px);
+    background: var(--surface-hover);
+    border-color: rgba(56, 189, 248, 0.3);
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+}
+
+.bank-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bank-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    /* Keep logo visible on dark backgrounds */
+    padding: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.bank-name {
+    font-size: 16px;
+    color: #ffffff;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Container for bank name + account number */
+.bank-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* Account number subtitle below bank name */
+.bank-account {
+    font-size: 13.5px;
+    color: #cbd5e1;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+/* ดูรายละเอียด button on bank cards */
+.btn-bank-detail {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    background: rgba(56, 189, 248, 0.06);
+    color: var(--primary);
+    letter-spacing: 0.3px;
+    width: 100%;
+}
+
+.btn-bank-detail:hover {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+}
+
+/* Bank modal table (reuse modal pattern but with unique id) */
+#bank-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+#bank-modal-table thead th {
+    background: rgba(10, 14, 23, 0.98);
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+#bank-modal-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.15s;
+}
+
+#bank-modal-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.05);
+}
+
+#bank-modal-table tbody td {
+    padding: 11px 16px;
+    color: #cbd5e1;
+    white-space: nowrap;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#bank-modal-table tbody td.numeric {
+    text-align: right;
+    font-weight: 600;
+    font-family: 'Inter', monospace;
+}
+
+#bank-modal-table tbody td:first-child {
+    color: var(--text-muted);
+    font-size: 12px;
+    width: 40px;
+}
+
+#bank-modal-totals {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+
+.bank-balance-wrapper {
+    margin-top: 2px;
+}
+
+.bank-balance {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary);
+    text-shadow: 0 2px 10px rgba(56, 189, 248, 0.15);
+}
+
+.bank-balance::before {
+    content: '฿';
+    font-size: 16px;
+    vertical-align: top;
+    margin-right: 6px;
+    color: var(--text-muted);
+}
+
+/* Currency prefix */
+.card .amount::before {
+    content: '฿';
+    font-size: 20px;
+    vertical-align: super;
+    margin-right: 6px;
+    color: var(--text-muted);
+}
+
+/* Filters Area */
+.filters {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.filter-group label {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.filter-group select,
+.filter-group input {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--glow-color);
+}
+
+/* Table Container & Table */
+.table-container {
+    overflow-x: auto;
+    padding: 1px;
+    /* Avoid border cut-off */
+}
+
+#transactions-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1600px;
+}
+
+#transactions-table th {
+    background: rgba(15, 22, 35, 0.95);
+    backdrop-filter: blur(8px);
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#transactions-table td {
+    padding: 16px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    white-space: nowrap;
+    color: #cbd5e1;
+}
+
+#transactions-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+#transactions-table tbody tr:hover {
+    background-color: var(--surface-hover);
+}
+
+/* Styling Specific Cells */
+.numeric {
+    text-align: right !important;
+    font-family: 'Inter', monospace;
+    font-size: 13.5px;
+}
+
+/* ── TYPE column cell ── */
+.type-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Pill badges for Type */
+.type-income,
+.type-expense {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    min-width: 72px;
+    line-height: 1;
+}
+
+.type-income {
+    background-color: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.08);
+}
+
+.type-expense {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.08);
+}
+
+/* Highlight specific columns for better scanning */
+#transactions-table td:nth-child(3) {
+    /* Description */
+    color: var(--text-primary);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#transactions-table td:nth-child(4) {
+    /* Bank */
+    font-weight: 500;
+}
+
+/* --- Detail Button on Cards --- */
+.btn-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+}
+
+.btn-detail:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+/* --- Modal Overlay --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeInOverlay 0.2s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-box {
+    background: #0f1623;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 1100px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+    animation: slideUpModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+@keyframes slideUpModal {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.modal-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: var(--expense);
+}
+
+/* Modal Actions (Toggle & PDF) */
+.modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.view-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-view {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.btn-view.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-export-pdf {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-export-pdf:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+    border-color: rgba(239, 68, 68, 0.6);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+
+/* Modal Body */
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 16px 28px 0;
+}
+
+.modal-search-bar {
+    margin-bottom: 14px;
+    flex-shrink: 0;
+}
+
+.modal-search-bar input {
+    width: 100%;
+    max-width: 380px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-search-bar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--glow-color);
+}
+
+/* Modal Table */
+.modal-table-wrap {
+    overflow-y: auto;
+    flex: 1;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+#modal-table,
+#bank-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+#modal-table thead th,
+#bank-modal-table thead th {
+    background: rgba(10, 14, 23, 0.98);
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+#modal-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.15s;
+}
+
+#modal-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.05);
+}
+
+#modal-table tbody td,
+#bank-modal-table tbody td {
+    padding: 11px 16px;
+    color: #cbd5e1;
+    white-space: nowrap;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#modal-table tbody td.numeric,
+#bank-modal-table tbody td.numeric {
+    text-align: right;
+    font-weight: 600;
+    font-family: 'Inter', monospace;
+}
+
+#modal-table tbody td:first-child,
+#bank-modal-table tbody td:first-child {
+    color: var(--text-muted);
+    font-size: 12px;
+    width: 40px;
+}
+
+.modal-amount-income {
+    color: var(--income);
+}
+
+.modal-amount-expense {
+    color: var(--expense);
+}
+
+/* Modal Footer */
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 4px 20px;
+    flex-shrink: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    margin-top: 10px;
+}
+
+#modal-total-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Balance Toggle Button */
+.btn-toggle-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.btn-toggle-balance:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Hidden Balance State */
+body.hide-balances .bank-balances-container {
+    display: none !important;
+}
+
+body.hide-balances .net-balance-amount {
+    filter: blur(6px);
+    opacity: 0.6;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* ── Floating Google Sheets FAB ── */
+#btn-open-sheets {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+    /* icon size only by default */
+    width: 52px;
+    height: 52px;
+    padding: 0 13px;
+    background: #1e2a20;
+    color: #ffffff;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 50px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#btn-open-sheets:hover {
+    width: 178px;
+    background: #1a5c30;
+    box-shadow: 0 6px 24px rgba(34, 168, 98, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+#btn-open-sheets:active {
+    transform: translateY(0px);
+}
+
+#btn-open-sheets img {
+    flex-shrink: 0;
+    display: block;
+}
+
+.fab-label {
+    margin-left: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    opacity: 0;
+    max-width: 0;
+    transition: opacity 0.2s ease 0.1s, max-width 0.3s ease;
+    letter-spacing: 0.3px;
+}
+
+#btn-open-sheets:hover .fab-label {
+    opacity: 1;
+    max-width: 120px;
+}
+
+/* =========================================================================
+   Global Loader
+   ========================================================================= */
+.global-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.global-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.loader-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(56, 189, 248, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 20px var(--glow-color);
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loader-content h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.loader-content p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* =========================================================================
+   Responsive Design & Mobile Adjustments
+   ========================================================================= */
+
+@media (max-width: 1024px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header-actions {
+        justify-content: space-between;
+        width: 100%;
+        margin-top: 15px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* Mobile: ซ่อนข้อความของปุ่ม refresh เหลือแค่ icon */
+    .btn-refresh-data .refresh-text {
+        display: none;
+    }
+
+    .btn-refresh-data {
+        padding: 8px 12px;
+    }
+
+    .transaction-chart-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .transaction-chart-header .header-filters {
+        width: 100%;
+    }
+
+    .bank-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .bank-date-filters {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .bank-balances-container {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 15px 15px 100px;
+    }
+
+    /* 1. Fluid Typography using clamp() - Smart resizing */
+    .dashboard-header h1 {
+        font-size: clamp(18px, 4vw, 22px);
+        white-space: normal;
+    }
+
+    .header-left {
+        width: 100%;
+    }
+
+    /* 2. Swipeable Filter Bar (Native App Feel) */
+    .header-filters,
+    .bank-date-filters {
+        width: 100%;
+        flex-wrap: nowrap;
+        /* Force 1 row */
+        overflow-x: auto;
+        overflow-y: visible;
+        padding-bottom: 20px;
+        -webkit-overflow-scrolling: touch;
+        /* Smooth iOS scrolling */
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        /* Hide scrollbar Firefox */
+        align-items: flex-end;
+        /* Align inputs and button nicely */
+    }
+
+    .header-filters::-webkit-scrollbar,
+    .bank-date-filters::-webkit-scrollbar {
+        display: none;
+        /* Hide scrollbar Chrome/Safari */
+    }
+
+    /* Adds shadow hint to show scrolling is possible */
+    .header-left,
+    .transaction-chart-header,
+    .bank-section-header {
+        position: relative;
+    }
+
+    .header-left::after,
+    .transaction-chart-header::after,
+    .bank-section-header::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 40px;
+        background: linear-gradient(to right, transparent, var(--bg-main));
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .hfilter-group {
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+        margin-right: 12px;
+    }
+
+    .hfilter-group select,
+    .hfilter-group input[type="text"],
+    .multi-select-box {
+        width: 140px;
+        /* Uniform width on mobile */
+        max-width: none;
+    }
+
+    /* Make ms-dropdown fit mobile screen */
+    .ms-dropdown {
+        width: calc(100vw - 40px) !important;
+        max-width: 320px !important;
+        left: 0 !important;
+    }
+
+    .btn-reset {
+        flex: 0 0 auto;
+        margin-bottom: 0px;
+        /* align with others cleanly */
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    /* Fluid scaling on cards */
+    .card .amount {
+        font-size: clamp(24px, 6vw, 32px);
+    }
+
+    /* 3. Touch Animations */
+    .card:active,
+    .bank-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
+    }
+
+    .btn-detail:active,
+    .btn-export-pdf:active,
+    .btn-toggle-balance:active,
+    .btn-view:active {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(0.95);
+    }
+
+    .bank-balances-container {
+        flex-direction: column;
+    }
+
+    .bank-card {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .modal-box {
+        max-width: 95%;
+        margin: 10px;
+        max-height: 90vh;
+    }
+
+    .modal-header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px 20px 15px;
+        position: relative;
+    }
+
+    .modal-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .modal-body {
+        padding: 15px 20px 0;
+    }
+
+    .bh-horizontal-pill {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px 20px;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .bh-separator {
+        width: 100%;
+        height: 1px;
+    }
+
+    .bh-pillar,
+    .bh-pillar-main,
+    .bh-pillar-date {
+        min-width: unset;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* More precise fluid constraints for extra small screens */
+    .net-balance-amount {
+        font-size: clamp(16px, 5vw, 18px);
+    }
+
+    .user-profile {
+        font-size: 14px;
+        gap: 10px;
+    }
+
+    .user-profile::before {
+        width: 30px;
+        height: 30px;
+    }
+
+    .btn-view,
+    .btn-export-pdf {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .view-toggle {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .modal-actions button,
+    .modal-actions .view-toggle {
+        width: 100%;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        margin: 0;
+    }
+
+    .modal-title {
+        max-width: 80%;
+    }
+}
+
+/* =========================================================================
+   APP LAYOUT & SIDEBAR NAVIGATION
+   ========================================================================= */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-main);
+}
+
+.sidebar-nav {
+    width: 260px;
+    background: rgba(15, 23, 42, 0.95);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    backdrop-filter: blur(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-brand {
+    padding: 30px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-logo {
+    font-size: 24px;
+    filter: drop-shadow(0 0 8px var(--primary));
+}
+
+.sidebar-brand span {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #fff;
+    background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-links {
+    flex: 1;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transform: translateX(4px);
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05));
+    color: var(--primary);
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.3);
+}
+
+.nav-icon {
+    font-size: 18px;
+}
+
+.sidebar-footer {
+    padding: 20px 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-refresh-sidebar {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-refresh-sidebar:hover {
+    background: var(--primary);
+    color: #000;
+    font-weight: 700;
+}
+
+/* Adjust Dashboard Container when Sidebar is present */
+.dashboard-container {
+    margin-left: 260px;
+    display: flex;
+    /* เปลี่ยนเป็น flex เพื่อให้ main กับ aside อยู่ข้างกัน */
+    min-height: 100vh;
+    width: calc(100% - 260px);
+}
+
+.main-content {
+    flex: 1;
+    padding: 30px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    /* ให้กรองอยู่บน การ์ดอยู่ล่าง */
+    gap: 25px;
+}
+
+.right-sidebar {
+    width: 320px;
+    padding: 30px 20px;
+    background: rgba(15, 23, 42, 0.4);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Mobile responsive for sidebar */
+@media (max-width: 1024px) {
+    .sidebar-nav {
+        width: 80px;
+    }
+
+    .sidebar-brand span,
+    .nav-link span:not(.nav-icon),
+    .btn-refresh-sidebar span {
+        display: none;
+    }
+
+    .nav-link {
+        justify-content: center;
+        padding: 12px;
+    }
+
+    .dashboard-container {
+        margin-left: 80px;
+        width: calc(100% - 80px);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar-nav {
+        display: none;
+    }
+
+    .dashboard-container {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* =========================================================================
+   LAYOUT CLEANUP & REORGANIZATION (ล่าสุด — override rules ที่ขัดแย้ง)
+   ========================================================================= */
+
+/* 1. Reset dashboard-container ให้เป็น wrapper เดียวไม่ขัดแย้ง */
+.dashboard-container {
+    max-width: none;
+    margin: 0;
+    margin-left: 260px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: calc(100% - 260px);
+}
+
+/* 2. Body wrapper ใหม่ที่จัด main + right sidebar อยู่ข้างกัน */
+.dashboard-body {
+    display: flex;
+    flex: 1;
+    gap: 24px;
+    padding: 0 28px 40px;
+    min-width: 0;
+    align-items: flex-start;
+}
+
+/* 3. Header ปรับใหม่: title + actions อยู่แถวบนสุด, filters อยู่แถวล่าง */
+.dashboard-header {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 28px 16px;
+    margin-bottom: 0;
+    align-items: stretch;
+}
+
+.header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+.header-top-row h1 {
+    font-size: 26px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.dashboard-header .header-left {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+}
+
+.dashboard-header .header-filters {
+    margin-bottom: 0;
+    padding: 16px 18px;
+    gap: 12px;
+    align-items: flex-end;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dashboard-header .header-actions {
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+/* 4. Main content + right sidebar */
+.main-content {
+    flex: 1;
+    padding: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.right-sidebar {
+    flex: 0 0 320px !important;
+    width: 320px;
+    padding: 20px 16px;
+    margin: 0;
+    position: sticky;
+    top: 20px;
+    height: calc(100vh - 40px);
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+
+/* 5. Summary cards — กลับมาเป็น 4 คอลัมน์เต็มบนจอกว้าง */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.card {
+    padding: 22px 20px;
+    min-height: 150px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card h3 {
+    font-size: 12px;
+    margin-bottom: 10px;
+    letter-spacing: 0.8px;
+}
+
+.card .amount {
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    word-break: break-word;
+}
+
+.btn-detail {
+    margin-top: 12px;
+    align-self: flex-start;
+}
+
+/* 6. Sections — ลด margin-top ที่เคย inline ในไฟล์ HTML */
+.charts-section,
+.bank-balances-section {
+    margin-top: 0 !important;
+    margin-bottom: 0;
+}
+
+/* 7. Net balance pill */
+.header-net-balance {
+    padding: 10px 18px;
+}
+
+.net-balance-amount {
+    font-size: 17px;
+}
+
+/* 8. Responsive breakpoints */
+@media (max-width: 1280px) {
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .right-sidebar {
+        flex: 0 0 280px !important;
+        width: 280px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .dashboard-container {
+        margin-left: 80px;
+        width: calc(100% - 80px);
+    }
+
+    .dashboard-body {
+        flex-direction: column;
+        padding: 0 20px 40px;
+    }
+
+    .right-sidebar {
+        flex: 1 1 100% !important;
+        width: 100%;
+        position: static;
+        height: auto;
+        max-height: 500px;
+    }
+
+    .dashboard-header {
+        padding: 20px 20px 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .header-top-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .header-top-row h1 {
+        font-size: 22px;
+    }
+
+    .dashboard-header .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* =========================================================================
+   MODAL REDESIGN — ทำให้ Modal ดูสวยขึ้น (ล่าสุด)
+   ========================================================================= */
+
+/* 1. Modal Box — ใหญ่ขึ้น มีขอบ glow เบาๆ */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.modal-box {
+    background: linear-gradient(180deg, #111b2e 0%, #0c1424 100%);
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    max-width: 1180px;
+    max-height: 90vh;
+    box-shadow:
+        0 40px 100px rgba(0, 0, 0, 0.7),
+        0 0 80px rgba(56, 189, 248, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 2. Modal Header — PDF + X อยู่ในแถวเดียวกัน */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 28px;
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.04), transparent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 20px;
+}
+
+.modal-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-row-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.modal-row-count::before {
+    content: '📊 ';
+}
+
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* 3. PDF Button — เปลี่ยนเป็น accent color */
+.btn-export-pdf {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(220, 38, 38, 0.08));
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.btn-export-pdf:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.18));
+    border-color: rgba(239, 68, 68, 0.6);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.2);
+}
+
+/* 4. Close Button */
+.modal-close {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    transform: rotate(90deg);
+}
+
+/* 5. Modal Controls — Search + View Toggle */
+.modal-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    gap: 16px;
+    background: rgba(15, 23, 42, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    flex-wrap: wrap;
+}
+
+.modal-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+    max-width: 420px;
+}
+
+.modal-search-wrap::before {
+    content: '🔍';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+#modal-search {
+    width: 100%;
+    background: rgba(10, 14, 23, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    padding: 11px 16px 11px 40px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13.5px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+#modal-search::placeholder {
+    color: rgba(148, 163, 184, 0.6);
+}
+
+#modal-search:focus {
+    border-color: var(--primary);
+    background: rgba(10, 14, 23, 0.9);
+    box-shadow: 0 0 0 3px var(--glow-color);
+}
+
+/* 6. View Toggle Buttons */
+.modal-view-toggle {
+    display: inline-flex;
+    background: rgba(10, 14, 23, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.btn-toggle {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-toggle:hover:not(.active) {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.btn-toggle.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(56, 189, 248, 0.1));
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
+}
+
+/* 7. Table Container */
+.modal-table-container {
+    overflow: auto;
+    flex: 1;
+    margin: 0;
+    padding: 0 28px 10px;
+}
+
+.modal-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+/* 8. Table Header — sticky แต่ดูสวยกว่า */
+.modal-table thead th,
+#modal-table thead th,
+#bank-modal-table thead th {
+    background: linear-gradient(180deg, #0a1120, #0d1528);
+    color: #94a3b8;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    padding: 14px 18px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 2px solid rgba(56, 189, 248, 0.15);
+    white-space: nowrap;
+}
+
+.modal-table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+.modal-table thead th:last-child {
+    border-top-right-radius: 12px;
+    text-align: right;
+}
+
+/* 9. Table Rows — zebra stripes + hover */
+.modal-table tbody tr,
+#modal-table tbody tr,
+#bank-modal-table tbody tr {
+    transition: all 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+}
+
+.modal-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.008);
+}
+
+.modal-table tbody tr:hover,
+#modal-table tbody tr:hover,
+#bank-modal-table tbody tr:hover {
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0.02)) !important;
+    transform: translateX(2px);
+}
+
+.modal-table tbody td,
+#modal-table tbody td,
+#bank-modal-table tbody td {
+    padding: 13px 18px;
+    color: #e2e8f0;
+    white-space: nowrap;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.modal-table tbody td:first-child,
+#modal-table tbody td:first-child,
+#bank-modal-table tbody td:first-child {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    width: 44px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 10. Last column (amount) — เน้นให้เด่น */
+.modal-table tbody td:last-child,
+#modal-table tbody td:last-child,
+#bank-modal-table tbody td:last-child {
+    text-align: right;
+    font-weight: 700;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    letter-spacing: -0.2px;
+}
+
+/* 11. Pill-style badges — for BANK / Category / Status columns
+   Matches text content ที่ JS ใส่ลงไปเป็น plain text — เราจะใช้ attribute data selector หรือ inline class
+   แต่เนื่องจากข้อจำกัด จะใช้วิธี style ทั้ง column ผ่าน nth-child แทน ซึ่งอาจไม่ตรง
+   ทางที่ดีคือเพิ่ม badge styling generic ที่ JS สามารถใช้ได้ */
+.modal-table .badge,
+.modal-table .pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* 12. Amount colors */
+.modal-amount-income,
+td.modal-amount-income {
+    color: var(--income) !important;
+}
+
+.modal-amount-expense,
+td.modal-amount-expense {
+    color: var(--expense) !important;
+}
+
+/* 13. Footer */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 16px 28px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(10, 14, 23, 0.5);
+}
+
+.modal-total {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-total span,
+#modal-total-amount span,
+#bank-modal-totals span {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 14. Custom scrollbar inside modal */
+.modal-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.modal-table-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-table-container::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+}
+
+.modal-table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.4);
+}
+
+/* 15. Mobile responsive */
+@media (max-width: 768px) {
+    .modal-header {
+        padding: 18px 20px;
+        flex-wrap: wrap;
+    }
+
+    .modal-title {
+        font-size: 18px;
+    }
+
+    .modal-controls {
+        padding: 14px 20px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .modal-search-wrap {
+        max-width: none;
+    }
+
+    .modal-table-container {
+        padding: 0 14px 10px;
+    }
+
+    .modal-table tbody td,
+    .modal-table thead th {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .modal-footer {
+        padding: 14px 20px;
+    }
+}
+
+/* =========================================================================
+   MODAL TABLE — COLUMN BADGES (nth-child targeting แบบไม่ต้องแก้ JS)
+   ========================================================================= */
+
+/* Full table (8 columns): # | วันที่ | คำอธิบาย | เจ้าหนี้ | Bank | Category | Status | Amount
+   Column indexes:            1 |   2   |    3    |    4   |  5   |    6    |   7   |   8      */
+
+/* BANK column (5) — monospace tech badge */
+#modal-table tbody tr td:nth-child(5) {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+#modal-table tbody tr td:nth-child(5)::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    margin-right: 8px;
+    vertical-align: middle;
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+}
+
+/* Category column (6) — soft tag */
+#modal-table tbody tr td:nth-child(6) {
+    color: #cbd5e1;
+    font-size: 12px;
+}
+
+#modal-table tbody tr td:nth-child(6)>* {
+    display: inline-block;
+}
+
+/* Use an inner span is not possible without JS — instead, use text directly with pseudo styling */
+/* Style the td itself as a subtle badge via a wrapper on hover, but keep it clean */
+
+/* Status column (7) — badge-style */
+#modal-table tbody tr td:nth-child(7) {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Date column (2) — slight muted */
+#modal-table tbody tr td:nth-child(2) {
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+/* Description column (3) — primary text */
+#modal-table tbody tr td:nth-child(3) {
+    color: #f1f5f9;
+    font-weight: 500;
+    max-width: 340px;
+}
+
+/* Creditor column (4) — muted */
+#modal-table tbody tr td:nth-child(4) {
+    color: #94a3b8;
+    font-size: 12.5px;
+}
+
+/* Apply same logic to bank-modal full view (8 columns slightly different) */
+/* bank modal full: # | วันที่ | คำอธิบาย | ประเภท | Category | Status | Cash In | Cash Out */
+#bank-modal-table tbody tr td:nth-child(2) {
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+}
+
+#bank-modal-table tbody tr td:nth-child(3) {
+    color: #f1f5f9;
+    font-weight: 500;
+}
+
+/* =========================================================================
+   BANK COLUMN — show pill background (ใช้ ::before ทำ pill ไม่ได้ครอบทั้ง text
+   ดังนั้นเราจะใช้ background + padding กับ td โดยตรง)
+   ========================================================================= */
+#modal-table tbody tr td:nth-child(5) {
+    position: relative;
+}
+
+#modal-table tbody tr td:nth-child(5)::after {
+    /* subtle background pill effect is done via the td itself */
+    content: '';
+}
+
+/* Instead use a cleaner approach: inline-block styling via padding and background */
+/* Since we can't wrap text in span, we use text-shadow + color + dot prefix (already added above) */
+
+/* =========================================================================
+   TOTAL ROW EMPHASIS in summary (grouped) view
+   ========================================================================= */
+
+/* Summary/Grouped view headers — different column count */
+#modal-table tbody tr td {
+    /* For grouped summary view: # | Category | Count | Amount */
+    /* nth-child rules above apply to full view; grouped view auto-styles since cols change */
+}
+
+/* =========================================================================
+   SMALL POLISH — loading state, empty state
+   ========================================================================= */
+.modal-table tbody tr td[colspan] {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* First row subtle highlight */
+.modal-table tbody tr:first-child {
+    border-top: 1px solid rgba(56, 189, 248, 0.1);
+}
