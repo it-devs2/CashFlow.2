@@ -13,6 +13,8 @@
 </head>
 
 <body>
+    <!-- Top Progress Bar -->
+    <div id="top-progress-bar" class="top-progress-bar"></div>
     <!-- Global Loader -->
     <div id="global-loader" class="global-loader hidden">
         <div class="loader-content">
@@ -38,27 +40,26 @@
                 <a href="#" class="nav-link" onclick="switchView('banks')">
                     <span class="nav-icon">🏦</span> Bank Balances
                 </a>
-                <a href="#" class="nav-link" onclick="switchView('recent')">
-                    <span class="nav-icon">📜</span> Recent Activity
-                </a>
             </nav>
             <div class="sidebar-footer" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
 
-                <button class="btn-refresh-sidebar" onclick="refreshData()">🔄 <span class="refresh-text">Refresh Data</span></button>
-                <div id="last-sync-time" style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 5px; opacity: 0.8;"></div>
+                <button class="btn-refresh-sidebar" onclick="refreshData()">🔄 <span class="refresh-text">Refresh
+                        Data</span></button>
+                <div id="last-sync-time"
+                    style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 5px; opacity: 0.8;">
+                </div>
             </div>
         </aside>
 
         <div class="dashboard-container">
-            <!-- Header -->
-            <header class="dashboard-header">
+            <!-- คอนเทนเนอร์ฝั่งซ้าย (Header + Main Content) -->
+            <div class="main-column-container">
+                <!-- Header -->
+                <header class="dashboard-header">
                 <div class="header-top-row">
-                    <h1>CashFlow Dashboard</h1>
-                    <div class="header-actions">
-                        <button id="btn-refresh-data" class="btn-refresh-data" onclick="refreshData()">🔄</button>
-                        <div class="header-net-balance">
-                            <span id="header-net-amount" class="net-balance-amount">0.00</span>
-                        </div>
+                    <div class="header-title-section">
+                        <h1>CashFlow Dashboard</h1>
+                        <p class="header-subtitle" id="last-sync-time-header">อัปเดตล่าสุด: --:--</p>
                     </div>
                 </div>
                 <div class="header-left">
@@ -86,17 +87,23 @@
                             </div>
                         </div>
                         <div class="hfilter-group">
-                            <label for="filter-bank">🏦 BANK</label>
-                            <select id="filter-bank">
+                            <label for="filter-category">🗂️ หมวดหมู่</label>
+                            <select id="filter-category">
                                 <option value="All">ทั้งหมด</option>
                             </select>
                         </div>
                         <div class="hfilter-group">
-                            <label for="filter-type">📑 ประเภท</label>
-                            <select id="filter-type">
+                            <label for="filter-group">👥 กลุ่ม</label>
+                            <select id="filter-group">
                                 <option value="All">ทั้งหมด</option>
-                                <option value="income">Income (รายรับ)</option>
-                                <option value="expense">Expense (รายจ่าย)</option>
+                            </select>
+                        </div>
+                        <div class="hfilter-group">
+                            <label for="filter-party-type">📑 ประเภท</label>
+                            <select id="filter-party-type">
+                                <option value="All">ทั้งหมด</option>
+                                <option value="Vendor">Expense (รายจ่าย)</option>
+                                <option value="Customer">Income (รายรับ)</option>
                             </select>
                         </div>
                         <div class="hfilter-group">
@@ -122,12 +129,11 @@
                 </div>
             </header>
 
-            <div class="dashboard-body">
+
                 <!-- MAIN CONTENT AREA (CENTER) -->
-                <main class="main-content">
-                    <!-- Summary Cards Row -->
+                <main class="dashboard-main">
                     <!-- Summary Cards Row 1 (Actuals) -->
-                    <section id="view-summary-actual" class="summary-cards" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 20px;">
+                    <section id="view-summary-actual" class="summary-cards">
                         <div class="card glass income-card">
                             <h3>Income (Actual)</h3>
                             <p id="income-actual" class="amount">0.00</p>
@@ -136,7 +142,8 @@
                         <div class="card glass expense-card">
                             <h3>Expense (Actual)</h3>
                             <p id="expense-actual" class="amount">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('expense-actual')">📋 รายละเอียด</button>
+                            <button class="btn-detail" onclick="openDetailModal('expense-actual')">📋
+                                รายละเอียด</button>
                         </div>
                         <div class="card glass" style="border-style: solid; border-color: rgba(245, 158, 11, 0.4);">
                             <h3 style="color: #f59e0b;">Selected Balance</h3>
@@ -145,7 +152,7 @@
                     </section>
 
                     <!-- Summary Cards Row 2 (Plans) -->
-                    <section id="view-summary-plan" class="summary-cards" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 25px;">
+                    <section id="view-summary-plan" class="summary-cards">
                         <div class="card glass plan-card">
                             <h3>Income (Plan)</h3>
                             <p id="income-plan" class="amount">0.00</p>
@@ -156,7 +163,8 @@
                             <p id="expense-plan" class="amount">0.00</p>
                             <button class="btn-detail" onclick="openDetailModal('expense-plan')">📋 รายละเอียด</button>
                         </div>
-                        <div class="card glass plan-card net-plan-card" style="border-style: solid; border-color: rgba(56, 189, 248, 0.4);">
+                        <div class="card glass plan-card net-plan-card"
+                            style="border-style: solid; border-color: rgba(56, 189, 248, 0.4);">
                             <h3 style="color: var(--primary);">Net Balances</h3>
                             <p id="net-plan" class="amount">0.00</p>
                         </div>
@@ -178,47 +186,36 @@
                         </div>
                         <div id="transaction-chart"></div>
                     </section>
-
-                    <!-- Bank Balances -->
-                    <section id="view-banks" class="bank-balances-section glass"
-                        style="margin-top: 25px; padding: 20px;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h2 class="section-title">Bank Balances</h2>
-                            <div id="bank-header-summary"
-                                style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 20px; padding: 5px 15px; color: #f59e0b; font-weight: 700;">
-                                Total: <span id="bank-total-available" style="color: #fff;">0.00</span>
-                            </div>
-                        </div>
-                        <!-- Bank cards are now shown in the right sidebar as a vertical list -->
-                        <!-- Bank cards container moved to the right sidebar -->
-                    </section>
                 </main>
+            </div> <!-- End main-column-container -->
 
-                <!-- SIDE FEED (RIGHT) -->
-                <aside id="view-recent" class="right-sidebar">
-                    <!-- Total Balance Summary (top of sidebar) -->
-                    <div class="card glass sidebar-total-card" style="margin-bottom:12px;padding:16px;border-left:4px solid rgba(56,189,248,0.12);">
-                        <h3 style="font-size:13px;font-weight:700;color:var(--text-muted);margin:0 0 8px;">Total Balance</h3>
-                        <p id="sidebar-bank-total" class="amount" style="font-size:24px;font-weight:800;color:var(--primary);margin:0 0 8px;">0.00</p>
-                        <div style="font-size:12px;color:var(--text-muted);">As of <span id="bank-selected-date">-</span></div>
+            <!-- SIDE FEED (RIGHT) - ขวาสุดติดขอบบนยาวลงมา -->
+            <aside id="view-recent" class="right-sidebar">
+                <!-- ยอดเงินรวม (อยู่ด้านบนสุดของแถบรายการ) -->
+                <div class="header-main-balance sidebar-balance-card">
+                    <div class="balance-label">AVAILABLE BALANCE</div>
+                    <div class="balance-value">
+                        <span class="currency">฿</span>
+                        <span id="available-balance">0.00</span>
                     </div>
+                </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h2 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0;">Bank Balances</h2>
+                <!-- Bank Balances Header with Total Badge -->
+                <div class="sidebar-bank-header">
+                    <div class="sidebar-bank-header-left">
+                        <span class="sidebar-bank-bar"></span>
+                        <h2 class="sidebar-bank-title">Bank Balances</h2>
                     </div>
+                    <div class="sidebar-bank-total-badge">
+                        Total: <span id="bank-total-available">0.00</span>
+                    </div>
+                </div>
 
-                    <!-- Scrollable bank list with fixed height (only this area scrolls) -->
-                    <div id="bank-balances-container" class="bank-balances-container vertical bank-list-scroll">
-                        <!-- Bank cards injected by JS (vertical list) -->
-                    </div>
-
-                    <!-- Hidden transaction placeholder kept for compatibility with existing JS (kept hidden) -->
-                    <div id="table-body" class="transaction-feed" style="display:none;">
-                        <!-- Transactions intentionally hidden (Recent Activity removed) -->
-                    </div>
-                </aside>
-            </div>
+                <!-- Bank Balances Container (Vertical, 1 card per row) -->
+                <div id="bank-balances-container" class="sidebar-bank-container">
+                    <!-- Bank cards injected by JS -->
+                </div>
+            </aside>
         </div>
 
         <!-- Modals -->

@@ -12,7 +12,6 @@ function checkValue(val) {
     return Number(val).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-
 // Utility: Parse Number safely (handling commas from Google Sheets)
 function parseSafe(val) {
     if (val === null || val === undefined || val === '') return 0;
@@ -31,6 +30,9 @@ function parseDateSafe(dateVal) {
     const s = dateVal.toString().trim();
     if (!s) return null;
 
+    // ถ้าเป็นแค่ตัวเลขปีเฉยๆ (เช่น 2026) หรือสั้นเกินไป ไม่นับว่าเป็นวันที่
+    if (s.length < 8 && !s.includes('/') && !s.includes('-')) return null;
+
     // Handle DD/MM/YYYY format specifically
     if (s.includes('/')) {
         const parts = s.split('/');
@@ -45,7 +47,7 @@ function parseDateSafe(dateVal) {
     }
 
     const d = new Date(s);
-    if (!isNaN(d)) return d;
+    if (!isNaN(d) && d.getFullYear() > 2000 && s.length >= 8) return d;
     return null;
 }
 
@@ -79,25 +81,26 @@ function normalizeName(name) {
 
 // Utility: Robust Row Detection & Value Extraction
 function getRowType(row) {
-    // 0. ตรวจสอบจากโครงสร้างของชีตโดยตรง (แม่นยำที่สุด)
-    if ('Customer' in row || 'customer' in row || 'Incoming' in row || 'incoming' in row) return 'income';
-    if ('Vendor' in row || 'vendor' in row || 'Payment' in row || 'payment' in row) return 'expense';
-
-    // 1. ดึงค่าจากคอลัมน์หลัก
+    // 1. ดึงค่าจากคอลัมน์หลัก Type (ตามที่คุณแจ้งมาว่าอยู่ในคอลัมน์ E) - ให้ความสำคัญสูงสุด
     const t = (row['Type'] || row.type || '').toString().trim().toLowerCase();
+    if (t === 'income' || t.includes('รับ') || t.includes('รายรับ')) return 'income';
+    if (t === 'expense' || t.includes('จ่าย') || t.includes('รายจ่าย')) return 'expense';
+
+    // 2. ตรวจสอบจากชื่อคอลัมน์ หรือ ค่าในคอลัมน์ Party (ตามรูปที่เห็นในชีท)
+    const party = (row['Party'] || row.party || '').toString().trim().toLowerCase();
+    if (party === 'customer' || party === 'ลูกหนี้') return 'income';
+    if (party === 'vendor' || party === 'เจ้าหนี้') return 'expense';
+
+    if (row['Customer'] || row.customer || row['Incoming'] || row.incoming) return 'income';
+    if (row['Vendor'] || row.vendor || row['Payment'] || row.payment) return 'expense';
+
+    // 3. ค้นหาจาก Keyword ใน Description หรือ Category
     const desc = (row['Description'] || row.description || '').toString().trim().toLowerCase();
     const cat = (row['Category'] || row.category || '').toString().trim().toLowerCase();
 
-    // 2. ถ้ามีระบุชัดเจนให้ใช้ตามนั้น
-    if (t === 'income' || t === 'expense') return t;
-    if (t.includes('รับ') || t.includes('รายรับ')) return 'income';
-    if (t.includes('จ่าย') || t.includes('รายจ่าย')) return 'expense';
-
-    // 3. ค้นหาจาก Keyword (ลำดับความสำคัญ: เช็ครายรับก่อน เพราะคำว่า "รายได้ค่า..." มีคำว่า "ค่า" อยู่)
     const incomeKeywords = ['รายได้', 'รับ', 'ขาย', 'income', 'revenue', 'receive', 'deposit', 'เงินเข้า', 'ลูกหนี้'];
     const expenseKeywords = ['ค่า', 'จ่าย', 'ภาษี', 'หัก', 'ชำระ', 'ซื้อ', 'payment', 'expense', 'cost', 'tax', 'เงินออก', 'เจ้าหนี้'];
 
-    // เช็ค Income ก่อนเสมอ
     for (let kw of incomeKeywords) {
         if (desc.includes(kw) || cat.includes(kw)) return 'income';
     }
@@ -105,29 +108,19 @@ function getRowType(row) {
         if (desc.includes(kw) || cat.includes(kw)) return 'expense';
     }
 
-    // 4. วนหาจากทุกคอลัมน์
+    // 4. วนหาจากทุกคอลัมน์ที่มีคำว่า รับ/จ่าย
     let foundType = '';
     Object.keys(row).forEach(key => {
         const val = (row[key] || '').toString().toLowerCase();
-        // เช็ค Income ในทุกคอลัมน์ก่อน
         if (!foundType && incomeKeywords.some(kw => val.includes(kw))) foundType = 'income';
     });
-    
+
     if (!foundType) {
         Object.keys(row).forEach(key => {
             const val = (row[key] || '').toString().toLowerCase();
             if (!foundType && expenseKeywords.some(kw => val.includes(kw))) foundType = 'expense';
         });
     }
-
-    if (foundType) return foundType;
-
-    // 5. เช็คจากชื่อคอลัมน์
-    Object.keys(row).forEach(key => {
-        const k = key.toLowerCase();
-        if (k.includes('รับ') && parseSafe(row[key]) > 0) foundType = 'income';
-        if (!foundType && k.includes('จ่าย') && parseSafe(row[key]) > 0) foundType = 'expense';
-    });
 
     return foundType || '';
 }
@@ -244,11 +237,21 @@ function loadFromCache() {
 // -------------------------------------------------
 // INIT: Fetch data from Google Apps Script API
 // -------------------------------------------------
+let topLoaderInterval;
+
 function showLoader() {
-    const loader = document.getElementById('global-loader');
-    if (loader) {
-        loader.style.display = 'flex';
-        loader.classList.remove('hidden');
+    const bar = document.getElementById('top-progress-bar');
+    if (bar) {
+        bar.style.opacity = '1';
+        bar.style.width = '15%';
+        clearInterval(topLoaderInterval);
+        topLoaderInterval = setInterval(() => {
+            let currentWidth = parseFloat(bar.style.width) || 0;
+            if (currentWidth < 90) {
+                let step = (100 - currentWidth) * 0.05; 
+                bar.style.width = (currentWidth + step) + '%';
+            }
+        }, 200);
     }
 }
 
@@ -306,10 +309,16 @@ async function _backgroundFetch(showUpdateToast = false) {
 }
 
 function hideLoader() {
-    const loader = document.getElementById('global-loader');
-    if (loader && !loader.classList.contains('hidden')) {
-        loader.classList.add('hidden');
-        setTimeout(() => loader.style.display = 'none', 400);
+    const bar = document.getElementById('top-progress-bar');
+    if (bar) {
+        clearInterval(topLoaderInterval);
+        bar.style.width = '100%';
+        setTimeout(() => {
+            bar.style.opacity = '0';
+            setTimeout(() => {
+                bar.style.width = '0%';
+            }, 300);
+        }, 400);
     }
 }
 
@@ -421,9 +430,12 @@ async function refreshData(isAuto = false) {
 
 function updateLastSyncTime() {
     const timeEl = document.getElementById('last-sync-time');
-    if (timeEl) {
+    const headerTimeEl = document.getElementById('last-sync-time-header');
+    if (timeEl || headerTimeEl) {
         const now = new Date();
-        timeEl.textContent = `อัปเดตล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
+        const timeStr = `อัปเดตล่าสุด: ${now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
+        if (timeEl) timeEl.textContent = timeStr;
+        if (headerTimeEl) headerTimeEl.textContent = timeStr;
     }
 }
 
@@ -453,7 +465,8 @@ function showToast(message, type = 'success') {
 // -------------------------------------------------
 function populateFilterDropdowns(transactions, plans) {
     const allData = [...transactions, ...plans];
-    const banks = new Set();
+    const categories = new Set();
+    const groups = new Set();
     const days = new Set();
     const months = new Set();
     const years = new Set();
@@ -461,15 +474,16 @@ function populateFilterDropdowns(transactions, plans) {
         'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
     allData.forEach(row => {
-        const bankRaw = row['Bank'] || row.bank;
-        if (bankRaw) {
-            const bankName = bankRaw.toString().split('-')[0].trim();
-            if (bankName) banks.add(bankName);
-        }
+        const cat = row['Category'] || row.category;
+        if (cat) categories.add(cat.toString().trim());
+        
+        const grp = row['Group'] || row.group;
+        if (grp) groups.add(grp.toString().trim());
+
         const rawDate = row['Date'] || row.date;
         if (rawDate) {
-            const d = new Date(rawDate);
-            if (!isNaN(d)) {
+            const d = parseDateSafe(rawDate);
+            if (d && !isNaN(d)) {
                 days.add(d.getDate());
                 months.add(d.getMonth() + 1);
                 years.add(d.getFullYear());
@@ -491,7 +505,8 @@ function populateFilterDropdowns(transactions, plans) {
         if ([...el.options].some(o => o.value === current)) el.value = current;
     };
 
-    updateSelect('filter-bank', [...banks].sort());
+    updateSelect('filter-category', [...categories].sort());
+    updateSelect('filter-group', [...groups].sort());
     updateSelect('filter-day', [...days].sort((a, b) => a - b), d => String(d).padStart(2, '0'));
     updateSelect('filter-month', [...months].sort((a, b) => a - b), m => `${String(m).padStart(2, '0')} - ${monthNames[m - 1]}`);
     updateSelect('filter-year', [...years].sort((a, b) => b - a));
@@ -528,20 +543,20 @@ function resetBankFilters() {
 // -------------------------------------------------
 function applyFilters() {
     const creditor = (document.getElementById('filter-creditor')?.value || '').toLowerCase().trim();
-    const bank = document.getElementById('filter-bank')?.value || 'All';
-    const type = document.getElementById('filter-type')?.value || 'All';
+    const category = document.getElementById('filter-category')?.value || 'All';
+    const group = document.getElementById('filter-group')?.value || 'All';
+    const partyType = document.getElementById('filter-party-type')?.value || 'All';
     const day = document.getElementById('filter-day')?.value || 'All';
     const month = document.getElementById('filter-month')?.value || 'All';
     const year = document.getElementById('filter-year')?.value || 'All';
 
     function matchRow(row) {
-        // Creditor filter: search across Customer, Vendor, Name, Party
+        // 1. Creditor filter: search across Customer, Vendor, Name, Party
         if (selectedCreditors.size > 0) {
             const fields = [
                 row['Customer'], row['Vendor'], row['Name'], row['Party'], row.customer, row.vendor, row.name, row.party
             ].map(v => normalizeName((v || '').toString().trim()));
 
-            // Description often contains more info, so we search normalized creditors within it
             const rawDesc = (row['Description'] || row.description || '').toString().trim();
 
             let matched = false;
@@ -549,36 +564,63 @@ function applyFilters() {
                 if (f && selectedCreditors.has(f)) { matched = true; break; }
             }
             if (!matched && rawDesc) {
-                // If not found in primary fields, check if any selected creditor name is inside description
                 for (let cred of selectedCreditors) {
                     if (rawDesc.includes(cred)) { matched = true; break; }
                 }
             }
-
             if (!matched) return false;
         }
 
-        // Bank filter
-        if (bank !== 'All') {
-            const b = (row['Bank'] || row.bank || '').toString().split('-')[0].trim();
-            if (b !== bank) return false;
+        // 2. Category filter
+        if (category !== 'All') {
+            const c = (row['Category'] || row.category || '').toString().trim();
+            if (c !== category) return false;
         }
 
-        // Type filter
-        if (type !== 'All') {
-            const t = (row['Type'] || row.type || '').toString().trim().toLowerCase();
-            if (t !== type.toLowerCase()) return false;
+        // 3. Group filter
+        if (group !== 'All') {
+            const g = (row['Group'] || row.group || '').toString().trim();
+            if (g !== group) return false;
         }
 
-        // Date filters
+        // 4. Party Type filter (Income/Expense) - ใช้ getRowType เพื่อความแม่นยำตามคอลัมน์ E
+        if (partyType !== 'All') {
+            const actualType = getRowType(row); // 'income' or 'expense'
+            const filterType = partyType === 'Customer' ? 'income' : 'expense';
+            if (actualType !== filterType) return false;
+        }
+
+        // 5. Date filters (Prioritize Month/Year string from column Q)
+        const rawMonthYear = row['เดือน/ปี'] || row.monthYear || '';
         const rawDate = row['Date'] || row.date;
-        if (rawDate && (day !== 'All' || month !== 'All' || year !== 'All')) {
-            const d = new Date(rawDate);
-            if (!isNaN(d)) {
-                if (day !== 'All' && d.getDate() !== Number(day)) return false;
-                if (month !== 'All' && (d.getMonth() + 1) !== Number(month)) return false;
-                if (year !== 'All' && d.getFullYear() !== Number(year)) return false;
+        
+        let rowMonth = -1;
+        let rowYear = -1;
+
+        // Try parsing from column Q (e.g., "04/2026")
+        if (rawMonthYear && rawMonthYear.toString().includes('/')) {
+            const parts = rawMonthYear.toString().split('/');
+            if (parts.length === 2) {
+                rowMonth = parseInt(parts[0]);
+                rowYear = parseInt(parts[1]);
             }
+        }
+
+        // Fallback to Date column if Q is not available
+        if ((rowMonth === -1 || rowYear === -1) && rawDate) {
+            const d = parseDateSafe(rawDate);
+            if (d && !isNaN(d)) {
+                rowMonth = d.getMonth() + 1;
+                rowYear = d.getFullYear();
+            }
+        }
+
+        // Apply filtering
+        if (month !== 'All' && rowMonth !== Number(month)) return false;
+        if (year !== 'All' && rowYear !== Number(year)) return false;
+        if (day !== 'All' && rawDate) {
+            const d = parseDateSafe(rawDate);
+            if (d && d.getDate() !== Number(day)) return false;
         }
 
         return true;
@@ -591,25 +633,12 @@ function applyFilters() {
     _lastFilteredTransactions = filteredTransactions;
     _lastFilteredPlans = filteredPlans;
 
-    const isFiltered = selectedCreditors.size > 0 || bank !== 'All' || type !== 'All' || day !== 'All' || month !== 'All' || year !== 'All';
+    const isFiltered = selectedCreditors.size > 0 || category !== 'All' || group !== 'All' || partyType !== 'All' || day !== 'All' || month !== 'All' || year !== 'All';
 
     window.tableRenderLimit = 150; // Reset load limit on filter change
 
     renderTable(filteredTransactions, filteredPlans);
     updateSummary(isFiltered);
-
-    // กรอง Bank Balances ตาม filter-bank ที่เลือก
-    // ✅ FIX Bug #1: renderBankBalances() ใหม่อ่านจาก bb-filter-bank (DOM) ไม่รับ parameter
-    // จึงต้อง sync ค่าจาก filter-bank หลัก → bb-filter-bank ก่อนเรียก
-    const bbBankSel = document.getElementById('bb-filter-bank');
-    if (bbBankSel) {
-        if (bank !== 'All' && [...bbBankSel.options].some(o => o.value === bank)) {
-            bbBankSel.value = bank;
-        } else if (bank === 'All') {
-            bbBankSel.value = 'All';
-        }
-    }
-    renderBankBalances();
 }
 
 // -------------------------------------------------
@@ -625,125 +654,50 @@ function loadMoreTransactions() {
 // RENDER TABLE + CALCULATE TOTALS
 // -------------------------------------------------
 function renderTable(transactionsData, plansData = []) {
-    const tbody = document.getElementById('table-body');
-
     // 0. รีเซ็ตยอดรวม
     totalIncomeActual = 0;
     totalExpenseActual = 0;
     totalIncomePlan = 0;
     totalExpensePlan = 0;
 
-    // 1. กรองข้อมูลและป้องกันการนับซ้ำ
-    const seenKeys = new Set();
-    const deduplicatedData = [];
-
-    const processSource = (data, isPlanSource) => {
-        data.forEach(row => {
-            // ค้นหาค่าสถานะและยอดเงินแบบยืดหยุ่น (ไม่สนใจตัวเล็ก/ใหญ่)
-            let rowStatus = '';
-            let amountVal = 0;
-            let foundAmount = false;
-
-            Object.keys(row).forEach(key => {
-                const k = key.toLowerCase();
-                const val = row[key];
-                if (k.includes('status')) rowStatus = (val || '').toString().trim().toLowerCase();
-                if (k.includes('amount')) {
-                    amountVal = parseSafe(val);
-                    foundAmount = true;
-                }
-            });
-
-            const rowType = getRowType(row);
-            const amt = foundAmount ? amountVal : getRowAmount(row, rowType);
-
-            const rawDate = (row['Date'] || row.date || '').toString();
-            const desc = (row.description || row['Description'] || '').toString().trim();
-            const key = `${rawDate}|${amt.toFixed(2)}|${rowType}|${desc}`;
-
-            if (!seenKeys.has(key)) {
-                seenKeys.add(key);
-                deduplicatedData.push(row);
-
-                // --- คำนวณยอดสรุป (เน้นความแม่นยำของสถานะ) ---
-                let targetSummary = '';
-                const s = rowStatus.toLowerCase();
-
-                if (s.includes('plan')) {
-                    targetSummary = 'plan';
-                } else if (s.includes('received') || s.includes('paid') || s.includes('actual') || s.includes('รับแล้ว') || s.includes('จ่ายแล้ว')) {
-                    targetSummary = 'actual';
-                } else if (!s) {
-                    targetSummary = isPlanSource ? 'plan' : 'actual';
-                } else {
-                    targetSummary = 'actual';
-                }
-
-                if (targetSummary === 'plan') {
-                    if (rowType === 'income') totalIncomePlan += amt;
-                    if (rowType === 'expense') totalExpensePlan += amt;
-                } else {
-                    if (rowType === 'income') totalIncomeActual += amt;
-                    if (rowType === 'expense') totalExpenseActual += amt;
-                }
-            }
+    // 1. คำนวณยอด Actual จากหน้า Transactions เท่านั้น (เพื่อป้องกันการนับซ้ำกับหน้า Plan)
+    transactionsData.forEach(row => {
+        const rowType = getRowType(row);
+        const amt = getRowAmount(row, rowType);
+        
+        let rowStatus = '';
+        Object.keys(row).forEach(key => {
+            if (key.toLowerCase().includes('status')) rowStatus = (row[key] || '').toString().trim().toLowerCase();
         });
-    };
 
-    // ทั้งสองแหล่งมาจากชีทตระกูล _Plan ดังนั้นถ้าสถานะว่างควรนับเป็น 'plan' (isPlanSource = true)
-    processSource(transactionsData, true);
-    processSource(plansData, true);
-
-    // 2. เรียงลำดับข้อมูล
-    deduplicatedData.sort(sortByDateAsc);
-
-    let htmlFragments = [];
-    let renderCount = 0;
-    const limit = window.tableRenderLimit || 150;
-
-    deduplicatedData.forEach((row, index) => {
-        if (renderCount < limit) {
-            const rowType = getRowType(row);
-            const amt = getRowAmount(row, rowType);
-            const rawDate = row['Date'] || row.date || '';
-            let displayDate = rawDate;
-            try {
-                const d = new Date(rawDate);
-                if (!isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' });
-            } catch (e) { }
-
-            const desc = (row.description || row['Description'] || '-').toString();
-            const bank = (row.bank || row['Bank'] || '-').toString();
-
-            // สร้าง HTML สำหรับการ์ดรายการย่อๆ
-            htmlFragments.push(`
-                <div class="transaction-card" onclick="openRowDetail(${JSON.stringify(row).replace(/"/g, '&quot;')})">
-                    <div class="t-card-header">
-                        <span class="t-card-date">${displayDate}</span>
-                        <span class="t-card-type ${rowType.toLowerCase()}">${rowType}</span>
-                    </div>
-                    <div class="t-card-desc" title="${desc}">${desc}</div>
-                    <div class="t-card-footer">
-                        <span class="t-card-bank">${bank}</span>
-                        <span class="t-card-amount ${rowType.toLowerCase()}">
-                            ${rowType === 'expense' ? '-' : ''}${checkValue(amt)}
-                        </span>
-                    </div>
-                </div>
-            `);
-            renderCount++;
+        // ในหน้า Transactions, ถ้าไม่ระบุว่าเป็น Plan ให้ถือว่าเป็น Actual ทั้งหมด
+        if (rowStatus.includes('plan')) {
+            if (rowType === 'income') totalIncomePlan += amt;
+            if (rowType === 'expense') totalExpensePlan += Math.abs(amt);
+        } else {
+            if (rowType === 'income') totalIncomeActual += amt;
+            if (rowType === 'expense') totalExpenseActual += Math.abs(amt);
         }
     });
 
-    if (deduplicatedData.length > limit) {
-        htmlFragments.push(`
-            <button onclick="loadMoreTransactions()" style="width: 100%; padding: 12px; background: rgba(56,189,248,0.05); border: 1px solid rgba(56,189,248,0.2); color: var(--primary); border-radius: 12px; cursor: pointer; font-size: 13px; margin-top: 10px;">
-                👇 ดูเพิ่มอีก ${(deduplicatedData.length - limit).toLocaleString()} รายการ
-            </button>
-        `);
-    }
+    // 2. คำนวณยอด Plan จากหน้า Plan เท่านั้น
+    plansData.forEach(row => {
+        const rowType = getRowType(row);
+        const amt = getRowAmount(row, rowType);
+        
+        let rowStatus = '';
+        Object.keys(row).forEach(key => {
+            if (key.toLowerCase().includes('status')) rowStatus = (row[key] || '').toString().trim().toLowerCase();
+        });
 
-    tbody.innerHTML = htmlFragments.join('');
+        // ในหน้า Plan, ถ้าสถานะเป็น Actual/Paid/Received ให้ข้ามไป (เพราะควรไปนับที่หน้า Transactions แทนเพื่อกันการนับซ้ำ)
+        const isActual = rowStatus.includes('received') || rowStatus.includes('paid') || rowStatus.includes('actual') || rowStatus.includes('รับแล้ว') || rowStatus.includes('จ่ายแล้ว');
+        
+        if (!isActual) {
+            if (rowType === 'income') totalIncomePlan += amt;
+            if (rowType === 'expense') totalExpensePlan += Math.abs(amt);
+        }
+    });
 }
 
 // ฟังก์ชันสำหรับเปิดดูรายละเอียดเมื่อคลิกที่การ์ด
@@ -817,15 +771,28 @@ function updateSummary(isFiltered = false) {
         }
     };
 
-    updateWithAnimation('income-actual', totalIncomeActual);
-    updateWithAnimation('expense-actual', totalExpenseActual);
+    let dispIncomeActual = totalIncomeActual;
+    let dispExpenseActual = totalExpenseActual;
+    let dispIncomePlan = totalIncomePlan;
+    let dispExpensePlan = totalExpensePlan;
+
+    // ถ้าไม่มีการกรองข้อมูล และมีข้อมูลสรุปจากฝั่ง Server ให้ดึงมาแสดงตรงๆ
+    if (!isFiltered && window._serverSummary) {
+        if (window._serverSummary.incomeActual !== undefined) dispIncomeActual = window._serverSummary.incomeActual;
+        if (window._serverSummary.expenseActual !== undefined) dispExpenseActual = window._serverSummary.expenseActual;
+        if (window._serverSummary.incomePlan !== undefined) dispIncomePlan = window._serverSummary.incomePlan;
+        if (window._serverSummary.expensePlan !== undefined) dispExpensePlan = window._serverSummary.expensePlan;
+    }
+
+    updateWithAnimation('income-actual', dispIncomeActual);
+    updateWithAnimation('expense-actual', dispExpenseActual);
     updateWithAnimation('selected-balance', _selectedBalance);
     updateWithAnimation('available-balance', _availableBalanceH2);
-    updateWithAnimation('income-plan', totalIncomePlan);
-    updateWithAnimation('expense-plan', totalExpensePlan);
+    updateWithAnimation('income-plan', dispIncomePlan);
+    updateWithAnimation('expense-plan', dispExpensePlan);
 
     // Calculate Net Balance (Plan)
-    const netPlanBalance = totalIncomePlan - totalExpensePlan;
+    const netPlanBalance = dispIncomePlan - dispExpensePlan;
     updateWithAnimation('net-plan', netPlanBalance);
 
     const netPlanEl = document.getElementById('net-plan');
@@ -833,8 +800,8 @@ function updateSummary(isFiltered = false) {
         netPlanEl.style.color = netPlanBalance >= 0 ? 'var(--income)' : 'var(--expense)';
     }
 
-    const totalIncomeGroup = totalIncomeActual + totalIncomePlan;
-    const totalExpenseGroup = totalExpenseActual + totalExpensePlan;
+    const totalIncomeGroup = dispIncomeActual + dispIncomePlan;
+    const totalExpenseGroup = dispExpenseActual + dispExpensePlan;
     const netBalance = totalIncomeGroup - totalExpenseGroup;
 
     const netAmountEl = document.getElementById('header-net-amount');
@@ -864,14 +831,7 @@ function updateOverviewChart() {
     const monthlyContractWages = new Array(12).fill(0);
     const thaiMonthCategories = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-    let dataToProcess = allTransactions;
-    if (typeof _lastFilteredTransactions !== 'undefined' && _lastFilteredTransactions.length > 0) {
-        if (allTransactions.length !== _lastFilteredTransactions.length) {
-            dataToProcess = _lastFilteredTransactions;
-        }
-    } else if (typeof _lastFilteredTransactions !== 'undefined' && _lastFilteredTransactions.length === 0) {
-        dataToProcess = [];
-    }
+    let dataToProcess = allTransactions; // ให้กราฟแสดงข้อมูลทั้งหมด ไม่ต้องตาม filter หลักด้านบน
 
     dataToProcess.forEach(row => {
         const rawDate = row['Date'] || row.date;
@@ -934,31 +894,7 @@ function updateOverviewChart() {
         },
         colors: ['#10b981', '#f59e0b', '#ef4444'], // Income: Green, Contract Wages: Orange, Other Exp: Red
         dataLabels: {
-            enabled: true,
-            formatter: function (val) {
-                if (val === 0) return '';
-                if (val >= 1000000) return '฿' + (val / 1000000).toFixed(2) + 'M';
-                if (val >= 1000) return '฿' + (val / 1000).toFixed(1) + 'K';
-                return '฿' + val.toLocaleString('th-TH');
-            },
-            offsetY: -14,
-            style: {
-                fontSize: '11.5px',
-                fontWeight: 700,
-                fontFamily: 'Outfit, sans-serif',
-                colors: ['#ffffff']
-            },
-            background: {
-                enabled: false
-            },
-            dropShadow: {
-                enabled: true,
-                top: 1,
-                left: 0,
-                blur: 3,
-                color: '#000',
-                opacity: 0.9
-            }
+            enabled: false
         },
         stroke: {
             show: true,
@@ -1062,6 +998,8 @@ function updateOverviewChart() {
         },
         tooltip: {
             theme: 'dark',
+            shared: true,
+            intersect: false,
             y: {
                 formatter: function (val) {
                     return "฿ " + val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1483,47 +1421,50 @@ function getBankLogoUrl(bankName) {
 
 function renderBankBalances() {
     const container = document.getElementById('bank-balances-container');
+    if (!container) return;
     container.innerHTML = '';
 
-    const bFilter = document.getElementById('bb-filter-bank')?.value || 'All';
+    // ✅ NOTE: Section bank-balances ตรงกลางถูกลบแล้ว (ย้ายไป sidebar)
+    //          bb-filter-* elements อาจไม่มีใน DOM แล้ว — ใช้ optional chaining + fallback
+    //          ถ้าไม่มี bb-filter-bank → ใช้ filter-bank หลักจาก header แทน
+    const bFilter = document.getElementById('bb-filter-bank')?.value
+        || document.getElementById('filter-bank')?.value
+        || 'All';
     let displayBalances = [...bankBalances];
     if (bFilter !== 'All') {
-        // Filter by bank prefix (e.g., "KBANK" matches "KBANK-123...")
-        displayBalances = displayBalances.filter(b => (b.bank || '').split('-')[0].trim() === bFilter);
+        displayBalances = displayBalances.filter(b => {
+            const bName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
+            return bName === bFilter;
+        });
     }
 
     if (!displayBalances || displayBalances.length === 0) {
-        container.innerHTML = '<span style="color: var(--text-muted); font-size: 14px;">ไม่พบข้อมูลยอดคงเหลือ</span>';
+        container.innerHTML = '<span style="color: var(--text-muted); font-size: 13px; padding: 10px; display: block; text-align: center;">ไม่พบข้อมูลยอดคงเหลือ</span>';
         const totalAvailableEl = document.getElementById('bank-total-available');
         if (totalAvailableEl) totalAvailableEl.textContent = '0.00';
         return;
     }
 
-    // เรียงตามชื่อธนาคาร (KBANK, KKP, SCB ...) แล้วตามเลขบัญชี
-
     // --- DYNAMIC BALANCE CALCULATION ---
-    const dVal = document.getElementById('bb-filter-day')?.value || 'All';
-    const mVal = document.getElementById('bb-filter-month')?.value || 'All';
-    const yVal = document.getElementById('bb-filter-year')?.value || 'All';
+    //   ถ้า bb-filter-* ไม่มี ให้ใช้ filter-* หลักจาก header
+    const dVal = document.getElementById('bb-filter-day')?.value || document.getElementById('filter-day')?.value || 'All';
+    const mVal = document.getElementById('bb-filter-month')?.value || document.getElementById('filter-month')?.value || 'All';
+    const yVal = document.getElementById('bb-filter-year')?.value || document.getElementById('filter-year')?.value || 'All';
 
     let cutoffDate = null;
     let isFiltered = false;
-    // ✅ FIX: trigger การกรองเมื่อมีการเลือกอย่างน้อย 1 ช่อง (วัน/เดือน/ปี)
     if (yVal !== 'All' || mVal !== 'All' || dVal !== 'All') {
         isFiltered = true;
         const today = new Date();
-        // ถ้าไม่ได้เลือกปี → ใช้ปีปัจจุบัน
         let year = yVal !== 'All' ? parseInt(yVal) : today.getFullYear();
-        // ถ้าไม่ได้เลือกเดือน → ใช้เดือนปัจจุบัน (หรือเดือนสุดท้ายของปี ถ้าเลือกปีย้อนหลัง)
         let month;
         if (mVal !== 'All') {
             month = parseInt(mVal) - 1;
         } else if (yVal !== 'All' && parseInt(yVal) < today.getFullYear()) {
-            month = 11; // ธ.ค.
+            month = 11;
         } else {
             month = today.getMonth();
         }
-        // ถ้าไม่ได้เลือกวัน → ใช้วันสุดท้ายของเดือนนั้น
         let day = dVal !== 'All' ? parseInt(dVal) : new Date(year, month + 1, 0).getDate();
         cutoffDate = new Date(year, month, day, 23, 59, 59).getTime();
     }
@@ -1532,11 +1473,14 @@ function renderBankBalances() {
 
     if (cutoffDate && typeof allTransactions !== 'undefined' && allTransactions.length > 0) {
         calculatedBalances.forEach(b => {
-            let bal = parseSafe(b.balance);
-            const bankFullName = (b.bank || '').trim();
-            const dashIdx = bankFullName.indexOf('-');
-            const bankTypeUpper = dashIdx !== -1 ? bankFullName.substring(0, dashIdx).trim().toUpperCase() : bankFullName.toUpperCase();
-            const acctLast4 = dashIdx !== -1 ? bankFullName.substring(dashIdx + 1).replace(/\D/g, '').slice(-4) : '';
+            const bName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
+            const bAccount = (b['Account No'] || b.accountNo || '').trim();
+            const bBalance = parseSafe(b['Available Balance'] || b['Beginning Balance'] || b.availableBalance || b.balance || 0);
+            
+            let bal = bBalance;
+            const bankFullName = `${bName} - ${bAccount}`.trim();
+            const bankTypeUpper = bName.toUpperCase();
+            const acctLast4 = bAccount.replace(/\D/g, '').slice(-4);
 
             allTransactions.forEach(row => {
                 const b1 = (row['Bank'] || row.bank || '').trim();
@@ -1580,61 +1524,62 @@ function renderBankBalances() {
 
     const finalBalancesToRender = isFiltered ? calculatedBalances : displayBalances;
     const sorted = [...finalBalancesToRender].sort((a, b) => {
-        const nameA = (a.bank || '').toUpperCase();
-        const nameB = (b.bank || '').toUpperCase();
+        const nameA = (a['Bank Name'] || a.bankName || a.bank || '').toUpperCase();
+        const nameB = (b['Bank Name'] || b.bankName || b.bank || '').toUpperCase();
         return nameA.localeCompare(nameB);
     });
 
-    sorted.forEach(bank => {
+    // --- RENDER COMPACT SIDEBAR BANK CARDS (1 per row) ---
+    sorted.forEach(bankRow => {
         const card = document.createElement('div');
-        card.className = 'bank-card';
-        const logoUrl = getBankLogoUrl(bank.bank);
-
-        // แยกชื่อธนาคาร vs เลขที่บัญชี
-        const dashIdx = bank.bank.indexOf('-');
-        const bankType = dashIdx !== -1 ? bank.bank.substring(0, dashIdx).trim() : bank.bank.trim();
-        const accountNum = dashIdx !== -1 ? bank.bank.substring(dashIdx + 1).trim() : '';
-        const safeBank = bank.bank.replace(/'/g, "\\'");
+        card.className = 'sidebar-bank-card';
+        
+        // ดึงข้อมูลตามชื่อคอลัมน์จริงใน Google Sheets
+        const bankName = (bankRow['Bank Name'] || bankRow.bankName || bankRow.bank || '').trim();
+        const accountNum = (bankRow['Account No'] || bankRow.accountNo || '').trim();
+        const balance = parseSafe(bankRow['Available Balance'] || bankRow.availableBalance || bankRow.balance || 0);
+        
+        const logoUrl = getBankLogoUrl(bankName);
+        const safeBankName = bankName.replace(/'/g, "\\'");
+        
+        // ตัดเลขบัญชีให้สั้นลงสำหรับแสดงผล
+        const shortAcct = accountNum ? (accountNum.length > 10 ? accountNum.substring(0, 7) + '...' : accountNum) : '';
 
         card.innerHTML = `
-            <div class="bank-card-header">
-                <img src="${logoUrl}" alt="${bankType} Logo" class="bank-logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzhiZGY4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMiIgeT0iNyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjE0IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48cGF0aCBkPSJNMTYgMjFWNWEyIDIgMCAwIDAtMi0yaC00YTIgMiAwIDAgMC0yIDJ2MTYiPjwvcGF0aD48L3N2Zz4='">
-                <div class="bank-info">
-                    <span class="bank-name">${bankType}</span>
-                    ${accountNum ? `<span class="bank-account">เลขที่บัญชี: ${accountNum}</span>` : ''}
+            <div class="sidebar-bank-card-top">
+                <img src="${logoUrl}" alt="${bankName}" class="sidebar-bank-logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzhiZGY4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMiIgeT0iNyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjE0IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48cGF0aCBkPSJNMTYgMjFWNWEyIDIgMCAwIDAtMi0yaC00YTIgMiAwIDAgMC0yIDJ2MTYiPjwvcGF0aD48L3N2Zz4='">
+                <div class="sidebar-bank-info">
+                    <span class="sidebar-bank-name">${bankName}</span>
+                    ${accountNum ? `<span class="sidebar-bank-account" title="เลขที่บัญชี: ${accountNum}">เลขที่บัญชี: ${shortAcct}</span>` : ''}
                 </div>
             </div>
-            <div class="bank-balance-wrapper">
-                <span class="bank-balance">${checkValue(bank.balance)}</span>
-            </div>
-            <button class="btn-bank-detail" onclick="openBankDetailModal('${safeBank}', '${bankType}', '${accountNum}')">📋 ดูรายละเอียด</button>
+            <div class="sidebar-bank-balance">฿${checkValue(balance)}</div>
+            <button class="sidebar-bank-detail-btn" onclick="openBankDetailModal('${safeBankName} - ${accountNum}', '${bankName}', '${accountNum}')">📋 ดูรายละเอียด</button>
         `;
         container.appendChild(card);
     });
 
-    // --- Update Bank Summary (Total + Date) --- Unified Box ---
-    const totalAvailableElMain = document.getElementById('bank-total-available');
-    const totalAvailableElSidebar = document.getElementById('sidebar-bank-total');
+    // --- Update Total Badge ---
+    const totalAvailableEl = document.getElementById('bank-total-available');
+    if (totalAvailableEl) {
+        const sumOfAllCards = sorted.reduce((sum, b) => {
+            const bal = parseSafe(b['Available Balance'] || b.availableBalance || b.balance || 0);
+            return sum + bal;
+        }, 0);
+        const isBankFiltered = (bFilter !== 'All');
+        const finalTotal = ((isFiltered || isBankFiltered) || !_availableBalanceH2) ? sumOfAllCards : _availableBalanceH2;
+        totalAvailableEl.textContent = checkValue(finalTotal);
+    }
+
+    // bank-selected-date อาจไม่มีใน DOM ใหม่แล้ว
     const selectedDateEl = document.getElementById('bank-selected-date');
-
-    // Compute final total (respect server-provided _availableBalanceH2 when appropriate)
-    const sumOfAllCards = sorted.reduce((sum, b) => sum + (Number(b.balance) || 0), 0);
-    const isBankFiltered = (bFilter !== 'All');
-    const finalTotal = ((isFiltered || isBankFiltered) || !_availableBalanceH2) ? sumOfAllCards : _availableBalanceH2;
-
-    if (totalAvailableElMain) totalAvailableElMain.textContent = checkValue(finalTotal);
-    if (totalAvailableElSidebar) totalAvailableElSidebar.textContent = checkValue(finalTotal);
-
     if (selectedDateEl) {
-        // ให้ความสำคัญกับค่าจาก G1 (ข้อมูล ณ วันที่) หากมีการส่งมาจาก Server
         if (_dateG1 && _dateG1 !== '-') {
             selectedDateEl.textContent = _dateG1;
         } else {
-            // Fallback: แสดงวันที่ตามฟิลเตอร์
-            const d = document.getElementById('bb-filter-day').value;
-            const m = document.getElementById('bb-filter-month').value;
-            const y = document.getElementById('bb-filter-year').value;
-
+            const d = document.getElementById('bb-filter-day')?.value || 'All';
+            const m = document.getElementById('bb-filter-month')?.value || 'All';
+            const y = document.getElementById('bb-filter-year')?.value || 'All';
             if (d === 'All' && m === 'All' && y === 'All') {
                 selectedDateEl.textContent = 'ยอดล่าสุดทั้งหมด';
             } else {
@@ -1659,8 +1604,8 @@ function populateBankDateFilters() {
     allTransactions.forEach(row => {
         const rawDate = row['Date'] || row.date;
         if (rawDate) {
-            const d = new Date(rawDate);
-            if (!isNaN(d)) {
+            const d = parseDateSafe(rawDate);
+            if (d && !isNaN(d)) {
                 days.add(d.getDate());
                 months.add(d.getMonth() + 1);
                 years.add(d.getFullYear());
@@ -1905,7 +1850,6 @@ function closeBankDetailModal(event, force = false) {
 document.addEventListener('DOMContentLoaded', () => {
     initDashboard();
 
-
     // Set Google Sheets button link
     const sheetsBtn = document.getElementById('btn-open-sheets');
     if (sheetsBtn) {
@@ -1913,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Listen to filter inputs (exclude creditor - handled by autocomplete)
-    ['filter-bank', 'filter-type', 'filter-day', 'filter-month', 'filter-year'].forEach(id => {
+    ['filter-category', 'filter-group', 'filter-party-type', 'filter-day', 'filter-month', 'filter-year'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', applyFilters);
@@ -1928,11 +1872,13 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedCreditors.clear();
         updateCreditorSelectText();
         document.getElementById('filter-creditor-search').value = '';
-        document.getElementById('filter-bank').value = 'All';
-        document.getElementById('filter-type').value = 'All';
-        document.getElementById('filter-day').value = 'All';
-        document.getElementById('filter-month').value = 'All';
-        document.getElementById('filter-year').value = 'All';
+        
+        const ids = ['filter-category', 'filter-group', 'filter-party-type', 'filter-day', 'filter-month', 'filter-year'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = 'All';
+        });
+        
         applyFilters();
     });
 
@@ -2407,28 +2353,42 @@ function initCreditorAutocomplete() {
     let currentMatches = [];
     let topMatch = null;
 
-    // Focus input -> Open Dropdown
+    // Only open if there is text
     searchInput.addEventListener('focus', () => {
-        dropdown.classList.add('open');
-        renderMsList(searchInput.value.trim());
+        const q = searchInput.value.trim();
+        if (q.length > 0) {
+            dropdown.classList.add('open');
+            renderMsList(q);
+        }
     });
 
     // Typing -> Filter + Ghost Suggestion
     searchInput.addEventListener('input', () => {
-        dropdown.classList.add('open');
-        renderMsList(searchInput.value.trim());
+        const q = searchInput.value.trim();
+        if (q.length > 0) {
+            dropdown.classList.add('open');
+            renderMsList(q);
+        } else {
+            dropdown.classList.remove('open');
+            ghostText.textContent = '';
+            suggestionsList.innerHTML = '';
+        }
     });
 
-    // Enter to select top match
+    // Enter / Tab / Right Arrow to select top match
     searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && topMatch) {
-            e.preventDefault();
-            selectedCreditors.add(topMatch);
-            searchInput.value = ''; // Clear for next search
-            ghostText.textContent = '';
-            updateCreditorSelectText();
-            applyFilters();
-            renderMsList('');
+        if ((e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowRight') && topMatch) {
+            const q = searchInput.value.trim();
+            if (q.length > 0) {
+                e.preventDefault();
+                selectedCreditors.add(topMatch);
+                searchInput.value = ''; // Clear for next search
+                ghostText.textContent = '';
+                dropdown.classList.remove('open');
+                updateCreditorSelectText();
+                applyFilters();
+                renderMsList('');
+            }
         }
     });
 
@@ -2446,42 +2406,51 @@ function initCreditorAutocomplete() {
         topMatch = null;
         ghostText.textContent = '';
 
-        let matches = allParties;
-        if (q) {
-            matches = allParties.filter(p => p.toLowerCase().includes(q));
-            matches.sort((a, b) => {
-                const aName = a.toLowerCase();
-                const bName = b.toLowerCase();
-                const aStarts = aName.startsWith(q);
-                const bStarts = bName.startsWith(q);
-                if (aStarts && !bStarts) return -1;
-                if (!aStarts && bStarts) return 1;
-                if (aStarts && bStarts) return aName.length - bName.length;
-                return a.localeCompare(b, 'th');
-            });
+        if (!q) {
+            currentMatches = [];
+            return;
+        }
 
-            // Set Top Match and Ghost Text
-            if (matches.length > 0) {
-                topMatch = matches[0];
-                // Only show ghost text if it starts with the query
-                if (topMatch.toLowerCase().startsWith(q)) {
-                    // We show the full name, but it will align because font is same
-                    ghostText.textContent = topMatch;
-                }
+        // Filter and Priority Sorting
+        let matches = allParties.filter(p => p.toLowerCase().includes(q));
+        matches.sort((a, b) => {
+            const aName = a.toLowerCase();
+            const bName = b.toLowerCase();
+            
+            // 1. Priority to exact start
+            const aStarts = aName.startsWith(q);
+            const bStarts = bName.startsWith(q);
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+            
+            // 2. If both start with it, shorter name first (closer match)
+            if (aStarts && bStarts) return aName.length - bName.length;
+            
+            // 3. Otherwise alphabetical
+            return a.localeCompare(b, 'th');
+        });
+
+        // Set Top Match and Ghost Text
+        if (matches.length > 0) {
+            topMatch = matches[0];
+            if (topMatch.toLowerCase().startsWith(q)) {
+                ghostText.textContent = topMatch;
             }
         }
 
         currentMatches = matches;
 
         if (matches.length === 0) {
-            suggestionsList.innerHTML = '<div class="autocomplete-empty">ไม่พบรายชื่อที่ค้นหา</div>';
+            suggestionsList.innerHTML = '<div class="autocomplete-empty">ไม่พบรายชื่อที่ตรงกับ "${query}"</div>';
             return;
         }
 
+        // Show only first 100 for performance
         matches.slice(0, 100).forEach((name, index) => {
             const item = document.createElement('label');
             item.className = 'ms-item';
-            if (index === 0 && q) item.style.background = 'rgba(56, 189, 248, 0.15)';
+            // Highlight the very first (best) match
+            if (index === 0) item.style.background = 'rgba(56, 189, 248, 0.12)';
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -2502,19 +2471,9 @@ function initCreditorAutocomplete() {
             const span = document.createElement('span');
             span.className = 'ms-item-name';
 
-            if (q) {
-                const idx = name.toLowerCase().indexOf(q);
-                if (idx !== -1) {
-                    span.innerHTML = name.slice(0, idx) +
-                        '<mark style="background:transparent; color:var(--primary); font-weight:bold;">' +
-                        name.slice(idx, idx + q.length) + '</mark>' +
-                        name.slice(idx + q.length);
-                } else {
-                    span.textContent = name;
-                }
-            } else {
-                span.textContent = name;
-            }
+            // Highlighting
+            const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            span.innerHTML = name.replace(regex, '<mark class="search-highlight">$1</mark>');
 
             item.appendChild(checkbox);
             item.appendChild(span);
@@ -2530,7 +2489,7 @@ function initCreditorAutocomplete() {
     });
 
     btnClear.addEventListener('click', () => {
-        selectedCreditors.clear();
+        currentMatches.forEach(name => selectedCreditors.delete(name));
         renderMsList(searchInput.value.trim());
         updateCreditorSelectText();
         applyFilters();
@@ -2579,35 +2538,35 @@ function switchView(viewId) {
     // 1. Update Sidebar Active State
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
-        if (link.getAttribute('onclick').includes(viewId)) {
+        const onclickAttr = link.getAttribute('onclick') || '';
+        if (onclickAttr.includes(`'${viewId}'`)) {
             link.classList.add('active');
         }
     });
 
     // 2. Define Section Visibility
+    //    - view-recent = Bank Balances Sidebar (ฝั่งขวา) แสดงตลอดเวลา
+    //    - view-summary-actual / view-summary-plan = 2 แถวของ Summary Cards
     const sections = {
-        'dashboard': ['view-summary', 'view-charts', 'view-analysis', 'view-banks', 'view-recent'],
-        'analytics': ['view-charts', 'view-analysis'],
-        'banks': ['view-banks'],
-        'recent': ['view-recent']
+        'dashboard': ['view-summary-actual', 'view-summary-plan', 'view-charts', 'view-analysis', 'view-recent'],
+        'analytics': ['view-charts', 'view-analysis', 'view-recent'],
+        'banks': ['view-summary-actual', 'view-summary-plan', 'view-recent']
     };
 
-    const allSections = ['view-summary', 'view-charts', 'view-analysis', 'view-banks', 'view-recent'];
-    const toShow = sections[viewId] || [];
+    const allSections = ['view-summary-actual', 'view-summary-plan', 'view-charts', 'view-analysis', 'view-recent'];
+    const toShow = sections[viewId] || sections['dashboard'];
 
     // 3. Toggle Display
     allSections.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            if (toShow.includes(id)) {
-                el.style.display = (id === 'view-recent' && viewId !== 'recent') ? '' : (id === 'view-recent' ? 'flex' : 'block');
-                // Special case for sidebar flex layout
-                if (id === 'view-recent') {
-                    el.style.display = (viewId === 'dashboard' || viewId === 'recent') ? 'flex' : 'none';
-                }
-            } else {
-                el.style.display = 'none';
-            }
+        if (!el) return;
+        if (toShow.includes(id)) {
+            // Sidebar ใช้ flex, Summary cards ใช้ grid, อื่นๆ ใช้ block
+            if (id === 'view-recent') el.style.display = 'flex';
+            else if (id === 'view-summary-actual' || id === 'view-summary-plan') el.style.display = 'grid';
+            else el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
         }
     });
 
@@ -2624,12 +2583,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof switchView === 'function') switchView('dashboard');
     }, 500);
 
-    // ล้าง Cache เก่าทิ้งทั้งหมดเพื่อเริ่มระบบแบบ "เชื่อมสด"
-    localStorage.clear();
-    console.log("Cache cleared for live sync.");
-
-    // Initialize Auto-Refresh ทุกๆ 10 วินาที (Near Real-time)
+    // Initialize Auto-Refresh ทุกๆ 10 นาที (เพื่อป้องกันอาการวูบวาบ)
     setInterval(() => {
         if (typeof refreshData === 'function') refreshData(true);
-    }, 10000);
+    }, 600000); 
 });
