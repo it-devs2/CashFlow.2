@@ -1506,6 +1506,41 @@ select option:hover {
     flex-shrink: 0;
 }
 
+/* Modal Tabs (NEW) */
+.modal-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: fit-content;
+}
+
+.modal-tab {
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
+}
+
+.modal-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.modal-tab.active {
+    background: linear-gradient(135deg, var(--secondary), #8b5cf6);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
 .modal-close:hover {
     background: rgba(239, 68, 68, 0.15);
     border-color: rgba(239, 68, 68, 0.4);
@@ -1602,62 +1637,105 @@ select option:hover {
     box-shadow: 0 0 0 3px var(--glow-color);
 }
 
-/* Modal Table */
+/* --- Pro Modal Table Styles --- */
 .modal-table-wrap {
     overflow-y: auto;
     flex: 1;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Modern Scrollbar */
+.modal-table-wrap::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-table-wrap::-webkit-scrollbar-track {
+    background: transparent;
+}
+.modal-table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.modal-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 #modal-table,
 #bank-modal-table {
     width: 100%;
-    border-collapse: collapse;
-    font-size: 13.5px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
 }
 
 #modal-table thead th,
 #bank-modal-table thead th {
-    background: rgba(10, 14, 23, 0.98);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: var(--text-muted);
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    font-weight: 600;
-    padding: 12px 16px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    padding: 14px 16px;
     text-align: left;
     position: sticky;
     top: 0;
-    z-index: 2;
-    border-bottom: 1px solid var(--border-color);
-    white-space: nowrap;
+    z-index: 10;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#modal-table tbody tr {
+#modal-table tbody tr,
+#bank-modal-table tbody tr {
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    transition: background 0.15s;
+    transition: all 0.2s ease;
 }
 
-#modal-table tbody tr:hover {
-    background: rgba(56, 189, 248, 0.05);
+#modal-table tbody tr:hover,
+#bank-modal-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
 }
 
 #modal-table tbody td,
 #bank-modal-table tbody td {
-    padding: 11px 16px;
-    color: #cbd5e1;
-    white-space: nowrap;
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 12px 16px;
+    color: #e2e8f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-#modal-table tbody td.numeric,
-#bank-modal-table tbody td.numeric {
-    text-align: right;
+.numeric {
+    font-family: 'Inter', 'Roboto Mono', monospace;
     font-weight: 600;
-    font-family: 'Inter', monospace;
+    text-align: right;
+    letter-spacing: -0.2px;
+}
+
+/* Status Badge Style */
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+}
+
+.status-badge.actual {
+    color: var(--income);
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.status-badge.plan {
+    color: var(--secondary);
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.08);
 }
 
 #modal-table tbody td:first-child,
@@ -2146,66 +2224,116 @@ body.hide-balances .net-balance-amount {
     background-color: var(--bg-main);
 }
 
+/* ---- Sidebar base ---- */
 .sidebar-nav {
     width: 260px;
-    background: rgba(15, 23, 42, 0.95);
-    border-right: 1px solid var(--border-color);
+    background: rgba(10, 18, 36, 0.97);
+    border-right: 1px solid rgba(56, 189, 248, 0.08);
     display: flex;
     flex-direction: column;
     position: fixed;
     height: 100vh;
     z-index: 1000;
-    backdrop-filter: blur(20px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(24px);
+    overflow: hidden;
+    /* smooth collapse */
+    transition: width 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---- Header row (logo + collapse btn) ---- */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 16px 18px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    gap: 8px;
+    min-height: 76px;
 }
 
 .sidebar-brand {
-    padding: 30px 24px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    overflow: hidden;
 }
 
 .brand-logo {
     font-size: 24px;
+    flex-shrink: 0;
     filter: drop-shadow(0 0 8px var(--primary));
+    transition: transform 0.3s ease;
 }
 
-.sidebar-brand span {
-    font-size: 18px;
+.brand-text {
+    font-size: 17px;
     font-weight: 800;
     letter-spacing: 2px;
-    color: #fff;
+    white-space: nowrap;
     background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    opacity: 1;
+    transition: opacity 0.25s ease, width 0.38s ease;
+    overflow: hidden;
 }
 
+/* Collapse toggle button */
+.sidebar-collapse-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.sidebar-collapse-btn:hover {
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--primary);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.collapse-arrow {
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+}
+
+/* ---- Nav links ---- */
 .nav-links {
     flex: 1;
-    padding: 10px 16px;
+    padding: 12px 12px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
+    overflow: hidden;
 }
 
 .nav-link {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 12px 14px;
     color: var(--text-muted);
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     border-radius: 12px;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, padding 0.38s ease, gap 0.38s ease;
+    white-space: nowrap;
+    position: relative;
+    overflow: visible;
 }
 
 .nav-link:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
     color: #fff;
-    transform: translateX(4px);
 }
 
 .nav-link.active {
@@ -2215,39 +2343,114 @@ body.hide-balances .net-balance-amount {
 }
 
 .nav-icon {
-    font-size: 18px;
+    font-size: 20px;
+    flex-shrink: 0;
+    line-height: 1;
 }
 
-.sidebar-footer {
-    padding: 20px 16px;
-    border-top: 1px solid var(--border-color);
+.nav-label {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* ---- Footer ---- */
+.sidebar-footer-wrap {
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
 }
 
 .btn-refresh-sidebar {
-    width: 100%;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     color: var(--text-muted);
     border-radius: 10px;
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 100%;
+    font-family: inherit;
 }
-
 .btn-refresh-sidebar:hover {
-    background: var(--primary);
-    color: #000;
-    font-weight: 700;
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--primary);
+    border-color: rgba(56, 189, 248, 0.25);
 }
 
-/* Adjust Dashboard Container when Sidebar is present */
+.sync-time-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    opacity: 0.7;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
+}
+
+/* =========================================================================
+   COLLAPSED STATE — Only brand logo remains visible
+   ========================================================================= */
+.sidebar-nav.collapsed {
+    width: 64px;
+}
+
+/* Hide nav links and footer completely */
+.sidebar-nav.collapsed .nav-links,
+.sidebar-nav.collapsed .sidebar-footer-wrap {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+/* Center the header (logo + btn) */
+.sidebar-nav.collapsed .sidebar-header {
+    justify-content: center;
+    padding: 22px 0;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Hide brand text */
+.sidebar-nav.collapsed .brand-text {
+    display: none;
+}
+
+/* Make brand logo bigger and centered */
+.sidebar-nav.collapsed .brand-logo {
+    font-size: 28px;
+}
+
+/* Rotate collapse arrow */
+.sidebar-nav.collapsed .collapse-arrow {
+    transform: rotate(180deg);
+}
+
+/* Dashboard expands when sidebar is narrow */
+.app-layout.sidebar-collapsed .dashboard-container {
+    margin-left: 64px;
+    width: calc(100% - 64px);
+}
+
+/* Dashboard container transition */
 .dashboard-container {
     margin-left: 260px;
     display: flex;
-    /* เปลี่ยนเป็น flex เพื่อให้ main กับ aside อยู่ข้างกัน */
     min-height: 100vh;
     width: calc(100% - 260px);
+    transition: margin-left 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+                width      0.38s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .main-content {
@@ -2318,6 +2521,13 @@ body.hide-balances .net-balance-amount {
     height: 100vh;
     overflow: hidden; /* ห้าม Scroll ทั้งหน้า ให้ไป Scroll แยกข้างในแทน */
     width: calc(100% - 260px);
+    transition: margin-left 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+                grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-container.right-sidebar-collapsed {
+    grid-template-columns: 1fr 0px;
 }
 
 /* 2. คอนเทนเนอร์ฝั่งซ้าย (Header + Main) ให้เลื่อนได้อิสระ */
@@ -2406,6 +2616,82 @@ body.hide-balances .net-balance-amount {
     flex-direction: column;
     gap: 20px;
     position: relative; /* ไม่ต้องใช้ sticky แล้วเพราะเป็น grid column แยก */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.right-sidebar.collapsed {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* =========================================================================
+   RIGHT SIDEBAR TOGGLE CONTROLS
+   ========================================================================= */
+
+/* The close button inside the right sidebar */
+.right-sidebar-close-btn {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    align-self: flex-start;
+}
+
+.right-sidebar-close-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--primary);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Small floating tab on the right edge to reopen the sidebar */
+.right-sidebar-reopen-tab {
+    position: fixed;
+    right: 0;
+    top: 50vh;
+    transform: translateY(-50%) translateX(100%);
+    width: 22px;
+    height: 56px;
+    background: rgba(10, 18, 36, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1200;
+    color: var(--primary);
+    backdrop-filter: blur(12px);
+    box-shadow: -4px 0 16px rgba(0,0,0,0.4);
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.2s ease,
+                width 0.2s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+.right-sidebar-reopen-tab svg {
+    display: block;
+    flex-shrink: 0;
+}
+.right-sidebar-reopen-tab:hover {
+    width: 30px;
+    background: rgba(56, 189, 248, 0.12);
+}
+
+/* Show the tab when right sidebar is collapsed */
+.dashboard-container.right-sidebar-collapsed .right-sidebar-reopen-tab {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* 5. Summary cards — กลับมาเป็น 4 คอลัมน์เต็มบนจอกว้าง */
@@ -3260,3 +3546,1033 @@ body.hide-balances .sidebar-bank-total-badge span {
         font-size: 20px;
     }
 }
+
+/* =========================================================================
+   PRO ANALYSIS TOOLBAR STYLES
+   ========================================================================= */
+.analysis-toolbar {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: flex-start;
+    align-items: center;
+    padding: 10px 15px;
+    margin-bottom: 25px;
+    border-radius: 14px;
+    background: #0f172a; /* พื้นหลังทึบพิเศษเพื่อบังตัวกราฟ */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    gap: 10px;
+    position: relative;
+    z-index: 2000; /* ยกทั้งแถบให้ลอยอยู่เหนือตัวกราฟทุกกรณี */
+}
+
+.toolbar-left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    flex: 1; /* ให้ฝั่งซ้ายขยายเต็มที่ */
+}
+
+.toolbar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+}
+
+.toolbar-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.toolbar-select-wrap {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.toolbar-select-wrap:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.toolbar-select-wrap select {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 30px 6px 12px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.toolbar-select-wrap::after {
+    content: '▼';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.toolbar-select-wrap.small select {
+    padding: 6px 24px 6px 10px;
+    font-size: 12px;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 6px;
+}
+
+.toolbar-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 140px;
+}
+
+.toolbar-trigger:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.toolbar-trigger span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.toolbar-trigger .chevron {
+    font-size: 8px;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+.btn-toolbar-reset {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-toolbar-reset:hover {
+    background: #ef4444;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.btn-toolbar-reset .icon {
+    font-size: 14px;
+}
+
+.multi-select-wrapper.open {
+    z-index: 2001; /* เมื่อเปิดให้ลอยสูงกว่าเพื่อน */
+}
+
+.multi-select-wrapper.open .autocomplete-dropdown {
+    display: block;
+}
+
+.analysis-toolbar .autocomplete-dropdown {
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 2002;
+    display: none;
+    position: absolute;
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    overflow: hidden;
+}
+
+.analysis-toolbar .dropdown-header {
+    padding: 5px;
+    margin-bottom: 8px;
+}
+
+.analysis-toolbar .dropdown-header input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #fff;
+    padding: 8px 10px;
+    font-size: 13px;
+    outline: none;
+}
+
+.analysis-toolbar .autocomplete-suggestions {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 5px;
+}
+
+/* Scrollbar for suggestions */
+.analysis-toolbar .autocomplete-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+.analysis-toolbar .autocomplete-suggestions::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+/* ============================================================
+   PRO DETAIL MODAL REDESIGN
+   ============================================================ */
+
+/* --- Modal Box --- */
+.modal-box {
+    background: #0d1520;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 1150px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: slideUpModal 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+/* --- Modal Header --- */
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 22px 26px 18px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+.modal-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    padding-top: 4px;
+}
+
+/* --- Modal Tabs (เส้นใต้แบบโปร) --- */
+.modal-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    width: fit-content;
+}
+
+.modal-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.8);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.2px;
+}
+
+.modal-tab .tab-icon {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.modal-tab:hover {
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.modal-tab.active {
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+}
+
+.modal-tab.active .tab-icon {
+    opacity: 1;
+}
+
+/* --- Modal Title Block --- */
+.modal-title-block {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.modal-title-text {
+    font-size: 22px;
+    font-weight: 800;
+    color: #f1f5f9;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.modal-count-badge {
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #38bdf8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* --- PDF Export Button --- */
+.btn-pdf-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(220, 38, 38, 0.10) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    transition: all 0.2s ease;
+    letter-spacing: 0.2px;
+    font-family: inherit;
+}
+
+.btn-pdf-export:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.2) 100%);
+    border-color: rgba(239, 68, 68, 0.6);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.2);
+}
+
+/* --- Close Button --- */
+.modal-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+/* --- Modal Controls (Search + Toggle) --- */
+.modal-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 26px;
+    background: rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+/* Search Input */
+.modal-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 14px;
+    flex: 1;
+    max-width: 380px;
+    transition: all 0.2s ease;
+}
+
+.modal-search-wrap:focus-within {
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(56, 189, 248, 0.04);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.08);
+}
+
+.modal-search-wrap .search-icon {
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.modal-search-wrap input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-size: 13.5px;
+    font-family: inherit;
+    width: 100%;
+}
+
+.modal-search-wrap input::placeholder {
+    color: #475569;
+}
+
+/* View Toggle */
+.modal-view-toggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 9px;
+    padding: 3px;
+    gap: 3px;
+}
+
+.btn-toggle {
+    padding: 6px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.btn-toggle:hover {
+    color: #94a3b8;
+}
+
+.btn-toggle.active {
+    background: rgba(255, 255, 255, 0.10);
+    color: #f1f5f9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Modal Content Area --- */
+.modal-content-area {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 26px;
+    min-height: 0;
+}
+
+/* Slim scrollbar for content area */
+.modal-content-area::-webkit-scrollbar { width: 5px; }
+.modal-content-area::-webkit-scrollbar-track { background: transparent; }
+.modal-content-area::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+.modal-content-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/* --- Table Wrapper (Scrollable) --- */
+.modal-table-wrap {
+    flex: 1;
+    overflow-y: auto;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(0, 0, 0, 0.2);
+    min-height: 300px;
+}
+
+/* Modern Slim Scrollbar */
+.modal-table-wrap::-webkit-scrollbar { width: 5px; }
+.modal-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.modal-table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+.modal-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/* --- Table Styles --- */
+#modal-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+/* Sticky Header */
+#modal-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(10, 16, 28, 0.97);
+    backdrop-filter: blur(8px);
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #475569;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+/* Accent line on first column header */
+#modal-table thead th:first-child {
+    padding-left: 20px;
+}
+
+/* Row styles */
+#modal-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+#modal-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.04);
+}
+
+#modal-table tbody tr:not(:last-child) td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Cell styles */
+#modal-table tbody td {
+    padding: 12px 16px;
+    color: #cbd5e1;
+    vertical-align: middle;
+}
+
+#modal-table tbody td:first-child {
+    padding-left: 20px;
+    color: #334155;
+    font-weight: 700;
+    font-size: 11px;
+    width: 36px;
+}
+
+/* Numeric Column */
+#modal-table .numeric {
+    text-align: right;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.3px;
+}
+
+/* Amount colors */
+.modal-amount-income { color: #34d399 !important; }
+.modal-amount-expense { color: #f87171 !important; }
+
+/* --- Status Badges --- */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.status-badge.actual {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+}
+
+.status-badge.plan {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.25);
+    color: #a78bfa;
+}
+
+/* --- Modal Footer --- */
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 26px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.modal-footer-left {}
+
+.modal-total-text {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.modal-total-text .total-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-left: 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+.modal-footer-right {}
+
+.footer-hint {
+    font-size: 11.5px;
+    color: #334155;
+}
+
+/* --- Bank Summary Grid --- */
+.bank-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+    padding-bottom: 8px;
+}
+
+/* Bank Cards */
+.summary-item-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 18px 20px;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.summary-item-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(56, 189, 248, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.summary-item-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+/* =========================================================================
+   MONTHLY SUMMARY TABLE (Corporate Premium — Gold & Deep Navy)
+   ========================================================================= */
+
+/* ── Section wrapper: centered ── */
+#monthly-summary-section {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: visible;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* ── Outer card shell ── */
+.ms-card-shell {
+    background: linear-gradient(160deg, rgba(10, 16, 30, 0.97) 0%, rgba(8, 14, 26, 0.99) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 20px;
+    /* overflow must be visible so the filter dropdown can escape the card */
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow:
+        0 0 0 1px rgba(180, 140, 60, 0.12),
+        0 24px 64px -16px rgba(0, 0, 0, 0.85),
+        0 4px 16px -4px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+/* Gold gradient top line */
+.ms-card-shell::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(180, 140, 60, 0.5) 20%,
+        rgba(212, 175, 55, 1) 50%,
+        rgba(180, 140, 60, 0.5) 80%,
+        transparent 100%);
+    border-radius: 20px 20px 0 0;
+    z-index: 2;
+}
+
+/* ── Report Header (inside card shell) ── */
+.ms-report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 16px;
+    padding: 22px 28px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(212, 175, 55, 0.03);
+    /* Always fill the full card width — never shrink with the table */
+    width: 100%;
+    min-width: 700px;
+    box-sizing: border-box;
+    border-radius: 20px 20px 0 0;
+}
+
+.ms-report-title-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.ms-report-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(180, 140, 60, 0.22));
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(180, 140, 60, 0.18);
+}
+
+.ms-report-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: rgba(212, 175, 55, 0.65);
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.ms-report-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+}
+
+.ms-report-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* Filter wrapper — fixed width, never shrinks */
+#ms-cat-wrapper {
+    flex-shrink: 0 !important;
+    width: 240px !important;
+    position: relative !important;
+}
+
+#ms-cat-wrapper .search-trigger-box {
+    background: rgba(180, 140, 60, 0.07) !important;
+    border: 1px solid rgba(180, 140, 60, 0.28) !important;
+    border-radius: 10px !important;
+    padding: 9px 14px !important;
+    transition: all 0.2s ease !important;
+}
+#ms-cat-wrapper .search-trigger-box:hover {
+    background: rgba(180, 140, 60, 0.13) !important;
+    border-color: rgba(212, 175, 55, 0.5) !important;
+}
+
+#ms-category-selected-count {
+    background: rgba(212, 175, 55, 0.14) !important;
+    color: #d4af37 !important;
+    border: 1px solid rgba(212, 175, 55, 0.28) !important;
+    border-radius: 10px !important;
+}
+
+/* ── Table Container ── */
+.monthly-summary-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    margin-top: 0;
+    border-radius: 0 0 20px 20px;
+}
+
+.monthly-summary-container::-webkit-scrollbar { height: 6px; width: 6px; }
+.monthly-summary-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+.monthly-summary-container::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.22);
+    border-radius: 4px;
+}
+.monthly-summary-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.42);
+}
+
+/* ── Table: auto layout, scroll for full number display ── */
+.ms-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.ms-table th,
+.ms-table td {
+    padding: 12px 10px;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ms-table th:last-child,
+.ms-table td:last-child { border-right: none; }
+
+.ms-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Table Header Row ── */
+.ms-table thead th {
+    font-weight: 700;
+    color: #64748b;
+    background: rgba(5, 8, 18, 0.99);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-size: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Category column — min 180px, sticky */
+.ms-table thead th:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 15;
+    background: rgba(5, 8, 18, 0.99);
+    padding-left: 20px;
+    min-width: 180px;
+    color: #7a8fa6;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Total column — min 130px, gold */
+.ms-table thead th.col-total {
+    min-width: 130px;
+    color: #c8a84b;
+    background: rgba(18, 14, 4, 0.99);
+    border-left: 1px solid rgba(180, 140, 60, 0.22);
+    letter-spacing: 0.5px;
+}
+
+
+/* ── Body Cells ── */
+.ms-table tbody td {
+    color: #8da0b5;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+/* Zebra stripe */
+.ms-table tbody tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.018);
+}
+
+/* Category cell */
+.ms-table tbody td:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: rgba(8, 13, 25, 0.97);
+    padding-left: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #c5d4e5;
+    min-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+
+.ms-table tbody tr:nth-child(even) td:first-child {
+    background: rgba(10, 15, 28, 0.98);
+}
+
+/* Row Hover */
+.ms-table tbody tr { transition: background 0.15s ease; }
+
+.ms-table tbody tr:hover td {
+    background: rgba(212, 175, 55, 0.04);
+    color: #dce9f5;
+}
+.ms-table tbody tr:hover td:first-child {
+    background: rgba(18, 26, 45, 0.99);
+    color: #f1f5f9;
+}
+
+/* Total Column */
+.ms-table td.col-total {
+    color: #c8a84b;
+    font-weight: 700;
+    background: rgba(18, 14, 4, 0.35);
+    border-left: 1px solid rgba(180, 140, 60, 0.16);
+}
+.ms-table tbody tr:hover td.col-total {
+    background: rgba(180, 140, 60, 0.09);
+    color: #d4af37;
+}
+
+/* ── Group Header Rows — Bold Banner Style ── */
+.ms-group-header td {
+    text-align: left !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    padding: 13px 24px !important;
+    border-top: none !important;
+    border-bottom: none !important;
+}
+
+/* Income group: emerald green banner */
+.ms-group-income td {
+    background: linear-gradient(90deg,
+        rgba(16, 185, 129, 0.22) 0%,
+        rgba(16, 185, 129, 0.08) 60%,
+        transparent 100%) !important;
+    color: #34d399 !important;
+    border-left: 4px solid #10b981 !important;
+    border-top: 1px solid rgba(16, 185, 129, 0.25) !important;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.15) !important;
+    padding-left: 20px !important;
+    box-shadow: inset 0 1px 0 rgba(52, 211, 153, 0.1) !important;
+    text-shadow: 0 0 20px rgba(52, 211, 153, 0.4) !important;
+}
+
+/* Expense group: red banner */
+.ms-group-expense td {
+    background: linear-gradient(90deg,
+        rgba(239, 68, 68, 0.22) 0%,
+        rgba(239, 68, 68, 0.08) 60%,
+        transparent 100%) !important;
+    color: #f87171 !important;
+    border-left: 4px solid #ef4444 !important;
+    border-top: 1px solid rgba(239, 68, 68, 0.25) !important;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.15) !important;
+    padding-left: 20px !important;
+    box-shadow: inset 0 1px 0 rgba(248, 113, 113, 0.1) !important;
+    text-shadow: 0 0 20px rgba(248, 113, 113, 0.4) !important;
+}
+
+
+/* Empty / Zero */
+.ms-table td.zero-val,
+.ms-empty {
+    color: #283548 !important;
+    font-weight: 400 !important;
+}
+
+/* ── Total Rows ── */
+.ms-total-row td {
+    background: rgba(180, 140, 60, 0.065) !important;
+    border-top: 1px solid rgba(180, 140, 60, 0.28) !important;
+    font-weight: 800 !important;
+    font-size: 12.5px;
+    color: #dce4ee !important;
+}
+.ms-total-row td:first-child {
+    background: rgba(20, 16, 5, 0.92) !important;
+    color: #c8a84b !important;
+}
+.ms-total-row td.col-total {
+    color: #d4af37 !important;
+    background: rgba(38, 28, 4, 0.55) !important;
+}
+
+/* ── Net Cash Flow Row ── */
+.ms-net-row td {
+    background: rgba(180, 140, 60, 0.1) !important;
+    border-top: 2px solid rgba(212, 175, 55, 0.38) !important;
+    font-weight: 900 !important;
+    font-size: 13px !important;
+    color: #d4af37 !important;
+}
+.ms-net-row td:first-child {
+    background: rgba(28, 20, 3, 0.96) !important;
+    color: #d4af37 !important;
+    font-size: 12.5px !important;
+}
+.ms-net-row td.col-total {
+    background: rgba(48, 36, 5, 0.92) !important;
+    color: #f0d060 !important;
+    font-size: 14px !important;
+    letter-spacing: -0.5px;
+}
+
+/* ── Amount colours ── */
+.modal-amount-income { color: #34d399 !important; }
+.modal-amount-expense { color: #f87171 !important; }
+
+

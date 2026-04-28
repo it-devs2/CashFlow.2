@@ -386,6 +386,10 @@ function processData(dataStatus) {
     renderBankBalances();
     populateTransactionChartFilters(allTransactions);
     updateTransactionChart();
+    
+    // Initialize Monthly Summary Table
+    populateMonthlySummaryCategories();
+    renderMonthlySummaryTable();
 }
 
 // -------------------------------------------------
@@ -816,9 +820,12 @@ function updateSummary(isFiltered = false) {
         }
     }
 
-    // Update Overview Chart
+    // Update both charts together so they always show the same filtered data
     if (typeof updateOverviewChart === 'function') {
         updateOverviewChart();
+    }
+    if (typeof updateTransactionChart === 'function') {
+        updateTransactionChart();
     }
 }
 
@@ -831,55 +838,61 @@ function updateOverviewChart() {
     const monthlyContractWages = new Array(12).fill(0);
     const thaiMonthCategories = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-    let dataToProcess = allTransactions; // ให้กราฟแสดงข้อมูลทั้งหมด ไม่ต้องตาม filter หลักด้านบน
 
-    dataToProcess.forEach(row => {
+    // ใช้เฉพาะ Transactions ที่กรองแล้ว (เหมือนกับกราฟ Analysis)
+    const txFiltered = _lastFilteredTransactions || [];
+
+    txFiltered.forEach(row => {
         const rawDate = row['Date'] || row.date;
         if (!rawDate) return;
-        const d = new Date(rawDate);
-        if (isNaN(d)) return;
+        const d = parseDateSafe(rawDate);
+        if (!d || isNaN(d)) return;
 
         const m = d.getMonth();
-        const rowStatus = (row.status || row['Status'] || '').toString().trim().toLowerCase();
+        const rowType = getRowType(row);
+        const amt = getRowAmount(row, rowType);
 
-        if (rowStatus !== 'plan') {
-            const rowType = getRowType(row);
-            const amt = getRowAmount(row, rowType);
-            const desc = (row['Description'] || row.description || '').toString();
-            const cat = (row['Category'] || row.category || '').toString();
+        let rowStatus = '';
+        Object.keys(row).forEach(key => {
+            if (key.toLowerCase().includes('status')) rowStatus = (row[key] || '').toString().trim().toLowerCase();
+        });
 
+        if (!rowStatus.includes('plan')) {
             if (rowType === 'income') monthlyIncome[m] += amt;
-            if (rowType === 'expense') {
-                monthlyExpense[m] += amt;
-                if (desc.includes('ค่าจ้างเหมา') || cat.includes('ค่าจ้างเหมา')) {
-                    monthlyContractWages[m] += amt;
-                }
-            }
+            if (rowType === 'expense') monthlyExpense[m] += amt;
         }
     });
 
     const seriesData = [
         { name: 'Income (รายได้)', data: monthlyIncome },
-        { name: 'Contract Wages (ค่าจ้างเหมา)', data: monthlyContractWages },
-        { name: 'Other Expenses', data: monthlyExpense.map((val, i) => val - monthlyContractWages[i]) }
+        { name: 'Expenses (รายจ่าย)', data: monthlyExpense }
     ];
 
     const chartData = {
         series: seriesData,
         chart: {
-            type: 'line',
-            height: 350,
+            type: 'area',
+            height: 380,
             background: 'transparent',
             toolbar: { show: false },
             fontFamily: 'Outfit, sans-serif',
             zoom: { enabled: false },
             selection: { enabled: false },
+            dropShadow: {
+                enabled: true,
+                enabledOnSeries: [0, 1],
+                top: 4,
+                left: 0,
+                blur: 12,
+                color: ['#10b981', '#ef4444'],
+                opacity: 0.35
+            },
             animations: {
                 enabled: true,
                 easing: 'easeinout',
-                speed: 800,
-                animateGradually: { enabled: true, delay: 150 },
-                dynamicAnimation: { enabled: true, speed: 350 }
+                speed: 900,
+                animateGradually: { enabled: true, delay: 120 },
+                dynamicAnimation: { enabled: true, speed: 400 }
             },
             events: {
                 mounted: function (ctx) {
@@ -892,30 +905,39 @@ function updateOverviewChart() {
                 }
             }
         },
-        colors: ['#10b981', '#f59e0b', '#ef4444'], // Income: Green, Contract Wages: Orange, Other Exp: Red
-        dataLabels: {
-            enabled: false
-        },
+        colors: ['#10b981', '#ef4444'],
+        dataLabels: { enabled: false },
         stroke: {
             show: true,
             curve: 'smooth',
-            width: 4
+            width: [3, 3],
+            lineCap: 'round'
         },
         markers: {
             size: 5,
-            colors: ['#10b981', '#f59e0b', '#ef4444'],
+            colors: ['#10b981', '#ef4444'],
             strokeColors: '#0b1121',
             strokeWidth: 3,
-            hover: {
-                size: 8,
-                sizeOffset: 3
+            shape: 'circle',
+            hover: { size: 8, sizeOffset: 3 }
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'dark',
+                type: 'vertical',
+                shadeIntensity: 0.4,
+                gradientToColors: ['rgba(16,185,129,0)', 'rgba(239,68,68,0)'],
+                opacityFrom: 0.45,
+                opacityTo: 0.02,
+                stops: [0, 95]
             }
         },
         xaxis: {
             categories: thaiMonthCategories,
             labels: {
                 style: {
-                    colors: '#cbd5e1',
+                    colors: '#94a3b8',
                     fontSize: '13px',
                     fontWeight: 600,
                     fontFamily: 'Outfit, sans-serif'
@@ -925,92 +947,55 @@ function updateOverviewChart() {
             axisTicks: { show: false },
             crosshairs: {
                 show: true,
-                stroke: {
-                    color: 'rgba(56, 189, 248, 0.3)',
-                    width: 1,
-                    dashArray: 3
-                }
+                stroke: { color: 'rgba(212,175,55,0.3)', width: 1, dashArray: 4 }
             }
         },
         yaxis: {
             labels: {
                 style: {
-                    colors: '#cbd5e1',
+                    colors: '#64748b',
                     fontSize: '12px',
                     fontWeight: 500,
                     fontFamily: 'Outfit, sans-serif'
                 },
                 formatter: function (val) {
-                    if (val === 0) return "฿0";
-                    if (val >= 1000000) return "฿" + (val / 1000000).toFixed(1) + 'M';
-                    if (val >= 1000) return "฿" + (val / 1000).toFixed(1) + 'K';
-                    return "฿" + val.toLocaleString('th-TH');
+                    if (val === 0) return '฿0';
+                    if (val >= 1_000_000) return '฿' + (val / 1_000_000).toFixed(1) + 'M';
+                    if (val >= 1_000) return '฿' + (val / 1_000).toFixed(0) + 'K';
+                    return '฿' + val.toLocaleString('th-TH');
                 }
             }
         },
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shade: 'dark',
-                type: 'vertical',
-                shadeIntensity: 0.5,
-                opacityFrom: 1,
-                opacityTo: 0.85,
-                stops: [0, 100]
-            }
-        },
         grid: {
-            borderColor: 'rgba(255, 255, 255, 0.06)',
-            strokeDashArray: 4,
-            padding: {
-                top: 30,
-                right: 20,
-                bottom: 10,
-                left: 20
-            },
-            yaxis: {
-                lines: { show: true }
-            },
-            xaxis: {
-                lines: { show: false }
-            }
+            borderColor: 'rgba(255,255,255,0.05)',
+            strokeDashArray: 5,
+            padding: { top: 20, right: 24, bottom: 8, left: 20 },
+            yaxis: { lines: { show: true } },
+            xaxis: { lines: { show: false } }
         },
         legend: {
             position: 'top',
             horizontalAlign: 'right',
-            labels: {
-                colors: '#f1f5f9',
-                useSeriesColors: false
-            },
+            labels: { colors: '#f1f5f9', useSeriesColors: false },
             fontSize: '13px',
             fontWeight: 600,
             fontFamily: 'Outfit, sans-serif',
-            markers: {
-                width: 12,
-                height: 12,
-                radius: 12,
-                offsetX: -4
-            },
-            itemMargin: {
-                horizontal: 12,
-                vertical: 4
-            }
+            markers: { width: 10, height: 10, radius: 10, offsetX: -4 },
+            itemMargin: { horizontal: 14, vertical: 4 }
         },
         tooltip: {
             theme: 'dark',
             shared: true,
             intersect: false,
+            style: { fontSize: '13px', fontFamily: 'Outfit, sans-serif' },
             y: {
                 formatter: function (val) {
-                    return "฿ " + val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return '฿ ' + Math.round(val).toLocaleString('th-TH');
                 }
-            },
-            style: {
-                fontSize: '14px',
-                fontFamily: 'Outfit, sans-serif'
             }
         }
     };
+
 
     if (comparisonChart) {
         comparisonChart.updateOptions({ xaxis: { categories: thaiMonthCategories } });
@@ -1041,8 +1026,8 @@ function populateTransactionChartFilters(transactions) {
 
         const rawDate = row['Date'] || row.date;
         if (rawDate) {
-            const d = new Date(rawDate);
-            if (!isNaN(d)) {
+            const d = parseDateSafe(rawDate);
+            if (d && !isNaN(d)) {
                 months.add(d.getMonth() + 1); // 1-12
                 years.add(d.getFullYear());
             }
@@ -1082,7 +1067,19 @@ function updateTransactionChart() {
     const rawMonth = document.getElementById('tc-filter-month')?.value || 'All';
 
     // 1. Filter Transactions
-    let filtered = allTransactions;
+    // เริ่มจากข้อมูล Transactions ที่ผ่าน filter หลักแล้ว (sync กับกราฟเส้น)
+    let filtered = (_lastFilteredTransactions && _lastFilteredTransactions.length > 0)
+        ? [..._lastFilteredTransactions]
+        : [...allTransactions];
+
+    // Filter out 'plan' status to show only actual transactions
+    filtered = filtered.filter(row => {
+        let rowStatus = '';
+        Object.keys(row).forEach(key => {
+            if (key.toLowerCase().includes('status')) rowStatus = (row[key] || '').toString().trim().toLowerCase();
+        });
+        return !rowStatus.includes('plan');
+    });
 
     if (rawType !== 'All') {
         filtered = filtered.filter(row => {
@@ -1098,14 +1095,14 @@ function updateTransactionChart() {
     }
     if (rawYear !== 'All') {
         filtered = filtered.filter(row => {
-            const date = new Date(row['Date'] || row.date);
-            return !isNaN(date) && date.getFullYear().toString() === rawYear;
+            const date = parseDateSafe(row['Date'] || row.date);
+            return date && !isNaN(date) && date.getFullYear().toString() === rawYear;
         });
     }
     if (rawMonth !== 'All') {
         filtered = filtered.filter(row => {
-            const date = new Date(row['Date'] || row.date);
-            return !isNaN(date) && (date.getMonth() + 1).toString() === rawMonth;
+            const date = parseDateSafe(row['Date'] || row.date);
+            return date && !isNaN(date) && (date.getMonth() + 1).toString() === rawMonth;
         });
     }
 
@@ -1207,10 +1204,10 @@ function updateTransactionChart() {
             toolbar: { show: false },
             fontFamily: 'Outfit, sans-serif',
             zoom: { enabled: false },
+            animations: { enabled: false },
             events: {
                 mounted: repositionLabels,
-                updated: repositionLabels,
-                animationEnd: repositionLabels
+                updated: repositionLabels
             }
         },
         plotOptions: {
@@ -1257,9 +1254,11 @@ function updateTransactionChart() {
         },
         yaxis: {
             labels: {
-                style: { colors: '#cbd5e1', fontSize: '13px', fontWeight: 600 },
-                maxWidth: 250,
-                align: 'left'
+                style: { colors: '#cbd5e1', fontSize: '13px', fontWeight: 600, fontFamily: 'Sarabun, Outfit, sans-serif' },
+                maxWidth: 350,
+                minWidth: 250,
+                align: 'left',
+                offsetX: 0
             }
         },
         legend: { show: false },
@@ -1268,7 +1267,7 @@ function updateTransactionChart() {
             strokeDashArray: 4,
             padding: {
                 right: 250, // กั้นพื้นที่ขวาไว้มหาศาล 250px
-                left: 10
+                left: 20
             }
         },
         tooltip: {
@@ -1554,7 +1553,6 @@ function renderBankBalances() {
                 </div>
             </div>
             <div class="sidebar-bank-balance">฿${checkValue(balance)}</div>
-            <button class="sidebar-bank-detail-btn" onclick="openBankDetailModal('${safeBankName} - ${accountNum}', '${bankName}', '${accountNum}')">📋 ดูรายละเอียด</button>
         `;
         container.appendChild(card);
     });
@@ -1723,6 +1721,8 @@ function openBankDetailModal(bankFullName, bankType, accountNum) {
     document.getElementById('bank-modal-subtitle').textContent = filterLabel ? `กรอง: ${filterLabel}` : 'แสดงทุกรายการ';
     document.getElementById('bank-modal-search').value = '';
 
+    window._bankModalRenderLimit = 200; // Reset limit on open
+
     renderBankDetailRows(rows);
     document.getElementById('bank-detail-modal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -1734,6 +1734,12 @@ function updateBankModalView(mode) {
     _bankModalViewMode = mode;
     document.getElementById('bank-btn-view-all').classList.toggle('active', mode === 'all');
     document.getElementById('bank-btn-view-group').classList.toggle('active', mode === 'group');
+    window._bankModalRenderLimit = 200; // Reset limit when switching views
+    filterBankModalTable();
+}
+
+function loadMoreBankModalRows() {
+    window._bankModalRenderLimit = (window._bankModalRenderLimit || 200) + 200;
     filterBankModalTable();
 }
 
@@ -1782,25 +1788,30 @@ function renderBankDetailRows(rows) {
     } else {
         thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>ประเภท</th><th>Category</th><th>Status</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
 
-        rows.forEach((row, i) => {
+        // Calculate total first
+        rows.forEach(row => {
+            const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
+            const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
+            totalIn += cashIn;
+            totalOut += cashOut;
+        });
+
+        const rowsToRender = rows.slice(0, window._bankModalRenderLimit || 200);
+
+        rowsToRender.forEach((row, i) => {
             const rawDate = row['Date'] || row.date || '';
             let displayDate = rawDate;
             try {
-                const d = new Date(rawDate);
-                if (!isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const d = parseDateSafe(rawDate);
+                if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
             } catch (e) { }
 
             const desc = row['Description'] || row.description || '-';
             const type = row['Type'] || row.type || '-';
             const category = row['Category'] || row.category || '-';
             const status = row['Status'] || row.status || '-';
-            // ✅ FIX: ใช้ค่า Cash In / Cash Out ตรงๆ จาก row (ตรงกับ Google Sheets)
-            // ไม่คำนวณ net หรือ fallback ที่อาจทำให้ยอดเพี้ยน
             const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
             const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
-
-            totalIn += cashIn;
-            totalOut += cashOut;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -1815,6 +1826,13 @@ function renderBankDetailRows(rows) {
             `;
             tbody.appendChild(tr);
         });
+
+        if (rows.length > (window._bankModalRenderLimit || 200)) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="8" style="text-align:center; padding:15px; cursor:pointer; color:#38bdf8; font-weight:bold; background:rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="loadMoreBankModalRows()">👇 โหลดเพิ่มเติม... (เหลืออีก ${rows.length - (window._bankModalRenderLimit || 200)} รายการ)</td>`;
+            tbody.appendChild(tr);
+        }
+
         document.getElementById('bank-modal-row-count').textContent = `${rows.length} รายการ`;
     }
 
@@ -1910,6 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Store currently displayed modal rows for search filtering
 let _modalRows = [];
 let _modalType = '';  // 'income' | 'expense'
+let _modalTab = 'list'; // 'list' | 'bank'
 
 const MODAL_LABELS = {
     'income-actual': { title: '📥 Income (Actual)', color: 'income' },
@@ -1925,56 +1944,188 @@ function openDetailModal(cardId) {
 
     let rows = [];
     if (cardId === 'income-actual') {
-        rows = _lastFilteredTransactions.filter(row => {
+        rows = typeof _lastFilteredTransactions !== 'undefined' ? _lastFilteredTransactions.filter(row => {
             const s = (row['Status'] || row.status || '').toLowerCase();
             return getRowType(row) === 'income' && s !== 'plan';
-        });
+        }) : [];
     } else if (cardId === 'income-plan') {
-        const fromPlans = _lastFilteredPlans.filter(row => {
+        const fromPlans = typeof _lastFilteredPlans !== 'undefined' ? _lastFilteredPlans.filter(row => {
             const s = (row['Status'] || row.status || '').toLowerCase();
             return getRowType(row) === 'income' && s === 'plan';
-        });
-        const fromTx = _lastFilteredTransactions.filter(row => {
+        }) : [];
+        const fromTx = typeof _lastFilteredTransactions !== 'undefined' ? _lastFilteredTransactions.filter(row => {
             const s = (row['Status'] || row.status || '').toLowerCase();
             return getRowType(row) === 'income' && s === 'plan';
-        });
+        }) : [];
         rows = [...fromPlans, ...fromTx];
     } else if (cardId === 'expense-actual') {
-        rows = _lastFilteredTransactions.filter(row => {
+        rows = typeof _lastFilteredTransactions !== 'undefined' ? _lastFilteredTransactions.filter(row => {
             const s = (row['Status'] || row.status || '').toLowerCase();
             return getRowType(row) === 'expense' && s !== 'plan';
-        });
+        }) : [];
     } else if (cardId === 'expense-plan') {
-        const fromPlans = _lastFilteredPlans.filter(row => {
+        const fromPlans = typeof _lastFilteredPlans !== 'undefined' ? _lastFilteredPlans.filter(row => {
             const s = (row['Status'] || row.status || '').toLowerCase();
             return getRowType(row) === 'expense' && s === 'plan';
-        });
-        const fromTx = _lastFilteredTransactions.filter(row => {
+        }) : [];
+        const fromTx = typeof _lastFilteredTransactions !== 'undefined' ? _lastFilteredTransactions.filter(row => {
             const s = (row['Status'] || row.status || '').toLowerCase();
             return getRowType(row) === 'expense' && s === 'plan';
-        });
+        }) : [];
         rows = [...fromPlans, ...fromTx];
     }
 
     _modalRows = rows;
 
     // Set header info
-    document.getElementById('modal-title').textContent = meta.title;
-    document.getElementById('modal-search').value = '';
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl) titleEl.textContent = meta.title;
+    
+    const searchEl = document.getElementById('modal-search');
+    if (searchEl) searchEl.value = '';
+
+    // Reset tab to list
+    if (typeof switchModalTab === 'function') switchModalTab('list');
+
+    window._modalRenderLimit = 200; // Reset limit on open
 
     renderModalRows(rows);
 
     // Open modal
-    document.getElementById('detail-modal').classList.add('active');
-    document.body.style.overflow = 'hidden';
+    const modalEl = document.getElementById('detail-modal');
+    if (modalEl) {
+        modalEl.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 let _detailModalViewMode = 'all';
+
+function renderModalRows(rows) {
+    const thead = document.getElementById('modal-table-head');
+    const tbody = document.getElementById('modal-table-body');
+    if (!thead || !tbody) return;
+
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    let total = 0;
+
+    const isGrouped = typeof _detailModalViewMode !== 'undefined' && _detailModalViewMode === 'group';
+    const fragment = document.createDocumentFragment();
+
+    if (isGrouped) {
+        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        const grouped = {};
+        rows.forEach(row => {
+            const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
+            if (!grouped[cat]) grouped[cat] = { count: 0, sum: 0 };
+            grouped[cat].count++;
+            grouped[cat].sum += getRowAmount(row, _modalType);
+        });
+
+        const sortedKeys = Object.keys(grouped).sort((a, b) => grouped[b].sum - grouped[a].sum);
+        let totalCount = 0;
+
+        sortedKeys.forEach((cat, i) => {
+            const item = grouped[cat];
+            total += item.sum;
+            totalCount += item.count;
+            const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${cat}</td>
+                <td>${item.count} รายการ</td>
+                <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
+            `;
+            fragment.appendChild(tr);
+        });
+
+        tbody.appendChild(fragment);
+
+        const countEl = document.getElementById('modal-row-count');
+        if (countEl) countEl.textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
+    } else {
+        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+
+        // Calculate total first across ALL rows
+        rows.forEach(row => {
+            total += getRowAmount(row, _modalType);
+        });
+
+        const rowsToRender = rows.slice(0, window._modalRenderLimit || 200);
+
+        rowsToRender.forEach((row, i) => {
+            const rawDate = row['Date'] || row.date || '';
+            let displayDate = rawDate;
+            try {
+                const d = parseDateSafe(rawDate);
+                if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } catch (e) { }
+
+            const desc = row['Description'] || row.description || '-';
+            const creditor = row['Name'] || row.name || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+            const bank = row['Bank'] || row.bank || '-';
+            const category = row['Category'] || row.category || '-';
+            const status = row['Status'] || row.status || '-';
+            const statusClass = status.toLowerCase().includes('plan') ? 'plan' : 'actual';
+
+            const numAmt = getRowAmount(row, _modalType);
+            const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${displayDate}</td>
+                <td title="${desc}">${desc}</td>
+                <td title="${creditor}">${creditor}</td>
+                <td>${bank}</td>
+                <td>${category}</td>
+                <td><span class="status-badge ${statusClass}">${status}</span></td>
+                <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
+            `;
+            fragment.appendChild(tr);
+        });
+        
+        if (rows.length > (window._modalRenderLimit || 200)) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="8" style="text-align:center; padding:15px; cursor:pointer; color:#38bdf8; font-weight:bold; background:rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="loadMoreModalRows()">👇 โหลดเพิ่มเติม... (เหลืออีก ${rows.length - (window._modalRenderLimit || 200)} รายการ)</td>`;
+            fragment.appendChild(tr);
+        }
+
+        tbody.appendChild(fragment);
+
+        const countEl = document.getElementById('modal-row-count');
+        if (countEl) countEl.textContent = `${rows.length} รายการ`;
+    }
+
+    const totalEl = document.getElementById('modal-total-amount');
+    if (totalEl) {
+        const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+        const valueSpan = totalEl.querySelector('.total-value');
+        if (valueSpan) {
+            valueSpan.className = `total-value ${amtClass}`;
+            valueSpan.textContent = `฿${checkValue(total)}`;
+        } else {
+            totalEl.innerHTML = `ยอดรวม: <span class="${amtClass}">฿${checkValue(total)}</span>`;
+        }
+    }
+    
+    // Always update bank summary
+    if (typeof renderModalBankSummary === 'function') renderModalBankSummary(rows);
+}
 
 function updateModalView(mode) {
     _detailModalViewMode = mode;
     document.getElementById('btn-view-all').classList.toggle('active', mode === 'all');
     document.getElementById('btn-view-group').classList.toggle('active', mode === 'group');
+    window._modalRenderLimit = 200; // Reset limit when switching views
+    filterModalTable();
+}
+
+function loadMoreModalRows() {
+    window._modalRenderLimit = (window._modalRenderLimit || 200) + 200;
     filterModalTable();
 }
 
@@ -2018,25 +2169,25 @@ function exportModalPdf(type) {
             // # | Date | Desc | Type | Category | Status | CashIn | CashOut
             colgroupHtml = `<colgroup>
                 <col style="width:4%">
-                <col style="width:9%">
-                <col style="width:24%">
-                <col style="width:9%">
-                <col style="width:15%">
-                <col style="width:9%">
-                <col style="width:15%">
-                <col style="width:15%">
+                <col style="width:10%">
+                <col style="width:20%">
+                <col style="width:10%">
+                <col style="width:12%">
+                <col style="width:8%">
+                <col style="width:18%">
+                <col style="width:18%">
             </colgroup>`;
         } else {
             // # | Date | Desc | Party | Bank | Category | Status | Amount
             colgroupHtml = `<colgroup>
                 <col style="width:4%">
-                <col style="width:9%">
-                <col style="width:22%">
-                <col style="width:14%">
                 <col style="width:10%">
-                <col style="width:14%">
-                <col style="width:9%">
-                <col style="width:18%">
+                <col style="width:23%">
+                <col style="width:20%">
+                <col style="width:10%">
+                <col style="width:11%">
+                <col style="width:7%">
+                <col style="width:15%">
             </colgroup>`;
         }
     }
@@ -2064,7 +2215,7 @@ function exportModalPdf(type) {
   thead th { background: #1e3a5f; color: #fff; padding: 7px 5px; text-align: left; font-weight: 700; border: 1px solid #1e3a5f; white-space: nowrap; overflow: hidden; font-size: 7pt; }
   tbody tr:nth-child(even) { background: #f0f4f8; }
   tbody tr:nth-child(odd)  { background: #fff; }
-  tbody td { padding: 5px; border: 1px solid #d1d5db; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111; overflow-wrap: break-word; white-space: normal; vertical-align: top; line-height: 1.2; }
   .numeric { text-align: right; font-family: monospace; white-space: nowrap; }
   thead th.numeric { text-align: right; }
   .modal-amount-income { color: #16a34a !important; font-weight: 700; }
@@ -2123,7 +2274,8 @@ function renderModalRows(rows) {
             tbody.appendChild(tr);
         });
 
-        document.getElementById('modal-row-count').textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
+        const countEl = document.getElementById('modal-row-count');
+        if (countEl) countEl.textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
         thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
 
@@ -2136,7 +2288,8 @@ function renderModalRows(rows) {
             } catch (e) { }
 
             const desc = row['Description'] || row.description || '-';
-            const creditor = row['Customer'] || row['Vendor'] || row['Party'] || row['Name'] || row.customer || row.party || row.name || '-';
+            // Prioritize 'Name' (Column H) over generic Party labels
+            const creditor = row['Name'] || row.name || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
             const bank = row['Bank'] || row.bank || '-';
             const category = row['Category'] || row.category || '-';
             const status = row['Status'] || row.status || '-';
@@ -2159,12 +2312,140 @@ function renderModalRows(rows) {
             `;
             tbody.appendChild(tr);
         });
-        document.getElementById('modal-row-count').textContent = `${rows.length} รายการ`;
+        const countEl = document.getElementById('modal-row-count');
+        if (countEl) countEl.textContent = `${rows.length} รายการ`;
     }
 
-    const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
-    document.getElementById('modal-total-amount').innerHTML = `ยอดรวม: <span class="${amtClass}">฿${checkValue(total)}</span>`;
+    const totalEl = document.getElementById('modal-total-amount');
+    if (totalEl) {
+        const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+        totalEl.innerHTML = `ยอดรวม: <span class="${amtClass}">฿${checkValue(total)}</span>`;
+    }
+    
+    // Always update bank summary
+    if (typeof renderModalBankSummary === 'function') renderModalBankSummary(rows);
 }
+
+function switchModalTab(tab) {
+    _modalTab = tab;
+    const listTab = document.getElementById('btn-modal-tab-list');
+    const bankTab = document.getElementById('btn-modal-tab-bank');
+    const listContent = document.getElementById('modal-content-list');
+    const bankContent = document.getElementById('modal-content-bank');
+
+    if (!listTab || !bankTab || !listContent || !bankContent) {
+        console.warn("Modal tab elements not found");
+        return;
+    }
+
+    if (tab === 'list') {
+        listTab.classList.add('active');
+        bankTab.classList.remove('active');
+        listContent.style.display = 'block';
+        bankContent.style.display = 'none';
+    } else {
+        listTab.classList.remove('active');
+        bankTab.classList.add('active');
+        listContent.style.display = 'none';
+        bankContent.style.display = 'block';
+    }
+}
+
+function renderModalBankSummary(rows) {
+    const container = document.getElementById('modal-bank-summary-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const grouped = {};
+    rows.forEach(row => {
+        const bank = row['Bank'] || row.bank || 'ไม่ระบุธนาคาร';
+        if (!grouped[bank]) grouped[bank] = { count: 0, sum: 0 };
+        grouped[bank].count++;
+        grouped[bank].sum += getRowAmount(row, _modalType);
+    });
+
+    const sortedBanks = Object.keys(grouped).sort((a, b) => grouped[b].sum - grouped[a].sum);
+    const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+    const fragment = document.createDocumentFragment();
+
+    sortedBanks.forEach(bank => {
+        const item = grouped[bank];
+        const card = document.createElement('div');
+        card.className = 'summary-item-card';
+        const safeName = bank.replace(/'/g, "\\'");
+        card.innerHTML = `
+            <div class="summary-item-header">
+                <span class="summary-item-name">${bank}</span>
+                <span class="summary-item-count">${item.count} รายการ</span>
+            </div>
+            <div class="summary-item-amount ${amtClass}">฿${checkValue(item.sum)}</div>
+            <button class="btn-bank-detail" onclick="showBankDetail('${safeName}')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                ดูรายการ
+            </button>
+        `;
+        fragment.appendChild(card);
+    });
+
+    container.appendChild(fragment);
+}
+
+// Drill-down: กรองรายการตาม Bank แล้วแสดงในแท็บ รายการ
+function showBankDetail(bankName) {
+    const filtered = _modalRows.filter(row => {
+        const bank = row['Bank'] || row.bank || 'ไม่ระบุธนาคาร';
+        return bank === bankName;
+    });
+
+    // บันทึก original title ก่อนเปลี่ยน
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl && !titleEl.dataset.originalTitle) {
+        titleEl.dataset.originalTitle = titleEl.textContent;
+    }
+
+    // สลับไปแท็บ รายการ
+    switchModalTab('list');
+
+    // แสดงปุ่มกลับ + label Bank
+    _showBankBackButton(bankName);
+
+    // Render เฉพาะรายการของ Bank นั้น
+    renderModalRows(filtered);
+}
+
+// เพิ่มปุ่ม "← กลับสรุป Bank" ใน controls bar
+function _showBankBackButton(bankName) {
+    // ลบปุ่มเดิมถ้ามี
+    const old = document.getElementById('btn-bank-back');
+    if (old) old.remove();
+
+    const controls = document.querySelector('.modal-controls');
+    if (!controls) return;
+
+    const backBtn = document.createElement('button');
+    backBtn.id = 'btn-bank-back';
+    backBtn.className = 'btn-bank-back';
+    backBtn.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        กลับสรุป Bank
+    `;
+    backBtn.onclick = () => {
+        // กลับแท็บ Bank
+        switchModalTab('bank');
+        // คืน title เดิม
+        const titleEl = document.getElementById('modal-title');
+        if (titleEl && titleEl.dataset.originalTitle) {
+            titleEl.textContent = titleEl.dataset.originalTitle;
+            delete titleEl.dataset.originalTitle;
+        }
+        // ลบปุ่มกลับ
+        backBtn.remove();
+        // Render ทุก row ใหม่
+        renderModalRows(_modalRows);
+    };
+    controls.prepend(backBtn);
+}
+
 
 function filterModalTable() {
     const q = (document.getElementById('modal-search')?.value || '').toLowerCase();
@@ -2245,7 +2526,8 @@ function initTcCategoryAutocomplete() {
     const btnSelectAll = document.getElementById('btn-tc-cat-select-all');
     const btnClear = document.getElementById('btn-tc-cat-clear');
 
-    if (!toggleBox || !dropdown) return;
+    if (!toggleBox || !dropdown || toggleBox.dataset.initialized) return;
+    toggleBox.dataset.initialized = "true";
 
     let currentMatches = [];
 
@@ -2253,6 +2535,10 @@ function initTcCategoryAutocomplete() {
     toggleBox.addEventListener('click', (e) => {
         e.stopPropagation();
         const isOpen = dropdown.classList.contains('open');
+        // ปิดดรอปดาวน์อื่นๆ ก่อน (ถ้ามี)
+        document.querySelectorAll('.multi-select-wrapper.open').forEach(el => {
+            if (el !== dropdown) el.classList.remove('open');
+        });
         dropdown.classList.toggle('open', !isOpen);
         if (!isOpen) {
             searchInput.focus();
@@ -2260,15 +2546,14 @@ function initTcCategoryAutocomplete() {
         }
     });
 
-    // Close when clicking outside
-    document.addEventListener('click', e => {
-        if (!toggleBox.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('open');
-        }
+    // ป้องกันการปิดเมื่อคลิกข้างในเมนู
+    dropdown.querySelector('.autocomplete-dropdown').addEventListener('click', (e) => {
+        e.stopPropagation();
     });
 
-    dropdown.addEventListener('click', e => {
-        e.stopPropagation();
+    // ปิดเมื่อคลิกข้างนอก
+    document.addEventListener('click', () => {
+        dropdown.classList.remove('open');
     });
 
     function renderMsList(query) {
@@ -2348,7 +2633,8 @@ function initCreditorAutocomplete() {
     const btnSelectAll = document.getElementById('btn-ms-select-all');
     const btnClear = document.getElementById('btn-ms-clear');
 
-    if (!dropdown || !searchInput) return;
+    if (!dropdown || !searchInput || searchInput.dataset.initialized) return;
+    searchInput.dataset.initialized = "true";
 
     let currentMatches = [];
     let topMatch = null;
@@ -2496,6 +2782,23 @@ function initCreditorAutocomplete() {
     });
 }
 
+function resetTcFilters() {
+    const filters = ['tc-filter-type', 'tc-filter-month', 'tc-filter-year'];
+    filters.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'All';
+    });
+    
+    selectedTcCategories.clear();
+    updateTcCategorySelectText();
+    
+    // Clear search input if it exists
+    const searchInput = document.getElementById('filter-tc-category-search');
+    if (searchInput) searchInput.value = '';
+    
+    updateTransactionChart();
+}
+
 // -------------------------------------------------
 // TOGGLE BALANCES (SHOW/HIDE)
 // -------------------------------------------------
@@ -2532,8 +2835,403 @@ function toggleTransactionRecords() {
 }
 
 // -------------------------------------------------
+// MONTHLY SUMMARY TABLE (PIVOT)
+// -------------------------------------------------
+
+let selectedMsCategories = new Set();
+let allMsCategories = [];
+
+function populateMonthlySummaryCategories() {
+    const list = document.getElementById('ms-category-suggestions');
+    if (!list) return;
+    
+    const categories = new Set();
+    allTransactions.forEach(row => {
+        const cat = row['Category'] || row.category;
+        if (cat) categories.add(cat.toString().trim());
+    });
+    
+    allMsCategories = [...categories].sort();
+    
+    renderMsCategoryList();
+}
+
+function renderMsCategoryList(filterText = '') {
+    const list = document.getElementById('ms-category-suggestions');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    const q = filterText.toLowerCase();
+    
+    allMsCategories.forEach(c => {
+        if (q && !c.toLowerCase().includes(q)) return;
+        
+        const div = document.createElement('div');
+        div.className = 'ms-item';
+        div.style.padding = '8px 12px';
+        div.style.cursor = 'pointer';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.gap = '10px';
+        div.style.borderRadius = '6px';
+        div.style.transition = '0.2s';
+        
+        const isSelected = selectedMsCategories.has(c);
+        if (isSelected) div.style.background = 'rgba(56, 189, 248, 0.1)';
+        
+        div.onmouseover = () => div.style.background = isSelected ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.05)';
+        div.onmouseout = () => div.style.background = isSelected ? 'rgba(56, 189, 248, 0.1)' : 'transparent';
+        
+        div.innerHTML = `
+            <input type="checkbox" ${isSelected ? 'checked' : ''} style="cursor:pointer;">
+            <span style="font-size:13px; color:#e2e8f0;">${c}</span>
+        `;
+        div.onclick = (e) => {
+            e.stopPropagation();
+            toggleMsCategory(c);
+        };
+        list.appendChild(div);
+    });
+    updateMsCategoryUI();
+}
+
+function toggleMsCategory(c) {
+    if (selectedMsCategories.has(c)) {
+        selectedMsCategories.delete(c);
+    } else {
+        selectedMsCategories.add(c);
+    }
+    renderMsCategoryList(document.getElementById('ms-category-search-input').value);
+    renderMonthlySummaryTable();
+}
+
+function msCatSelectAll() {
+    allMsCategories.forEach(c => selectedMsCategories.add(c));
+    renderMsCategoryList(document.getElementById('ms-category-search-input').value);
+    renderMonthlySummaryTable();
+}
+
+function msCatClear() {
+    selectedMsCategories.clear();
+    renderMsCategoryList(document.getElementById('ms-category-search-input').value);
+    renderMonthlySummaryTable();
+}
+
+function toggleMsCatDropdown(e) {
+    if(e) e.stopPropagation();
+    const drop = document.getElementById('ms-category-dropdown');
+    drop.style.display = drop.style.display === 'none' ? 'block' : 'none';
+}
+
+function filterMsCategory() {
+    const q = document.getElementById('ms-category-search-input').value;
+    renderMsCategoryList(q);
+}
+
+function updateMsCategoryUI() {
+    const countSpan = document.getElementById('ms-category-selected-count');
+    const displayInput = document.getElementById('ms-category-search-display');
+    if (!countSpan || !displayInput) return;
+    
+    if (selectedMsCategories.size === 0 || selectedMsCategories.size === allMsCategories.length) {
+        countSpan.textContent = 'ทั้งหมด';
+        countSpan.style.background = 'rgba(255,255,255,0.1)';
+        countSpan.style.color = '#cbd5e1';
+        displayInput.value = 'ทุกหมวดหมู่ (All)';
+    } else {
+        countSpan.textContent = selectedMsCategories.size + ' รายการ';
+        countSpan.style.background = 'rgba(56, 189, 248, 0.2)';
+        countSpan.style.color = '#38bdf8';
+        
+        // Show the first selected category name, or comma separated if multiple
+        const arr = Array.from(selectedMsCategories);
+        if (arr.length === 1) {
+            displayInput.value = arr[0];
+        } else {
+            displayInput.value = arr.join(', ');
+        }
+    }
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('ms-cat-wrapper');
+    const drop = document.getElementById('ms-category-dropdown');
+    if (wrap && drop && drop.style.display === 'block' && !wrap.contains(e.target)) {
+        drop.style.display = 'none';
+    }
+});
+
+function renderMonthlySummaryTable() {
+    const tbody = document.getElementById('monthly-summary-body');
+    if (!tbody) return;
+
+    // isFiltered is true if some items are selected, but NOT all items
+    const isFiltered = selectedMsCategories.size > 0 && selectedMsCategories.size !== allMsCategories.length;
+
+    // We only want actual transactions, not plans
+    const actualTx = allTransactions.filter(row => {
+        const s = (row['Status'] || row.status || '').toLowerCase();
+        if (s.includes('plan')) return false;
+        
+        // Apply category filter
+        if (isFiltered) {
+            const c = (row['Category'] || row.category || 'ไม่ระบุหมวดหมู่').toString().trim();
+            if (!selectedMsCategories.has(c)) return false;
+        }
+        return true;
+    });
+
+    // Data structure: key -> { in: [0..11], out: [0..11] }
+    const summaryData = {};
+    let totalInByMonth = Array(12).fill(0);
+    let totalOutByMonth = Array(12).fill(0);
+
+    actualTx.forEach(row => {
+        const rawDate = row['Date'] || row.date;
+        const d = parseDateSafe(rawDate);
+        if (!d || isNaN(d)) return;
+
+        const monthIdx = d.getMonth(); // 0 to 11
+        
+        // ALWAYS group by category for the Monthly Summary table to maintain consistent UI
+        const groupKey = (row['Category'] || row.category || 'ไม่ระบุหมวดหมู่').toString().trim();
+        
+        const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
+        const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
+
+        if (cashIn === 0 && cashOut === 0) return;
+
+        if (!summaryData[groupKey]) {
+            summaryData[groupKey] = {
+                type: getRowType(row) === 'income' ? 'income' : (getRowType(row) === 'expense' ? 'expense' : 'other'),
+                in: Array(12).fill(0),
+                out: Array(12).fill(0)
+            };
+        }
+
+        summaryData[groupKey].in[monthIdx] += cashIn;
+        summaryData[groupKey].out[monthIdx] += cashOut;
+        
+        totalInByMonth[monthIdx] += cashIn;
+        totalOutByMonth[monthIdx] += cashOut;
+    });
+
+    let htmlContent = '';
+
+    // Integer formatter for Monthly Summary cells — no decimals, commas only
+    function fmtMs(val) {
+        const intVal = Math.round(val);
+        const abbr = intVal.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const full = abbr; // same — integers with commas is already readable
+        return { abbr, full };
+    }
+
+    // Helper to render a row
+    const createRowHTML = (title, dataArray, isExpense, isTotalRow = false) => {
+        const rowTotal = dataArray.reduce((sum, val) => sum + val, 0);
+        
+        // Hide row if all values are 0 (unless it's the main total row)
+        if (rowTotal === 0 && !isTotalRow) return '';
+
+        const colorClass = isExpense ? 'modal-amount-expense' : 'modal-amount-income';
+        const rowClass = isTotalRow ? ' class="ms-total-row"' : '';
+        
+        let html = `<tr${rowClass}><td title="${title}">${title}</td>`;
+        
+        for (let i = 0; i < 12; i++) {
+            const val = dataArray[i];
+            const cellClass = val > 0 ? colorClass : 'ms-empty';
+            if (val > 0) {
+                const { abbr, full } = fmtMs(val);
+                html += `<td class="${cellClass}" title="${full}">${abbr}</td>`;
+            } else {
+                html += `<td class="${cellClass}">-</td>`;
+            }
+        }
+        
+        // Total column — always show full value
+        const totalClass = rowTotal > 0 ? colorClass : 'ms-empty';
+        const { abbr: totalAbbr, full: totalFull } = rowTotal > 0 ? fmtMs(rowTotal) : { abbr: '-', full: '-' };
+        html += `<td class="col-total ${totalClass}" title="${totalFull}">${totalAbbr}</td></tr>`;
+        
+        return html;
+    };
+
+
+    // Sort categories (Income first, then Expense, then alphabetical)
+    const sortedKeys = Object.keys(summaryData).sort((a, b) => {
+        const typeA = summaryData[a].type;
+        const typeB = summaryData[b].type;
+        if (typeA !== typeB) {
+            if (typeA === 'income') return -1;
+            if (typeB === 'income') return 1;
+        }
+        return a.localeCompare(b);
+    });
+
+    let currentType = '';
+
+    sortedKeys.forEach(key => {
+        const item = summaryData[key];
+        const isIncome = item.in.some(v => v > 0);
+        const isExpense = item.out.some(v => v > 0);
+        const typeLabel = isIncome ? 'รายรับ' : 'รายจ่าย';
+
+        // Add section header if type changes
+        if (currentType !== typeLabel) {
+            currentType = typeLabel;
+            const displayInput = document.getElementById('ms-category-search-display');
+            const catDisplay = displayInput ? displayInput.value : 'เลือกแล้ว';
+            let groupTitle = isFiltered ? `รายการ${typeLabel} - ${catDisplay}` : `หมวดหมู่${typeLabel}`;
+            const groupClass = `ms-group-header ${isIncome ? 'ms-group-income' : 'ms-group-expense'}`;
+            const icon = isIncome ? '▲ 💰' : '▼ 💸';
+            htmlContent += `<tr class="${groupClass}"><td colspan="14">${icon} &nbsp; ${groupTitle}</td></tr>`;
+        }
+
+        if (isIncome) {
+            htmlContent += createRowHTML(key, item.in, false);
+        }
+        if (isExpense) {
+            htmlContent += createRowHTML(key, item.out, true);
+        }
+    });
+
+    if (!isFiltered) {
+        htmlContent += createRowHTML('💰 รวมรายรับ (Total Income)', totalInByMonth, false, true);
+        htmlContent += createRowHTML('💸 รวมรายจ่าย (Total Expense)', totalOutByMonth, true, true);
+        
+        // Net Cash Flow
+        const netByMonth = Array(12).fill(0);
+        for(let i=0; i<12; i++) netByMonth[i] = totalInByMonth[i] - totalOutByMonth[i];
+        
+        const netTotal = netByMonth.reduce((sum, val) => sum + val, 0);
+        
+        let netHtml = `<tr class="ms-net-row"><td>📊 สุทธิ (Net Cash Flow)</td>`;
+        
+        for (let i = 0; i < 12; i++) {
+            const val = netByMonth[i];
+            const colorClass = val > 0 ? 'modal-amount-income' : (val < 0 ? 'modal-amount-expense' : 'ms-empty');
+            if (val !== 0) {
+                const { abbr, full } = fmtMs(val);
+                netHtml += `<td class="${colorClass}" title="${full}">${abbr}</td>`;
+            } else {
+                netHtml += `<td class="${colorClass}">-</td>`;
+            }
+        }
+        const netTotalClass = netTotal > 0 ? 'modal-amount-income' : (netTotal < 0 ? 'modal-amount-expense' : 'ms-empty');
+        const { abbr: netTotalAbbr, full: netTotalFull } = netTotal !== 0 ? fmtMs(netTotal) : { abbr: '-', full: '-' };
+        netHtml += `<td class="col-total ${netTotalClass}" title="${netTotalFull}">${netTotalAbbr}</td></tr>`;
+
+        
+        htmlContent += netHtml;
+    } else if (selectedMsCategories.size > 1) {
+        const isIncomeCat = totalInByMonth.reduce((a, b) => a + b, 0) >= totalOutByMonth.reduce((a, b) => a + b, 0);
+        if (isIncomeCat) {
+            htmlContent += createRowHTML('💰 รวมทั้งหมด (Total)', totalInByMonth, false, true);
+        } else {
+            htmlContent += createRowHTML('💸 รวมทั้งหมด (Total)', totalOutByMonth, true, true);
+        }
+    }
+    
+    // Write to DOM once
+    tbody.innerHTML = htmlContent;
+}
+
+function exportMonthlySummaryPdf() {
+    const table = document.getElementById('monthly-summary-table');
+    if (!table) return;
+    
+    const displayInput = document.getElementById('ms-category-search-display');
+    const catDisplay = displayInput ? displayInput.value : 'ทุกหมวดหมู่ (All)';
+    const title = `รายงานสรุปยอดรายเดือน (Monthly Summary) - ${catDisplay}`;
+
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (!printWindow) { alert('กรุณาอนุญาต Pop-up สำหรับเว็บนี้ก่อนครับ'); return; }
+
+    const tableHtml = table.outerHTML;
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sarabun', sans-serif; font-size: 8pt; color: #111; background: #fff; padding: 20px; }
+  .hdr { text-align: center; border-bottom: 2px solid #1e3a5f; padding-bottom: 10px; margin-bottom: 15px; }
+  .hdr h1 { font-size: 16pt; color: #1e3a5f; font-weight: 700; margin-bottom: 5px; }
+  .hdr p  { font-size: 9pt; color: #555; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 8pt; }
+  thead th { background: #1e3a5f; color: #fff !important; padding: 8px 5px; text-align: right; font-weight: 700; border: 1px solid #1e3a5f; }
+  thead th:first-child { text-align: left; width: 15%; }
+  tbody tr:nth-child(even) { background: #f9fafb; }
+  tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111 !important; text-align: right; }
+  tbody td:first-child { text-align: left; }
+  .modal-amount-income { color: #16a34a !important; font-weight: 700; }
+  .modal-amount-expense { color: #dc2626 !important; font-weight: 700; }
+  @media print { @page { size: A4 landscape; margin: 1cm; } body { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>${title}</h1>
+  <p>วันที่เรียกดู: ${new Date().toLocaleString('th-TH')}</p>
+</div>
+${tableHtml}
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`);
+    printWindow.document.close();
+}
+
+// -------------------------------------------------
 // VIEW SWITCHING (SIDEBAR NAV)
 // -------------------------------------------------
+// Create shared tooltip element for collapsed sidebar
+const _sidebarTooltip = document.createElement('div');
+_sidebarTooltip.className = 'sidebar-tooltip';
+document.body.appendChild(_sidebarTooltip);
+let _tooltipTimer = null;
+
+function _setupSidebarTooltips() {
+    document.querySelectorAll('.sidebar-nav .nav-link[data-tooltip]').forEach(link => {
+        link.addEventListener('mouseenter', function(e) {
+            const nav = document.getElementById('sidebar-nav');
+            if (!nav || !nav.classList.contains('collapsed')) return;
+            const rect = this.getBoundingClientRect();
+            _sidebarTooltip.textContent = this.dataset.tooltip;
+            _sidebarTooltip.style.top = (rect.top + rect.height / 2) + 'px';
+            clearTimeout(_tooltipTimer);
+            _sidebarTooltip.classList.add('visible');
+        });
+        link.addEventListener('mouseleave', function() {
+            _tooltipTimer = setTimeout(() => _sidebarTooltip.classList.remove('visible'), 80);
+        });
+    });
+}
+
+function toggleLeftSidebar() {
+    const nav    = document.getElementById('sidebar-nav');
+    const layout = document.querySelector('.app-layout');
+    if (!nav || !layout) return;
+    const isCollapsed = nav.classList.toggle('collapsed');
+    layout.classList.toggle('sidebar-collapsed', isCollapsed);
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 420);
+}
+
+function toggleRightSidebar() {
+    const rightSidebar = document.getElementById('view-recent');
+    const container = document.querySelector('.dashboard-container');
+    if (!rightSidebar || !container) return;
+    const isCollapsed = rightSidebar.classList.toggle('collapsed');
+    container.classList.toggle('right-sidebar-collapsed', isCollapsed);
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 420);
+}
+
+// Wire up tooltips after DOM ready
+document.addEventListener('DOMContentLoaded', _setupSidebarTooltips);
+
 function switchView(viewId) {
     // 1. Update Sidebar Active State
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -2548,12 +3246,12 @@ function switchView(viewId) {
     //    - view-recent = Bank Balances Sidebar (ฝั่งขวา) แสดงตลอดเวลา
     //    - view-summary-actual / view-summary-plan = 2 แถวของ Summary Cards
     const sections = {
-        'dashboard': ['view-summary-actual', 'view-summary-plan', 'view-charts', 'view-analysis', 'view-recent'],
-        'analytics': ['view-charts', 'view-analysis', 'view-recent'],
+        'dashboard': ['view-summary-actual', 'view-summary-plan', 'view-charts', 'view-analysis', 'monthly-summary-section', 'view-recent'],
+        'analytics': ['view-charts', 'view-analysis', 'monthly-summary-section', 'view-recent'],
         'banks': ['view-summary-actual', 'view-summary-plan', 'view-recent']
     };
 
-    const allSections = ['view-summary-actual', 'view-summary-plan', 'view-charts', 'view-analysis', 'view-recent'];
+    const allSections = ['view-summary-actual', 'view-summary-plan', 'view-charts', 'view-analysis', 'monthly-summary-section', 'view-recent'];
     const toShow = sections[viewId] || sections['dashboard'];
 
     // 3. Toggle Display

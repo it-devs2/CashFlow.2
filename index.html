@@ -25,29 +25,41 @@
 
     <div class="app-layout">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar-nav">
-            <div class="sidebar-brand">
-                <div class="brand-logo">💰</div>
-                <span>CASHFLOW</span>
+        <aside class="sidebar-nav" id="sidebar-nav">
+            <!-- Collapse toggle at top -->
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <div class="brand-logo">💰</div>
+                    <span class="brand-text">CASHFLOW</span>
+                </div>
+                <button class="sidebar-collapse-btn" onclick="toggleLeftSidebar()" title="หุบ/ขยาย เมนู">
+                    <svg class="collapse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
             </div>
+
             <nav class="nav-links">
-                <a href="#" class="nav-link active" onclick="switchView('dashboard')">
-                    <span class="nav-icon">🏠</span> Dashboard
+                <a href="#" class="nav-link active" data-tooltip="Dashboard" onclick="switchView('dashboard')">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Dashboard</span>
                 </a>
-                <a href="#" class="nav-link" onclick="switchView('analytics')">
-                    <span class="nav-icon">📊</span> Analytics & Graphs
+                <a href="#" class="nav-link" data-tooltip="Analytics & Graphs" onclick="switchView('analytics')">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Analytics & Graphs</span>
                 </a>
-                <a href="#" class="nav-link" onclick="switchView('banks')">
-                    <span class="nav-icon">🏦</span> Bank Balances
+                <a href="#" class="nav-link" data-tooltip="Bank Balances" onclick="switchView('banks')">
+                    <span class="nav-icon">🏦</span>
+                    <span class="nav-label">Bank Balances</span>
                 </a>
             </nav>
-            <div class="sidebar-footer" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
 
-                <button class="btn-refresh-sidebar" onclick="refreshData()">🔄 <span class="refresh-text">Refresh
-                        Data</span></button>
-                <div id="last-sync-time"
-                    style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 5px; opacity: 0.8;">
-                </div>
+            <div class="sidebar-footer-wrap">
+                <button class="btn-refresh-sidebar" onclick="refreshData()">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-label">Refresh Data</span>
+                </button>
+                <div id="last-sync-time" class="sync-time-text"></div>
             </div>
         </aside>
 
@@ -56,78 +68,78 @@
             <div class="main-column-container">
                 <!-- Header -->
                 <header class="dashboard-header">
-                <div class="header-top-row">
-                    <div class="header-title-section">
-                        <h1>CashFlow Dashboard</h1>
-                        <p class="header-subtitle" id="last-sync-time-header">อัปเดตล่าสุด: --:--</p>
+                    <div class="header-top-row">
+                        <div class="header-title-section">
+                            <h1>CashFlow Dashboard</h1>
+                            <p class="header-subtitle" id="last-sync-time-header">อัปเดตล่าสุด: --:--</p>
+                        </div>
                     </div>
-                </div>
-                <div class="header-left">
-                    <div class="header-filters" id="header-filters">
-                        <div class="hfilter-group">
-                            <label>🔍 เจ้าหนี้</label>
-                            <div class="multi-select-wrapper">
-                                <div class="search-trigger-box">
-                                    <div class="input-ghost-wrapper">
-                                        <input type="text" id="filter-creditor-search" placeholder="ค้นหาเจ้าหนี้..."
-                                            autocomplete="off">
-                                        <span id="creditor-ghost-text" class="ghost-text"></span>
+                    <div class="header-left">
+                        <div class="header-filters" id="header-filters">
+                            <div class="hfilter-group">
+                                <label>🔍 เจ้าหนี้</label>
+                                <div class="multi-select-wrapper">
+                                    <div class="search-trigger-box">
+                                        <div class="input-ghost-wrapper">
+                                            <input type="text" id="filter-creditor-search"
+                                                placeholder="ค้นหาเจ้าหนี้..." autocomplete="off">
+                                            <span id="creditor-ghost-text" class="ghost-text"></span>
+                                        </div>
+                                        <span id="creditor-selected-count" class="selected-badge">ทั้งหมด</span>
                                     </div>
-                                    <span id="creditor-selected-count" class="selected-badge">ทั้งหมด</span>
-                                </div>
-                                <div class="ms-dropdown" id="creditor-dropdown">
-                                    <div class="ms-actions">
-                                        <div class="ms-action-btn" id="btn-ms-select-all">✅ เลือกทั้งหมด</div>
-                                        <div class="ms-action-btn" id="btn-ms-clear">❌ ล้าง</div>
-                                    </div>
-                                    <div class="ms-list" id="creditor-suggestions">
-                                        <!-- Suggestions injected by JS -->
+                                    <div class="ms-dropdown" id="creditor-dropdown">
+                                        <div class="ms-actions">
+                                            <div class="ms-action-btn" id="btn-ms-select-all">✅ เลือกทั้งหมด</div>
+                                            <div class="ms-action-btn" id="btn-ms-clear">❌ ล้าง</div>
+                                        </div>
+                                        <div class="ms-list" id="creditor-suggestions">
+                                            <!-- Suggestions injected by JS -->
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <div class="hfilter-group">
+                                <label for="filter-category">🗂️ หมวดหมู่</label>
+                                <select id="filter-category">
+                                    <option value="All">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <div class="hfilter-group">
+                                <label for="filter-group">👥 กลุ่ม</label>
+                                <select id="filter-group">
+                                    <option value="All">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <div class="hfilter-group">
+                                <label for="filter-party-type">📑 ประเภท</label>
+                                <select id="filter-party-type">
+                                    <option value="All">ทั้งหมด</option>
+                                    <option value="Vendor">Expense (รายจ่าย)</option>
+                                    <option value="Customer">Income (รายรับ)</option>
+                                </select>
+                            </div>
+                            <div class="hfilter-group">
+                                <label for="filter-day">📅 วัน</label>
+                                <select id="filter-day">
+                                    <option value="All">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <div class="hfilter-group">
+                                <label for="filter-month">🗓️ เดือน</label>
+                                <select id="filter-month">
+                                    <option value="All">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <div class="hfilter-group">
+                                <label for="filter-year">📆 ปี</label>
+                                <select id="filter-year">
+                                    <option value="All">ทั้งหมด</option>
+                                </select>
+                            </div>
+                            <button id="btn-reset-filters" class="btn-reset">↺ รีเซ็ต</button>
                         </div>
-                        <div class="hfilter-group">
-                            <label for="filter-category">🗂️ หมวดหมู่</label>
-                            <select id="filter-category">
-                                <option value="All">ทั้งหมด</option>
-                            </select>
-                        </div>
-                        <div class="hfilter-group">
-                            <label for="filter-group">👥 กลุ่ม</label>
-                            <select id="filter-group">
-                                <option value="All">ทั้งหมด</option>
-                            </select>
-                        </div>
-                        <div class="hfilter-group">
-                            <label for="filter-party-type">📑 ประเภท</label>
-                            <select id="filter-party-type">
-                                <option value="All">ทั้งหมด</option>
-                                <option value="Vendor">Expense (รายจ่าย)</option>
-                                <option value="Customer">Income (รายรับ)</option>
-                            </select>
-                        </div>
-                        <div class="hfilter-group">
-                            <label for="filter-day">📅 วัน</label>
-                            <select id="filter-day">
-                                <option value="All">ทั้งหมด</option>
-                            </select>
-                        </div>
-                        <div class="hfilter-group">
-                            <label for="filter-month">🗓️ เดือน</label>
-                            <select id="filter-month">
-                                <option value="All">ทั้งหมด</option>
-                            </select>
-                        </div>
-                        <div class="hfilter-group">
-                            <label for="filter-year">📆 ปี</label>
-                            <select id="filter-year">
-                                <option value="All">ทั้งหมด</option>
-                            </select>
-                        </div>
-                        <button id="btn-reset-filters" class="btn-reset">↺ รีเซ็ต</button>
                     </div>
-                </div>
-            </header>
+                </header>
 
 
                 <!-- MAIN CONTENT AREA (CENTER) -->
@@ -184,13 +196,136 @@
                             <button id="btn-tc-toggle" onclick="toggleTransactionAmounts()" class="btn-reset"
                                 style="padding: 5px 12px; font-size: 11px;">🔒 ซ่อนยอดเงิน</button>
                         </div>
+
+                        <!-- Pro Analysis Toolbar (New Horizontal Design) -->
+                        <div class="analysis-toolbar glass">
+                            <div class="toolbar-left">
+                                <div class="toolbar-item">
+                                    <span class="toolbar-label">🔎 Type</span>
+                                    <div class="toolbar-select-wrap">
+                                        <select id="tc-filter-type" onchange="updateTransactionChart()">
+                                            <option value="All">ทั้งหมด</option>
+                                            <option value="income">รายรับ (Income)</option>
+                                            <option value="expense">รายจ่าย (Expense)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="toolbar-divider"></div>
+
+                                <div class="toolbar-item">
+                                    <div class="multi-select-wrapper" id="tc-category-dropdown">
+                                        <div class="toolbar-trigger" id="btn-tc-category-dropdown">
+                                            <span class="toolbar-label" style="margin-right:8px; padding:0;">📁
+                                                Category</span>
+                                            <span id="tc-category-selected-text">ทั้งหมด</span>
+                                            <i class="chevron">▼</i>
+                                        </div>
+                                        <div class="autocomplete-dropdown" style="width: 250px;">
+                                            <div class="dropdown-header">
+                                                <input type="text" id="filter-tc-category-search"
+                                                    placeholder="ค้นหาหมวดหมู่..." autocomplete="off">
+                                            </div>
+                                            <div class="ms-actions">
+                                                <button id="btn-tc-cat-select-all">เลือกทั้งหมด</button>
+                                                <button id="btn-tc-cat-clear">ล้างค่า</button>
+                                            </div>
+                                            <div id="tc-category-suggestions" class="autocomplete-suggestions"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="toolbar-divider"></div>
+
+                                <div class="toolbar-item">
+                                    <span class="toolbar-label">📅 Period</span>
+                                    <div class="toolbar-group">
+                                        <div class="toolbar-select-wrap small">
+                                            <select id="tc-filter-month" onchange="updateTransactionChart()">
+                                                <option value="All">เดือน</option>
+                                            </select>
+                                        </div>
+                                        <div class="toolbar-select-wrap small">
+                                            <select id="tc-filter-year" onchange="updateTransactionChart()">
+                                                <option value="All">ปี</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="toolbar-right">
+                                <button onclick="resetTcFilters()" class="btn-toolbar-reset" title="รีเซ็ตตัวกรอง">
+                                    <span class="icon">↺</span> Reset
+                                </button>
+                            </div>
+                        </div>
                         <div id="transaction-chart"></div>
                     </section>
+
+                    <!-- Monthly Summary Section -->
+                    <section id="monthly-summary-section" style="margin-top: 28px;">
+                        <div class="ms-card-shell">
+
+                            <!-- Report Header -->
+                            <div class="ms-report-header">
+                                <div class="ms-report-title-block">
+                                    <div class="ms-report-icon">📊</div>
+                                    <div class="ms-report-text">
+                                        <div class="ms-report-label">Financial Report</div>
+                                        <div class="ms-report-name">สรุปยอดรายเดือน (Monthly Summary)</div>
+                                    </div>
+                                </div>
+                                <div class="ms-report-controls">
+                                    <div class="multi-select-wrapper" id="ms-cat-wrapper">
+                                        <div class="search-trigger-box" onclick="toggleMsCatDropdown(event)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                                            <div class="input-ghost-wrapper" style="flex:1;">
+                                                <input type="text" id="ms-category-search-display" placeholder="หมวดหมู่ (Category)" readonly style="cursor:pointer; background:transparent; border:none; color:#f1f5f9; outline:none; font-size:13px; width:100%;">
+                                            </div>
+                                            <span id="ms-category-selected-count" class="selected-badge">ทั้งหมด</span>
+                                        </div>
+                                        <div class="ms-dropdown" id="ms-category-dropdown" style="display:none; position:absolute; top:calc(100% + 5px); right:0; width:300px; background:rgba(8, 14, 26, 0.97); border:1px solid rgba(180,140,60,0.2); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); z-index:1000; backdrop-filter:blur(12px);">
+                                            <div class="ms-actions" style="display:flex; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); gap:10px;">
+                                                <div class="ms-action-btn" onclick="msCatSelectAll()" style="flex:1; text-align:center; padding:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.15); border-radius:6px; cursor:pointer; font-size:12px; color:#c8a84b; transition:0.2s;">✅ เลือกทั้งหมด</div>
+                                                <div class="ms-action-btn" onclick="msCatClear()" style="flex:1; text-align:center; padding:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; cursor:pointer; font-size:12px; color:#64748b; transition:0.2s;">❌ ล้าง</div>
+                                            </div>
+                                            <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                                <input type="text" id="ms-category-search-input" placeholder="ค้นหาหมวดหมู่..." oninput="filterMsCategory()" style="width:100%; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); color:#fff; outline:none; font-size:13px;">
+                                            </div>
+                                            <div class="ms-list" id="ms-category-suggestions" style="max-height:250px; overflow-y:auto; padding:5px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
+                            <div class="monthly-summary-container">
+                                <table id="monthly-summary-table" class="ms-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>ม.ค.</th><th>ก.พ.</th><th>มี.ค.</th><th>เม.ย.</th>
+                                            <th>พ.ค.</th><th>มิ.ย.</th><th>ก.ค.</th><th>ส.ค.</th>
+                                            <th>ก.ย.</th><th>ต.ค.</th><th>พ.ย.</th><th>ธ.ค.</th>
+                                            <th class="col-total">รวม (Total)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthly-summary-body"></tbody>
+                                </table>
+                            </div>
+
+                        </div><!-- /.ms-card-shell -->
+                    </section>
+
                 </main>
             </div> <!-- End main-column-container -->
 
+
             <!-- SIDE FEED (RIGHT) - ขวาสุดติดขอบบนยาวลงมา -->
             <aside id="view-recent" class="right-sidebar">
+                <button class="right-sidebar-close-btn" onclick="toggleRightSidebar()" title="ซ่อนแถบด้านขวา">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
                 <!-- ยอดเงินรวม (อยู่ด้านบนสุดของแถบรายการ) -->
                 <div class="header-main-balance sidebar-balance-card">
                     <div class="balance-label">AVAILABLE BALANCE</div>
@@ -216,44 +351,102 @@
                     <!-- Bank cards injected by JS -->
                 </div>
             </aside>
-        </div>
+
+            <!-- Floating tab to re-open right sidebar when collapsed -->
+            <button class="right-sidebar-reopen-tab" onclick="toggleRightSidebar()" title="แสดงยอดเงินธนาคาร" aria-label="แสดงยอดเงินธนาคาร">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+
+        </div><!-- End dashboard-container -->
 
         <!-- Modals -->
         <div id="detail-modal" class="modal-overlay" onclick="closeDetailModal(event)">
             <div class="modal-box">
+
+                <!-- === MODAL HEADER === -->
                 <div class="modal-header">
                     <div class="modal-header-left">
-                        <h2 class="modal-title" id="modal-title">รายละเอียดรายการ</h2>
-                        <span class="modal-row-count" id="modal-row-count">0 รายการ</span>
+                        <div class="modal-tabs">
+                            <button id="btn-modal-tab-list" class="modal-tab active" onclick="switchModalTab('list')">
+                                <span class="tab-icon">☰</span> รายการ
+                            </button>
+                            <button id="btn-modal-tab-bank" class="modal-tab" onclick="switchModalTab('bank')">
+                                <span class="tab-icon">🏦</span> Bank
+                            </button>
+                        </div>
+                        <div class="modal-title-block">
+                            <h2 id="modal-title" class="modal-title-text">-</h2>
+                            <span id="modal-row-count" class="modal-count-badge">0 รายการ</span>
+                        </div>
                     </div>
-                    <div class="modal-header-actions">
-                        <button class="btn-export-pdf" onclick="exportModalPdf('detail')">💾 PDF</button>
-                        <button class="modal-close" onclick="closeDetailModal(null, true)">×</button>
+                    <div class="modal-header-right">
+                        <button onclick="exportModalPdf('detail')" class="btn-pdf-export">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                            </svg>
+                            ส่งออก PDF
+                        </button>
+                        <button class="modal-close-btn" onclick="closeDetailModal(null, true)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
+                <!-- === MODAL CONTROLS === -->
                 <div class="modal-controls">
                     <div class="modal-search-wrap">
-                        <input type="text" id="modal-search" placeholder="ค้นหาในตาราง..." oninput="filterModalTable()">
+                        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" id="modal-search" placeholder="ค้นหารายการ..." oninput="filterModalTable()">
                     </div>
                     <div class="modal-view-toggle">
-                        <button id="btn-view-all" class="btn-toggle active"
-                            onclick="updateModalView('all')">รายการทั้งหมด</button>
-                        <button id="btn-view-group" class="btn-toggle"
-                            onclick="updateModalView('group')">สรุปตามหมวดหมู่</button>
+                        <button id="btn-view-all" class="btn-toggle active" onclick="updateModalView('all')">
+                            รายการทั้งหมด
+                        </button>
+                        <button id="btn-view-group" class="btn-toggle" onclick="updateModalView('group')">
+                            สรุปตามหมวดหมู่
+                        </button>
                     </div>
                 </div>
 
-                <div class="modal-table-container">
-                    <table class="modal-table" id="modal-table">
-                        <thead id="modal-table-head"></thead>
-                        <tbody id="modal-table-body"></tbody>
-                    </table>
+                <!-- === LIST VIEW === -->
+                <div id="modal-content-list" class="modal-content-area">
+                    <div class="modal-table-wrap" id="modal-table-container">
+                        <table id="modal-table">
+                            <thead id="modal-table-head"></thead>
+                            <tbody id="modal-table-body"></tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="modal-footer">
-                    <div id="modal-total-amount" class="modal-total">ยอดรวม: <span>฿0.00</span></div>
+                <!-- === BANK SUMMARY VIEW === -->
+                <div id="modal-content-bank" class="modal-content-area" style="display: none;">
+                    <div id="modal-bank-summary-container" class="bank-summary-grid"></div>
                 </div>
+
+                <!-- === MODAL FOOTER === -->
+                <div class="modal-footer">
+                    <div class="modal-footer-left">
+                        <span id="modal-total-amount" class="modal-total-text">ยอดรวม: <span
+                                class="total-value">฿0.00</span></span>
+                    </div>
+                    <div class="modal-footer-right">
+                        <span class="footer-hint">💡 กดที่แถวเพื่อดูรายละเอียด</span>
+                    </div>
+                </div>
+
             </div>
         </div>
 
