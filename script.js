@@ -3038,11 +3038,10 @@ function renderMonthlySummaryTable() {
 
     let htmlContent = '';
 
-    // Integer formatter for Monthly Summary cells — no decimals, commas only
+    // Formatter for Monthly Summary cells — including 2 decimal places
     function fmtMs(val) {
-        const intVal = Math.round(val);
-        const abbr = intVal.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        const full = abbr; // same — integers with commas is already readable
+        const abbr = val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const full = abbr; 
         return { abbr, full };
     }
 
@@ -3061,7 +3060,8 @@ function renderMonthlySummaryTable() {
         let toggleBtn = '';
         if (catKey && nameCount > 1) {
             const isExpanded = expandedMsCategories.has(catKey);
-            toggleBtn = `<span class="ms-expand-btn" onclick="toggleMsExpand(event, '${catKey.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" title="แสดงรายชื่อ">${isExpanded ? '&#x2212;' : '&#x2B;'}</span>`;
+            const expandedClass = isExpanded ? ' expanded' : '';
+            toggleBtn = `<span class="ms-expand-btn${expandedClass}" onclick="toggleMsExpand(event, '${catKey.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" title="แสดงรายชื่อ">${isExpanded ? '&#x2212;' : '&#x2B;'}</span>`;
         }
         
         let html = `<tr${rowClass} data-cat-key="${catKey ? catKey.replace(/"/g,'&quot;') : ''}"><td title="${title}">${toggleBtn}${title}</td>`;
