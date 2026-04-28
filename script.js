@@ -2840,6 +2840,7 @@ function toggleTransactionRecords() {
 
 let selectedMsCategories = new Set();
 let allMsCategories = [];
+let expandedMsCategories = new Set(); // tracks which category keys are expanded
 
 function populateMonthlySummaryCategories() {
     const list = document.getElementById('ms-category-suggestions');
@@ -2927,6 +2928,16 @@ function filterMsCategory() {
     const q = document.getElementById('ms-category-search-input').value;
     renderMsCategoryList(q);
 }
+function toggleMsExpand(e, catKey) {
+    if (e) e.stopPropagation();
+    if (expandedMsCategories.has(catKey)) {
+        expandedMsCategories.delete(catKey);
+    } else {
+        expandedMsCategories.add(catKey);
+    }
+    renderMonthlySummaryTable();
+}
+
 
 function updateMsCategoryUI() {
     const countSpan = document.getElementById('ms-category-selected-count');
@@ -2969,50 +2980,58 @@ function renderMonthlySummaryTable() {
     // isFiltered is true if some items are selected, but NOT all items
     const isFiltered = selectedMsCategories.size > 0 && selectedMsCategories.size !== allMsCategories.length;
 
-    // We only want actual transactions, not plans
-    const actualTx = allTransactions.filter(row => {
-        const s = (row['Status'] || row.status || '').toLowerCase();
-        if (s.includes('plan')) return false;
-        
-        // Apply category filter
-        if (isFiltered) {
-            const c = (row['Category'] || row.category || 'ไม่ระบุหมวดหมู่').toString().trim();
-            if (!selectedMsCategories.has(c)) return false;
-        }
-        return true;
-    });
+    // Combine actual transactions and plans for the monthly summary
+    const allData = [...allTransactions, ...allPlans];
 
     // Data structure: key -> { in: [0..11], out: [0..11] }
     const summaryData = {};
     let totalInByMonth = Array(12).fill(0);
     let totalOutByMonth = Array(12).fill(0);
 
-    actualTx.forEach(row => {
+    // Get current selected year from filter to ensure we only sum data for that year
+    const filterYear = document.getElementById('filter-year')?.value || new Date().getFullYear().toString();
+
+    allData.forEach(row => {
+        const s = (row['Status'] || row.status || '').toLowerCase();
+        // If we want to strictly follow current year filter
         const rawDate = row['Date'] || row.date;
         const d = parseDateSafe(rawDate);
         if (!d || isNaN(d)) return;
+        
+        if (filterYear !== 'All' && d.getFullYear().toString() !== filterYear) return;
 
-        const monthIdx = d.getMonth(); // 0 to 11
-        
-        // ALWAYS group by category for the Monthly Summary table to maintain consistent UI
+        // Apply category filter
         const groupKey = (row['Category'] || row.category || 'ไม่ระบุหมวดหมู่').toString().trim();
-        
+        if (isFiltered && !selectedMsCategories.has(groupKey)) return;
+
+        const rowType = getRowType(row);
         const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
         const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
+
+        const monthIdx = d.getMonth();
 
         if (cashIn === 0 && cashOut === 0) return;
 
         if (!summaryData[groupKey]) {
             summaryData[groupKey] = {
-                type: getRowType(row) === 'income' ? 'income' : (getRowType(row) === 'expense' ? 'expense' : 'other'),
+                type: rowType === 'income' ? 'income' : (rowType === 'expense' ? 'expense' : 'other'),
                 in: Array(12).fill(0),
-                out: Array(12).fill(0)
+                out: Array(12).fill(0),
+                names: {}
             };
+        }
+
+        const nameKey = (row['Name'] || row.name || 'ไม่ระบุชื่อ').toString().trim();
+        if (!summaryData[groupKey].names[nameKey]) {
+            summaryData[groupKey].names[nameKey] = { in: Array(12).fill(0), out: Array(12).fill(0) };
         }
 
         summaryData[groupKey].in[monthIdx] += cashIn;
         summaryData[groupKey].out[monthIdx] += cashOut;
-        
+        summaryData[groupKey].names[nameKey].in[monthIdx] += cashIn;
+        summaryData[groupKey].names[nameKey].out[monthIdx] += cashOut;
+
+        // Also update totals
         totalInByMonth[monthIdx] += cashIn;
         totalOutByMonth[monthIdx] += cashOut;
     });
@@ -3027,17 +3046,25 @@ function renderMonthlySummaryTable() {
         return { abbr, full };
     }
 
-    // Helper to render a row
-    const createRowHTML = (title, dataArray, isExpense, isTotalRow = false) => {
+    // Helper to render a category row (with +/- toggle)
+    const createRowHTML = (title, dataArray, isExpense, isTotalRow = false, catKey = null, nameCount = 0) => {
         const rowTotal = dataArray.reduce((sum, val) => sum + val, 0);
         
         // Hide row if all values are 0 (unless it's the main total row)
         if (rowTotal === 0 && !isTotalRow) return '';
 
         const colorClass = isExpense ? 'modal-amount-expense' : 'modal-amount-income';
-        const rowClass = isTotalRow ? ' class="ms-total-row"' : '';
+        const typeClass = isExpense ? 'ms-row-expense' : 'ms-row-income';
+        const rowClass = isTotalRow ? ' class="ms-total-row"' : ` class="ms-category-row ${typeClass}"`;
+
+        // Build toggle button for expandable rows
+        let toggleBtn = '';
+        if (catKey && nameCount > 1) {
+            const isExpanded = expandedMsCategories.has(catKey);
+            toggleBtn = `<span class="ms-expand-btn" onclick="toggleMsExpand(event, '${catKey.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" title="แสดงรายชื่อ">${isExpanded ? '&#x2212;' : '&#x2B;'}</span>`;
+        }
         
-        let html = `<tr${rowClass}><td title="${title}">${title}</td>`;
+        let html = `<tr${rowClass} data-cat-key="${catKey ? catKey.replace(/"/g,'&quot;') : ''}"><td title="${title}">${toggleBtn}${title}</td>`;
         
         for (let i = 0; i < 12; i++) {
             const val = dataArray[i];
@@ -3050,11 +3077,41 @@ function renderMonthlySummaryTable() {
             }
         }
         
-        // Total column — always show full value
+        // Total column
         const totalClass = rowTotal > 0 ? colorClass : 'ms-empty';
         const { abbr: totalAbbr, full: totalFull } = rowTotal > 0 ? fmtMs(rowTotal) : { abbr: '-', full: '-' };
         html += `<td class="col-total ${totalClass}" title="${totalFull}">${totalAbbr}</td></tr>`;
         
+        return html;
+    };
+
+    // Helper to render expanded name sub-rows
+    const createNameRowsHTML = (catKey, namesMap, isExpense) => {
+        if (!expandedMsCategories.has(catKey)) return '';
+        const colorClass = isExpense ? 'modal-amount-expense' : 'modal-amount-income';
+        let html = '';
+        const sorted = Object.entries(namesMap).sort((a,b) => {
+            const totA = (isExpense ? a[1].out : a[1].in).reduce((s,v)=>s+v,0);
+            const totB = (isExpense ? b[1].out : b[1].in).reduce((s,v)=>s+v,0);
+            return totB - totA; // descending by total
+        });
+        sorted.forEach(([name, nd]) => {
+            const arr = isExpense ? nd.out : nd.in;
+            const rowTotal = arr.reduce((s,v)=>s+v,0);
+            if (rowTotal === 0) return;
+            html += `<tr class="ms-name-row ms-name-row-${isExpense ? 'expense' : 'income'}"><td class="ms-name-cell" title="${name}">└ ${name}</td>`;
+            for (let i = 0; i < 12; i++) {
+                const val = arr[i];
+                if (val > 0) {
+                    const { abbr, full } = fmtMs(val);
+                    html += `<td class="${colorClass} ms-name-val ms-col-${i}" title="${full}">${abbr}</td>`;
+                } else {
+                    html += `<td class="ms-empty ms-name-val ms-col-${i}">-</td>`;
+                }
+            }
+            const { abbr: ta, full: tf } = fmtMs(rowTotal);
+            html += `<td class="col-total ${colorClass} ms-name-val" title="${tf}">${ta}</td></tr>`;
+        });
         return html;
     };
 
@@ -3090,10 +3147,14 @@ function renderMonthlySummaryTable() {
         }
 
         if (isIncome) {
-            htmlContent += createRowHTML(key, item.in, false);
+            const nameCount = Object.keys(item.names || {}).length;
+            htmlContent += createRowHTML(key, item.in, false, false, key + '__in', nameCount);
+            htmlContent += createNameRowsHTML(key + '__in', item.names, false);
         }
         if (isExpense) {
-            htmlContent += createRowHTML(key, item.out, true);
+            const nameCount = Object.keys(item.names || {}).length;
+            htmlContent += createRowHTML(key, item.out, true, false, key + '__out', nameCount);
+            htmlContent += createNameRowsHTML(key + '__out', item.names, true);
         }
     });
 

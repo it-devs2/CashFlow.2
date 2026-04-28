@@ -4575,4 +4575,126 @@ body.hide-balances .sidebar-bank-total-badge span {
 .modal-amount-income { color: #34d399 !important; }
 .modal-amount-expense { color: #f87171 !important; }
 
+/* ── Expand Toggle Button ── */
+.ms-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    margin-right: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    user-select: none;
+}
+.ms-expand-btn:hover {
+    background: rgba(212, 175, 55, 0.18);
+    border-color: rgba(212, 175, 55, 0.45);
+    color: #c8a84b;
+}
+
+/* ── Row Indicators ── */
+.ms-row-income td:first-child {
+    border-left: 4px solid var(--income) !important;
+}
+.ms-row-expense td:first-child {
+    border-left: 4px solid var(--expense) !important;
+}
+
+.ms-table tbody td:first-child {
+    display: flex;
+    align-items: center;
+}
+
+/* ── Name Sub-rows ── */
+.ms-name-row td {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+}
+.ms-name-row-income td {
+    background: rgba(16, 185, 129, 0.03) !important;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.06) !important;
+}
+.ms-name-row-expense td {
+    background: rgba(239, 68, 68, 0.03) !important;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.06) !important;
+}
+.ms-name-cell {
+    text-align: left !important;
+    padding-left: 36px !important;
+    color: #64748b !important;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ms-name-val {
+    font-size: 12px !important;
+    opacity: 0.80;
+}
+/* Sticky first-child still works */
+.ms-name-row td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: rgba(6, 10, 20, 0.97) !important;
+}
+.ms-name-row-income td:first-child { border-left: 3px solid rgba(16,185,129,0.35) !important; }
+.ms-name-row-expense td:first-child { border-left: 3px solid rgba(239,68,68,0.35) !important; }
+
+/* ── Category Row (Main Row / Total Row) — Reverted to Normal ── */
+.ms-category-row td {
+    background: rgba(30, 41, 59, 0.4) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+.ms-category-row td:first-child {
+    background: rgba(15, 23, 42, 0.95) !important;
+    color: #f1f5f9 !important;
+    font-weight: 700 !important;
+}
+
+/* ── Name Sub-rows (Bright Orange Details) ── */
+.ms-name-row td {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+}
+
+/* Make sub-row values Bright Orange */
+.ms-name-row .ms-name-val,
+.ms-name-row .col-total {
+    color: #f97316 !important; /* Bright Orange 500 */
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+
+.ms-name-cell {
+    text-align: left !important;
+    padding-left: 36px !important;
+    color: #94a3b8 !important; /* Muted text for name label */
+    font-style: italic;
+}
+
+/* Empty dash in sub-rows also orange-tinted */
+.ms-name-row .ms-empty {
+    color: rgba(249, 115, 22, 0.3) !important;
+}
+
+/* Sticky first-child background */
+.ms-name-row td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: rgba(6, 10, 20, 0.98) !important;
+}
 
