@@ -4690,57 +4690,334 @@ body.hide-balances .sidebar-bank-total-badge span {
     color: rgba(249, 115, 22, 0.3) !important;
 }
 
-/* ── Animations for Monthly Summary ── */
-@keyframes msRowFadeIn {
-    0% { 
-        opacity: 0; 
-        transform: translateY(-8px);
-        background: rgba(249, 115, 22, 0.05); 
-    }
-    100% { 
-        opacity: 1; 
-        transform: translateY(0);
-        background: transparent;
-    }
+/* ── PREMIUM MONTHLY SUMMARY REDESIGN ── */
+#monthly-summary-section {
+    max-width: 100%;
+    margin: 28px 0;
+    padding: 0 15px;
 }
 
-.ms-name-row {
-    animation: msRowFadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+.ms-card-shell {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    position: relative;
 }
 
-.ms-expand-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+.ms-card-shell::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(13, 20, 38, 0.6);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.ms-card-shell::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+}
+
+.ms-report-header {
+    position: relative;
+    z-index: 1100;
+    padding: 24px 30px;
+    background: rgba(13, 20, 38, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px 20px 0 0;
+    transition: box-shadow 0.3s ease;
+}
+
+/* ── STICKY STATE: activated by JS when section scrolls past container top ── */
+#monthly-summary-section.ms-headers-stuck .ms-report-header {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+/* NOTE: table th sticky is handled by the JS ghost header (#ms-ghost-header) */
+
+.ms-report-name {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ms-table-container {
+    width: 100%;
+}
+
+.ms-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.ms-table th {
+    background: rgba(13, 20, 38, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 16px 12px;
     color: #94a3b8;
-    cursor: pointer;
-    margin-right: 12px;
-    font-size: 14px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    user-select: none;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
 }
 
-.ms-expand-btn:hover {
-    background: rgba(249, 115, 22, 0.15);
-    border-color: rgba(249, 115, 22, 0.4);
-    color: #f97316;
-    transform: scale(1.1);
+.ms-table td {
+    padding: 14px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.2s ease;
+}
+
+/* Sticky Category Column (left axis) – only data cells, NOT header cells */
+.ms-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    min-width: 240px;
+    max-width: 300px;
+}
+
+.ms-table th:first-child {
+    min-width: 240px;
+    max-width: 300px;
+}
+
+.ms-table td:first-child {
+    background: rgba(13, 20, 38, 0.95);
+    backdrop-filter: blur(10px);
+    font-weight: 600;
+    color: #f1f5f9;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Category Headers (Green/Red indicators) */
+.ms-group-header td {
+    background: rgba(15, 23, 42, 0.4) !important;
+    color: #94a3b8 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    padding: 10px 20px !important;
+}
+
+.ms-category-row:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Row Type Indicators */
+.ms-row-income td:first-child { border-left: 4px solid #10b981 !important; }
+.ms-row-expense td:first-child { border-left: 4px solid #ef4444 !important; }
+
+/* Sub-row Styling (The beautiful part) */
+.ms-name-row {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.ms-name-cell {
+    padding-left: 45px !important;
+    color: #64748b !important;
+    font-size: 13px !important;
+    position: relative;
+}
+
+/* Tree Line Effect */
+.ms-name-cell::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: rgba(212, 175, 55, 0.15);
+}
+
+.ms-name-cell::after {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    width: 12px;
+    height: 2px;
+    background: rgba(212, 175, 55, 0.15);
+}
+
+.ms-name-row:last-child .ms-name-cell::before {
+    height: 50%;
+}
+
+/* Amber Gold Numbers for Sub-rows */
+.ms-name-row .ms-name-val {
+    color: #fbbf24 !important; /* Premium Amber Gold */
+    font-weight: 600 !important;
+    text-shadow: 0 0 15px rgba(251, 191, 36, 0.15);
+}
+
+.ms-name-row .col-total {
+    background: rgba(251, 191, 36, 0.03);
+    color: #f59e0b !important;
+}
+
+/* Expand Button Polish */
+.ms-expand-btn {
+    width: 20px;
+    height: 20px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    color: #d4af37;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ms-expand-btn.expanded {
-    background: rgba(249, 115, 22, 0.2);
-    border-color: rgba(249, 115, 22, 0.5);
-    color: #ffffff;
+    background: #d4af37;
+    color: #000;
     transform: rotate(180deg);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
 }
 
-/* Ensure sticky columns don't break animation */
-.ms-name-row td:first-child {
-    animation: inherit;
+/* Totals Row */
+.ms-total-row td {
+    background: rgba(15, 23, 42, 0.6) !important;
+    font-weight: 800 !important;
+    color: #fff !important;
+    border-top: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.ms-total-row .modal-amount-income { color: #10b981 !important; }
+.ms-total-row .modal-amount-expense { color: #ef4444 !important; }
+
+/* Empty dash style */
+.ms-empty {
+    color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.ms-name-row {
+    /* No animation — rows appear instantly */
+}
+
+/* ── FILTER BAR PREMIUM ANIMATIONS ── */
+.header-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 20px;
+    background: rgba(13, 20, 38, 0.4);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.hfilter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: filterEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes filterEntrance {
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Staggered delay for each filter group */
+.hfilter-group:nth-child(1) { animation-delay: 0.1s; }
+.hfilter-group:nth-child(2) { animation-delay: 0.15s; }
+.hfilter-group:nth-child(3) { animation-delay: 0.2s; }
+.hfilter-group:nth-child(4) { animation-delay: 0.25s; }
+.hfilter-group:nth-child(5) { animation-delay: 0.3s; }
+.hfilter-group:nth-child(6) { animation-delay: 0.35s; }
+.hfilter-group:nth-child(7) { animation-delay: 0.4s; }
+.hfilter-group:nth-child(8) { animation-delay: 0.45s; }
+
+.hfilter-group label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-left: 4px;
+    transition: color 0.3s ease;
+}
+
+.hfilter-group:hover label {
+    color: #fbbf24; /* Amber Gold on hover */
+}
+
+.hfilter-group select, 
+.hfilter-group input {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    color: #f1f5f9 !important;
+    font-size: 13px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer;
+}
+
+.hfilter-group select:hover, 
+.hfilter-group input:hover {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(251, 191, 36, 0.3) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(251, 191, 36, 0.05);
+}
+
+.hfilter-group select:focus, 
+.hfilter-group input:focus {
+    border-color: #fbbf24 !important;
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1) !important;
+    outline: none;
+}
+
+/* Reset Button Style & Pulse */
+.btn-reset {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+}
+
+.btn-reset:hover {
+    background: #ef4444;
+    color: #fff;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+}
+
+.btn-reset:active {
+    transform: translateY(0) scale(0.95);
 }
 

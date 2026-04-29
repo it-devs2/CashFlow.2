@@ -248,7 +248,7 @@ function showLoader() {
         topLoaderInterval = setInterval(() => {
             let currentWidth = parseFloat(bar.style.width) || 0;
             if (currentWidth < 90) {
-                let step = (100 - currentWidth) * 0.05; 
+                let step = (100 - currentWidth) * 0.05;
                 bar.style.width = (currentWidth + step) + '%';
             }
         }, 200);
@@ -386,10 +386,11 @@ function processData(dataStatus) {
     renderBankBalances();
     populateTransactionChartFilters(allTransactions);
     updateTransactionChart();
-    
+
     // Initialize Monthly Summary Table
     populateMonthlySummaryCategories();
     renderMonthlySummaryTable();
+    initMonthlySummarySticky();
 }
 
 // -------------------------------------------------
@@ -480,7 +481,7 @@ function populateFilterDropdowns(transactions, plans) {
     allData.forEach(row => {
         const cat = row['Category'] || row.category;
         if (cat) categories.add(cat.toString().trim());
-        
+
         const grp = row['Group'] || row.group;
         if (grp) groups.add(grp.toString().trim());
 
@@ -597,7 +598,7 @@ function applyFilters() {
         // 5. Date filters (Prioritize Month/Year string from column Q)
         const rawMonthYear = row['เดือน/ปี'] || row.monthYear || '';
         const rawDate = row['Date'] || row.date;
-        
+
         let rowMonth = -1;
         let rowYear = -1;
 
@@ -668,7 +669,7 @@ function renderTable(transactionsData, plansData = []) {
     transactionsData.forEach(row => {
         const rowType = getRowType(row);
         const amt = getRowAmount(row, rowType);
-        
+
         let rowStatus = '';
         Object.keys(row).forEach(key => {
             if (key.toLowerCase().includes('status')) rowStatus = (row[key] || '').toString().trim().toLowerCase();
@@ -688,7 +689,7 @@ function renderTable(transactionsData, plansData = []) {
     plansData.forEach(row => {
         const rowType = getRowType(row);
         const amt = getRowAmount(row, rowType);
-        
+
         let rowStatus = '';
         Object.keys(row).forEach(key => {
             if (key.toLowerCase().includes('status')) rowStatus = (row[key] || '').toString().trim().toLowerCase();
@@ -696,7 +697,7 @@ function renderTable(transactionsData, plansData = []) {
 
         // ในหน้า Plan, ถ้าสถานะเป็น Actual/Paid/Received ให้ข้ามไป (เพราะควรไปนับที่หน้า Transactions แทนเพื่อกันการนับซ้ำ)
         const isActual = rowStatus.includes('received') || rowStatus.includes('paid') || rowStatus.includes('actual') || rowStatus.includes('รับแล้ว') || rowStatus.includes('จ่ายแล้ว');
-        
+
         if (!isActual) {
             if (rowType === 'income') totalIncomePlan += amt;
             if (rowType === 'expense') totalExpensePlan += Math.abs(amt);
@@ -1475,7 +1476,7 @@ function renderBankBalances() {
             const bName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
             const bAccount = (b['Account No'] || b.accountNo || '').trim();
             const bBalance = parseSafe(b['Available Balance'] || b['Beginning Balance'] || b.availableBalance || b.balance || 0);
-            
+
             let bal = bBalance;
             const bankFullName = `${bName} - ${bAccount}`.trim();
             const bankTypeUpper = bName.toUpperCase();
@@ -1532,15 +1533,15 @@ function renderBankBalances() {
     sorted.forEach(bankRow => {
         const card = document.createElement('div');
         card.className = 'sidebar-bank-card';
-        
+
         // ดึงข้อมูลตามชื่อคอลัมน์จริงใน Google Sheets
         const bankName = (bankRow['Bank Name'] || bankRow.bankName || bankRow.bank || '').trim();
         const accountNum = (bankRow['Account No'] || bankRow.accountNo || '').trim();
         const balance = parseSafe(bankRow['Available Balance'] || bankRow.availableBalance || bankRow.balance || 0);
-        
+
         const logoUrl = getBankLogoUrl(bankName);
         const safeBankName = bankName.replace(/'/g, "\\'");
-        
+
         // ตัดเลขบัญชีให้สั้นลงสำหรับแสดงผล
         const shortAcct = accountNum ? (accountNum.length > 10 ? accountNum.substring(0, 7) + '...' : accountNum) : '';
 
@@ -1890,13 +1891,13 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedCreditors.clear();
         updateCreditorSelectText();
         document.getElementById('filter-creditor-search').value = '';
-        
+
         const ids = ['filter-category', 'filter-group', 'filter-party-type', 'filter-day', 'filter-month', 'filter-year'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = 'All';
         });
-        
+
         applyFilters();
     });
 
@@ -1980,7 +1981,7 @@ function openDetailModal(cardId) {
     // Set header info
     const titleEl = document.getElementById('modal-title');
     if (titleEl) titleEl.textContent = meta.title;
-    
+
     const searchEl = document.getElementById('modal-search');
     if (searchEl) searchEl.value = '';
 
@@ -2087,7 +2088,7 @@ function renderModalRows(rows) {
             `;
             fragment.appendChild(tr);
         });
-        
+
         if (rows.length > (window._modalRenderLimit || 200)) {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td colspan="8" style="text-align:center; padding:15px; cursor:pointer; color:#38bdf8; font-weight:bold; background:rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="loadMoreModalRows()">👇 โหลดเพิ่มเติม... (เหลืออีก ${rows.length - (window._modalRenderLimit || 200)} รายการ)</td>`;
@@ -2111,7 +2112,7 @@ function renderModalRows(rows) {
             totalEl.innerHTML = `ยอดรวม: <span class="${amtClass}">฿${checkValue(total)}</span>`;
         }
     }
-    
+
     // Always update bank summary
     if (typeof renderModalBankSummary === 'function') renderModalBankSummary(rows);
 }
@@ -2321,7 +2322,7 @@ function renderModalRows(rows) {
         const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
         totalEl.innerHTML = `ยอดรวม: <span class="${amtClass}">฿${checkValue(total)}</span>`;
     }
-    
+
     // Always update bank summary
     if (typeof renderModalBankSummary === 'function') renderModalBankSummary(rows);
 }
@@ -2702,16 +2703,16 @@ function initCreditorAutocomplete() {
         matches.sort((a, b) => {
             const aName = a.toLowerCase();
             const bName = b.toLowerCase();
-            
+
             // 1. Priority to exact start
             const aStarts = aName.startsWith(q);
             const bStarts = bName.startsWith(q);
             if (aStarts && !bStarts) return -1;
             if (!aStarts && bStarts) return 1;
-            
+
             // 2. If both start with it, shorter name first (closer match)
             if (aStarts && bStarts) return aName.length - bName.length;
-            
+
             // 3. Otherwise alphabetical
             return a.localeCompare(b, 'th');
         });
@@ -2788,14 +2789,14 @@ function resetTcFilters() {
         const el = document.getElementById(id);
         if (el) el.value = 'All';
     });
-    
+
     selectedTcCategories.clear();
     updateTcCategorySelectText();
-    
+
     // Clear search input if it exists
     const searchInput = document.getElementById('filter-tc-category-search');
     if (searchInput) searchInput.value = '';
-    
+
     updateTransactionChart();
 }
 
@@ -2845,28 +2846,28 @@ let expandedMsCategories = new Set(); // tracks which category keys are expanded
 function populateMonthlySummaryCategories() {
     const list = document.getElementById('ms-category-suggestions');
     if (!list) return;
-    
+
     const categories = new Set();
     allTransactions.forEach(row => {
         const cat = row['Category'] || row.category;
         if (cat) categories.add(cat.toString().trim());
     });
-    
+
     allMsCategories = [...categories].sort();
-    
+
     renderMsCategoryList();
 }
 
 function renderMsCategoryList(filterText = '') {
     const list = document.getElementById('ms-category-suggestions');
     if (!list) return;
-    
+
     list.innerHTML = '';
     const q = filterText.toLowerCase();
-    
+
     allMsCategories.forEach(c => {
         if (q && !c.toLowerCase().includes(q)) return;
-        
+
         const div = document.createElement('div');
         div.className = 'ms-item';
         div.style.padding = '8px 12px';
@@ -2876,13 +2877,13 @@ function renderMsCategoryList(filterText = '') {
         div.style.gap = '10px';
         div.style.borderRadius = '6px';
         div.style.transition = '0.2s';
-        
+
         const isSelected = selectedMsCategories.has(c);
         if (isSelected) div.style.background = 'rgba(56, 189, 248, 0.1)';
-        
+
         div.onmouseover = () => div.style.background = isSelected ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.05)';
         div.onmouseout = () => div.style.background = isSelected ? 'rgba(56, 189, 248, 0.1)' : 'transparent';
-        
+
         div.innerHTML = `
             <input type="checkbox" ${isSelected ? 'checked' : ''} style="cursor:pointer;">
             <span style="font-size:13px; color:#e2e8f0;">${c}</span>
@@ -2919,7 +2920,7 @@ function msCatClear() {
 }
 
 function toggleMsCatDropdown(e) {
-    if(e) e.stopPropagation();
+    if (e) e.stopPropagation();
     const drop = document.getElementById('ms-category-dropdown');
     drop.style.display = drop.style.display === 'none' ? 'block' : 'none';
 }
@@ -2943,7 +2944,7 @@ function updateMsCategoryUI() {
     const countSpan = document.getElementById('ms-category-selected-count');
     const displayInput = document.getElementById('ms-category-search-display');
     if (!countSpan || !displayInput) return;
-    
+
     if (selectedMsCategories.size === 0 || selectedMsCategories.size === allMsCategories.length) {
         countSpan.textContent = 'ทั้งหมด';
         countSpan.style.background = 'rgba(255,255,255,0.1)';
@@ -2953,7 +2954,7 @@ function updateMsCategoryUI() {
         countSpan.textContent = selectedMsCategories.size + ' รายการ';
         countSpan.style.background = 'rgba(56, 189, 248, 0.2)';
         countSpan.style.color = '#38bdf8';
-        
+
         // Show the first selected category name, or comma separated if multiple
         const arr = Array.from(selectedMsCategories);
         if (arr.length === 1) {
@@ -2997,7 +2998,7 @@ function renderMonthlySummaryTable() {
         const rawDate = row['Date'] || row.date;
         const d = parseDateSafe(rawDate);
         if (!d || isNaN(d)) return;
-        
+
         if (filterYear !== 'All' && d.getFullYear().toString() !== filterYear) return;
 
         // Apply category filter
@@ -3041,14 +3042,14 @@ function renderMonthlySummaryTable() {
     // Formatter for Monthly Summary cells — including 2 decimal places
     function fmtMs(val) {
         const abbr = val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const full = abbr; 
+        const full = abbr;
         return { abbr, full };
     }
 
     // Helper to render a category row (with +/- toggle)
     const createRowHTML = (title, dataArray, isExpense, isTotalRow = false, catKey = null, nameCount = 0) => {
         const rowTotal = dataArray.reduce((sum, val) => sum + val, 0);
-        
+
         // Hide row if all values are 0 (unless it's the main total row)
         if (rowTotal === 0 && !isTotalRow) return '';
 
@@ -3063,9 +3064,9 @@ function renderMonthlySummaryTable() {
             const expandedClass = isExpanded ? ' expanded' : '';
             toggleBtn = `<span class="ms-expand-btn${expandedClass}" onclick="toggleMsExpand(event, '${catKey.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" title="แสดงรายชื่อ">${isExpanded ? '&#x2212;' : '&#x2B;'}</span>`;
         }
-        
-        let html = `<tr${rowClass} data-cat-key="${catKey ? catKey.replace(/"/g,'&quot;') : ''}"><td title="${title}">${toggleBtn}${title}</td>`;
-        
+
+        let html = `<tr${rowClass} data-cat-key="${catKey ? catKey.replace(/"/g, '&quot;') : ''}"><td title="${title}">${toggleBtn}${title}</td>`;
+
         for (let i = 0; i < 12; i++) {
             const val = dataArray[i];
             const cellClass = val > 0 ? colorClass : 'ms-empty';
@@ -3076,12 +3077,12 @@ function renderMonthlySummaryTable() {
                 html += `<td class="${cellClass}">-</td>`;
             }
         }
-        
+
         // Total column
         const totalClass = rowTotal > 0 ? colorClass : 'ms-empty';
         const { abbr: totalAbbr, full: totalFull } = rowTotal > 0 ? fmtMs(rowTotal) : { abbr: '-', full: '-' };
         html += `<td class="col-total ${totalClass}" title="${totalFull}">${totalAbbr}</td></tr>`;
-        
+
         return html;
     };
 
@@ -3090,16 +3091,17 @@ function renderMonthlySummaryTable() {
         if (!expandedMsCategories.has(catKey)) return '';
         const colorClass = isExpense ? 'modal-amount-expense' : 'modal-amount-income';
         let html = '';
-        const sorted = Object.entries(namesMap).sort((a,b) => {
-            const totA = (isExpense ? a[1].out : a[1].in).reduce((s,v)=>s+v,0);
-            const totB = (isExpense ? b[1].out : b[1].in).reduce((s,v)=>s+v,0);
+        const sorted = Object.entries(namesMap).sort((a, b) => {
+            const totA = (isExpense ? a[1].out : a[1].in).reduce((s, v) => s + v, 0);
+            const totB = (isExpense ? b[1].out : b[1].in).reduce((s, v) => s + v, 0);
             return totB - totA; // descending by total
         });
-        sorted.forEach(([name, nd]) => {
+        sorted.forEach(([name, nd], index) => {
             const arr = isExpense ? nd.out : nd.in;
-            const rowTotal = arr.reduce((s,v)=>s+v,0);
+            const rowTotal = arr.reduce((s, v) => s + v, 0);
             if (rowTotal === 0) return;
-            html += `<tr class="ms-name-row ms-name-row-${isExpense ? 'expense' : 'income'}"><td class="ms-name-cell" title="${name}">└ ${name}</td>`;
+            const delay = (index * 0.05).toFixed(2);
+            html += `<tr class="ms-name-row ms-name-row-${isExpense ? 'expense' : 'income'}" style="animation-delay: ${delay}s"><td class="ms-name-cell" title="${name}">${name}</td>`;
             for (let i = 0; i < 12; i++) {
                 const val = arr[i];
                 if (val > 0) {
@@ -3158,51 +3160,151 @@ function renderMonthlySummaryTable() {
         }
     });
 
-    if (!isFiltered) {
-        htmlContent += createRowHTML('💰 รวมรายรับ (Total Income)', totalInByMonth, false, true);
-        htmlContent += createRowHTML('💸 รวมรายจ่าย (Total Expense)', totalOutByMonth, true, true);
-        
-        // Net Cash Flow
-        const netByMonth = Array(12).fill(0);
-        for(let i=0; i<12; i++) netByMonth[i] = totalInByMonth[i] - totalOutByMonth[i];
-        
-        const netTotal = netByMonth.reduce((sum, val) => sum + val, 0);
-        
-        let netHtml = `<tr class="ms-net-row"><td>📊 สุทธิ (Net Cash Flow)</td>`;
-        
-        for (let i = 0; i < 12; i++) {
-            const val = netByMonth[i];
-            const colorClass = val > 0 ? 'modal-amount-income' : (val < 0 ? 'modal-amount-expense' : 'ms-empty');
-            if (val !== 0) {
-                const { abbr, full } = fmtMs(val);
-                netHtml += `<td class="${colorClass}" title="${full}">${abbr}</td>`;
-            } else {
-                netHtml += `<td class="${colorClass}">-</td>`;
-            }
-        }
-        const netTotalClass = netTotal > 0 ? 'modal-amount-income' : (netTotal < 0 ? 'modal-amount-expense' : 'ms-empty');
-        const { abbr: netTotalAbbr, full: netTotalFull } = netTotal !== 0 ? fmtMs(netTotal) : { abbr: '-', full: '-' };
-        netHtml += `<td class="col-total ${netTotalClass}" title="${netTotalFull}">${netTotalAbbr}</td></tr>`;
+    htmlContent += createRowHTML('💰 รวมรายรับ (Total Income)', totalInByMonth, false, true);
+    htmlContent += createRowHTML('💸 รวมรายจ่าย (Total Expense)', totalOutByMonth, true, true);
 
-        
-        htmlContent += netHtml;
-    } else if (selectedMsCategories.size > 1) {
-        const isIncomeCat = totalInByMonth.reduce((a, b) => a + b, 0) >= totalOutByMonth.reduce((a, b) => a + b, 0);
-        if (isIncomeCat) {
-            htmlContent += createRowHTML('💰 รวมทั้งหมด (Total)', totalInByMonth, false, true);
+    // Net Cash Flow
+    const netByMonth = Array(12).fill(0);
+    for (let i = 0; i < 12; i++) netByMonth[i] = totalInByMonth[i] - totalOutByMonth[i];
+
+    const netTotal = netByMonth.reduce((sum, val) => sum + val, 0);
+
+    let netHtml = `<tr class="ms-net-row"><td>📊 สุทธิ (Net Cash Flow)</td>`;
+
+    for (let i = 0; i < 12; i++) {
+        const val = netByMonth[i];
+        const colorClass = val > 0 ? 'modal-amount-income' : (val < 0 ? 'modal-amount-expense' : 'ms-empty');
+        if (val !== 0) {
+            const { abbr, full } = fmtMs(val);
+            netHtml += `<td class="${colorClass}" title="${full}">${abbr}</td>`;
         } else {
-            htmlContent += createRowHTML('💸 รวมทั้งหมด (Total)', totalOutByMonth, true, true);
+            netHtml += `<td class="${colorClass}">-</td>`;
         }
     }
-    
+    const netTotalClass = netTotal > 0 ? 'modal-amount-income' : (netTotal < 0 ? 'modal-amount-expense' : 'ms-empty');
+    const { abbr: netTotalAbbr, full: netTotalFull } = netTotal !== 0 ? fmtMs(netTotal) : { abbr: '-', full: '-' };
+    netHtml += `<td class="col-total ${netTotalClass}" title="${netTotalFull}">${netTotalAbbr}</td></tr>`;
+
+
+    htmlContent += netHtml;
+
     // Write to DOM once
     tbody.innerHTML = htmlContent;
+}
+
+// ── SMART STICKY HEADER FOR MONTHLY SUMMARY ──────────────────────────
+function initMonthlySummarySticky() {
+    const scrollContainer = document.querySelector('.main-column-container');
+    const section = document.getElementById('monthly-summary-section');
+    const reportHeader = section ? section.querySelector('.ms-report-header') : null;
+    const table = document.getElementById('monthly-summary-table');
+    const tableContainer = section ? section.querySelector('.monthly-summary-container') : null;
+
+    if (!scrollContainer || !section || !reportHeader || !table || !tableContainer) return;
+
+    // ── Build the floating ghost header ──────────────────────────────────
+    // Remove any existing ghost
+    const existingGhost = document.getElementById('ms-ghost-header');
+    if (existingGhost) existingGhost.remove();
+
+    const ghost = document.createElement('div');
+    ghost.id = 'ms-ghost-header';
+    ghost.style.cssText = `
+        position: fixed;
+        left: 0; right: 0;
+        z-index: 990;
+        overflow: hidden;
+        pointer-events: none;
+        display: none;
+        background: rgba(13, 20, 38, 0.97);
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid rgba(255,255,255,0.05);
+    `;
+
+    // Clone the real thead row
+    const realThead = table.querySelector('thead');
+    const ghostTable = document.createElement('table');
+    ghostTable.className = table.className;
+    ghostTable.style.cssText = 'width: 100%; border-collapse: separate; border-spacing: 0; table-layout: auto;';
+    const ghostThead = realThead.cloneNode(true);
+    ghostTable.appendChild(ghostThead);
+    ghost.appendChild(ghostTable);
+    document.body.appendChild(ghost);
+
+    // ── Sync column widths from real table ───────────────────────────────
+    function syncWidths() {
+        // Sync the overall table width first
+        const realTableWidth = table.getBoundingClientRect().width;
+        ghostTable.style.width = realTableWidth + 'px';
+        ghostTable.style.minWidth = realTableWidth + 'px';
+
+        const realThs = realThead.querySelectorAll('th');
+        const ghostThs = ghostThead.querySelectorAll('th');
+        realThs.forEach((th, i) => {
+            if (ghostThs[i]) {
+                const w = th.getBoundingClientRect().width;
+                ghostThs[i].style.width = w + 'px';
+                ghostThs[i].style.minWidth = w + 'px';
+                ghostThs[i].style.maxWidth = w + 'px';
+            }
+        });
+    }
+
+    // ── Sync horizontal scroll ───────────────────────────────────────────
+    tableContainer.addEventListener('scroll', function () {
+        ghost.scrollLeft = tableContainer.scrollLeft;
+        ghost.style.left = (tableContainer.getBoundingClientRect().left - tableContainer.scrollLeft) + 'px';
+    }, { passive: true });
+
+    // ── Main scroll handler ───────────────────────────────────────────────
+    function updateGhost() {
+        const sectionRect = section.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const theadRect = realThead.getBoundingClientRect();
+        const reportH = reportHeader.offsetHeight;
+
+        // Activate report header sticky
+        if (sectionRect.top <= containerRect.top) {
+            section.classList.add('ms-headers-stuck');
+        } else {
+            section.classList.remove('ms-headers-stuck');
+            ghost.style.display = 'none';
+            return;
+        }
+
+        // Show ghost header only when the real thead has scrolled out of view
+        const reportBottom = containerRect.top + reportH;
+        if (theadRect.bottom <= reportBottom) {
+            // Real thead is hidden behind the report header — show ghost
+            syncWidths();
+            ghost.style.display = 'block';
+            ghost.style.top = reportBottom + 'px';
+            ghost.style.left = tableContainer.getBoundingClientRect().left + 'px';
+            ghost.style.width = tableContainer.getBoundingClientRect().width + 'px';
+            // Sync horizontal scroll position
+            ghost.querySelector('table').style.transform = `translateX(-${tableContainer.scrollLeft}px)`;
+        } else {
+            ghost.style.display = 'none';
+        }
+    }
+
+    scrollContainer.addEventListener('scroll', updateGhost, { passive: true });
+    tableContainer.addEventListener('scroll', updateGhost, { passive: true });
+    
+    // ── Auto-sync widths when table changes size (expansion/content) ─────
+    const resizeObserver = new ResizeObserver(() => {
+        syncWidths();
+        updateGhost();
+    });
+    resizeObserver.observe(table);
+    
+    window.addEventListener('resize', () => { syncWidths(); updateGhost(); }, { passive: true });
 }
 
 function exportMonthlySummaryPdf() {
     const table = document.getElementById('monthly-summary-table');
     if (!table) return;
-    
+
     const displayInput = document.getElementById('ms-category-search-display');
     const catDisplay = displayInput ? displayInput.value : 'ทุกหมวดหมู่ (All)';
     const title = `รายงานสรุปยอดรายเดือน (Monthly Summary) - ${catDisplay}`;
@@ -3257,7 +3359,7 @@ let _tooltipTimer = null;
 
 function _setupSidebarTooltips() {
     document.querySelectorAll('.sidebar-nav .nav-link[data-tooltip]').forEach(link => {
-        link.addEventListener('mouseenter', function(e) {
+        link.addEventListener('mouseenter', function (e) {
             const nav = document.getElementById('sidebar-nav');
             if (!nav || !nav.classList.contains('collapsed')) return;
             const rect = this.getBoundingClientRect();
@@ -3266,14 +3368,14 @@ function _setupSidebarTooltips() {
             clearTimeout(_tooltipTimer);
             _sidebarTooltip.classList.add('visible');
         });
-        link.addEventListener('mouseleave', function() {
+        link.addEventListener('mouseleave', function () {
             _tooltipTimer = setTimeout(() => _sidebarTooltip.classList.remove('visible'), 80);
         });
     });
 }
 
 function toggleLeftSidebar() {
-    const nav    = document.getElementById('sidebar-nav');
+    const nav = document.getElementById('sidebar-nav');
     const layout = document.querySelector('.app-layout');
     if (!nav || !layout) return;
     const isCollapsed = nav.classList.toggle('collapsed');
@@ -3345,5 +3447,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Auto-Refresh ทุกๆ 10 นาที (เพื่อป้องกันอาการวูบวาบ)
     setInterval(() => {
         if (typeof refreshData === 'function') refreshData(true);
-    }, 600000); 
+    }, 600000);
 });
