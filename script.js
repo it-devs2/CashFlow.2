@@ -1818,8 +1818,13 @@ function renderBankDetailRows(rows) {
                     const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
 
                     subTr.innerHTML = `
-                        <td colspan="2" style="padding-left: 50px; color:#94a3b8; font-size:12px;">${displayDate}</td>
-                        <td style="color:#cbd5e1; font-size:12px;" title="${desc}">${desc}</td>
+                        <td style="color:#64748b; font-size:11px; text-align:center; white-space:nowrap;">
+                            <span>${displayDate}</span>
+                        </td>
+                        <td style="padding-left: 20px;">
+                            <span style="color:#cbd5e1; font-size:12px;" title="${desc}">${desc}</span>
+                        </td>
+                        <td></td>
                         <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">${cashIn > 0 ? '฿' + checkValue(cashIn) : '-'}</td>
                         <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">${cashOut > 0 ? '฿' + checkValue(cashOut) : '-'}</td>
                     `;
@@ -2132,8 +2137,13 @@ function renderModalRows(rows) {
                     const amount = getRowAmount(row, _modalType);
 
                     subTr.innerHTML = `
-                        <td colspan="2" style="padding-left: 50px; color:#94a3b8; font-size:12px;">${displayDate}</td>
-                        <td style="color:#cbd5e1; font-size:12px;" title="${desc} | ${creditor}">${desc} - ${creditor}</td>
+                        <td style="color:#64748b; font-size:11px; text-align:center; white-space:nowrap;">
+                            <span>${displayDate}</span>
+                        </td>
+                        <td style="padding-left: 20px;">
+                            <span style="color:#cbd5e1; font-size:12px;" title="${desc} | ${creditor}">${desc} ${creditor !== '-' ? ' - ' + creditor : ''}</span>
+                        </td>
+                        <td></td>
                         <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">฿${checkValue(amount)}</td>
                     `;
                     fragment.appendChild(subTr);
@@ -2235,11 +2245,24 @@ function exportModalPdf(type) {
     const mode = isBank ? _bankModalViewMode : _detailModalViewMode;
 
     const footerCount = document.getElementById(isBank ? 'bank-modal-row-count' : 'modal-row-count').textContent;
-    const footerTotal = document.getElementById(isBank ? 'bank-modal-totals' : 'modal-total-amount').innerText;
+    const footerTotal = document.getElementById(isBank ? 'bank-modal-totals' : 'modal-total-amount').innerText.replace(/฿/g, '');
 
     // Clone the visible table including all rendered rows
     const tableClone = sourceTable.cloneNode(true);
     tableClone.removeAttribute('id');
+
+    // Force PDF-friendly styles on cloned sub-rows
+    const subTds = tableClone.querySelectorAll('.modal-sub-row td');
+    subTds.forEach(td => {
+        td.style.color = '#334155'; // Darker text for readability in print
+        const spans = td.querySelectorAll('span');
+        spans.forEach(span => {
+            span.style.color = ''; // Remove inline color from spans so they inherit td color
+        });
+    });
+    const expandBtns = tableClone.querySelectorAll('.btn-ms-expand');
+    expandBtns.forEach(btn => btn.remove());
+
 
     // Inject colgroup for precise column widths to avoid wrapping (A4 portrait ~190mm usable)
     // Different widths for group vs detail view
@@ -2293,6 +2316,9 @@ function exportModalPdf(type) {
 
     // Insert colgroup right after <table tag
     let tableHtml = tableClone.outerHTML.replace(/^<table[^>]*>/, match => match + colgroupHtml);
+    
+    // Remove all '฿' symbols from the exported HTML
+    tableHtml = tableHtml.replace(/฿/g, '');
 
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) { alert('กรุณาอนุญาต Pop-up สำหรับเว็บนี้ก่อนครับ'); return; }
@@ -2312,9 +2338,17 @@ function exportModalPdf(type) {
   .hdr p  { font-size: 8pt; color: #555; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 7pt; table-layout: fixed; }
   thead th { background: #1e3a5f; color: #fff; padding: 7px 5px; text-align: left; font-weight: 700; border: 1px solid #1e3a5f; white-space: nowrap; overflow: hidden; font-size: 7pt; }
-  tbody tr:nth-child(even) { background: #f0f4f8; }
-  tbody tr:nth-child(odd)  { background: #fff; }
-  tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111; overflow-wrap: break-word; white-space: normal; vertical-align: top; line-height: 1.2; }
+  tbody tr:nth-child(even) { background: #f0f4f8 !important; }
+  tbody tr:nth-child(odd)  { background: #fff !important; }
+  tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111 !important; overflow-wrap: break-word; white-space: normal; vertical-align: top; line-height: 1.2; }
+  
+  /* Sub-rows styling for PDF to override inline colors */
+  .modal-sub-row td { background: #f8fafc !important; color: #334155 !important; font-size: 7pt !important; border-top: 1px dashed #cbd5e1 !important; }
+  .modal-sub-row td.numeric { color: #0f172a !important; font-weight: bold !important; }
+  
+  /* Hide the expand button in PDF */
+  .btn-ms-expand { display: none !important; }
+
   .numeric { text-align: right; font-family: monospace; white-space: nowrap; }
   thead th.numeric { text-align: right; }
   .modal-amount-income { color: #16a34a !important; font-weight: 700; }
