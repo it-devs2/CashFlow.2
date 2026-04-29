@@ -1756,7 +1756,7 @@ function renderBankDetailRows(rows) {
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
-            if (!grouped[cat]) grouped[cat] = { count: 0, in: 0, out: 0 };
+            if (!grouped[cat]) grouped[cat] = { count: 0, in: 0, out: 0, items: [] };
             // ✅ FIX: ใช้ค่า Cash In / Cash Out ตรงๆ จาก row (ตรงกับ Google Sheets)
             const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
             const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
@@ -1764,6 +1764,7 @@ function renderBankDetailRows(rows) {
             grouped[cat].count++;
             grouped[cat].in += cashIn;
             grouped[cat].out += cashOut;
+            grouped[cat].items.push(row);
         });
 
         const sortedKeys = Object.keys(grouped).sort((a, b) => (grouped[b].in + grouped[b].out) - (grouped[a].in + grouped[a].out));
@@ -1775,15 +1776,56 @@ function renderBankDetailRows(rows) {
             totalOut += item.out;
             totalCount += item.count;
 
+            const hasSubRows = item.items.length > 0;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${i + 1}</td>
-                <td>${cat}</td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${hasSubRows ? `<button class="btn-ms-expand" onclick="toggleModalGroupExpand(event, 'bank-cat-${i}')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:4px; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>` : ''}
+                        <span>${cat}</span>
+                    </div>
+                </td>
                 <td>${item.count} รายการ</td>
                 <td class="numeric modal-amount-income">${item.in > 0 ? '฿' + checkValue(item.in) : '-'}</td>
                 <td class="numeric modal-amount-expense">${item.out > 0 ? '฿' + checkValue(item.out) : '-'}</td>
             `;
             tbody.appendChild(tr);
+
+            if (hasSubRows) {
+                // Sort sub-items by amount descending (using max of cashIn and cashOut)
+                const sortedSubItems = [...item.items].sort((a, b) => {
+                    const amtA = Math.max(Number(a['Cash In'] || a.cashIn) || 0, Number(a['Cash Out'] || a.cashOut) || 0);
+                    const amtB = Math.max(Number(b['Cash In'] || b.cashIn) || 0, Number(b['Cash Out'] || b.cashOut) || 0);
+                    return amtB - amtA;
+                });
+                
+                sortedSubItems.forEach(row => {
+                    const subTr = document.createElement('tr');
+                    subTr.className = `modal-sub-row bank-cat-${i}`;
+                    subTr.style.display = 'none';
+                    subTr.style.background = 'rgba(255,255,255,0.02)';
+                    
+                    const rawDate = row['Date'] || row.date || '';
+                    let displayDate = rawDate;
+                    try {
+                        const d = parseDateSafe(rawDate);
+                        if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    } catch (e) { }
+
+                    const desc = row['Description'] || row.description || '-';
+                    const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
+                    const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
+
+                    subTr.innerHTML = `
+                        <td colspan="2" style="padding-left: 50px; color:#94a3b8; font-size:12px;">${displayDate}</td>
+                        <td style="color:#cbd5e1; font-size:12px;" title="${desc}">${desc}</td>
+                        <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">${cashIn > 0 ? '฿' + checkValue(cashIn) : '-'}</td>
+                        <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">${cashOut > 0 ? '฿' + checkValue(cashOut) : '-'}</td>
+                    `;
+                    tbody.appendChild(subTr);
+                });
+            }
         });
         document.getElementById('bank-modal-row-count').textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
@@ -2002,6 +2044,24 @@ function openDetailModal(cardId) {
 
 let _detailModalViewMode = 'all';
 
+function toggleModalGroupExpand(e, catClass) {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    const isExpanded = btn.textContent === '-';
+    
+    // Toggle sub rows
+    const subRows = document.querySelectorAll(`.${catClass}`);
+    subRows.forEach(row => {
+        row.style.display = isExpanded ? 'none' : 'table-row';
+    });
+    
+    // Update button state
+    btn.textContent = isExpanded ? '+' : '-';
+    btn.style.background = isExpanded ? 'rgba(255,255,255,0.05)' : 'rgba(56,189,248,0.2)';
+    btn.style.borderColor = isExpanded ? 'rgba(255,255,255,0.1)' : 'rgba(56,189,248,0.4)';
+    btn.style.color = isExpanded ? '#fff' : '#38bdf8';
+}
+
 function renderModalRows(rows) {
     const thead = document.getElementById('modal-table-head');
     const tbody = document.getElementById('modal-table-body');
@@ -2019,9 +2079,10 @@ function renderModalRows(rows) {
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
-            if (!grouped[cat]) grouped[cat] = { count: 0, sum: 0 };
+            if (!grouped[cat]) grouped[cat] = { count: 0, sum: 0, items: [] };
             grouped[cat].count++;
             grouped[cat].sum += getRowAmount(row, _modalType);
+            grouped[cat].items.push(row);
         });
 
         const sortedKeys = Object.keys(grouped).sort((a, b) => grouped[b].sum - grouped[a].sum);
@@ -2033,14 +2094,51 @@ function renderModalRows(rows) {
             totalCount += item.count;
             const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
 
+            const hasSubRows = item.items.length > 0;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${i + 1}</td>
-                <td>${cat}</td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${hasSubRows ? `<button class="btn-ms-expand" onclick="toggleModalGroupExpand(event, 'modal-cat-${i}')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:4px; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer;">+</button>` : ''}
+                        <span>${cat}</span>
+                    </div>
+                </td>
                 <td>${item.count} รายการ</td>
                 <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
             `;
             fragment.appendChild(tr);
+
+            if (hasSubRows) {
+                // Sort sub-items by amount descending
+                const sortedSubItems = [...item.items].sort((a, b) => {
+                    return getRowAmount(b, _modalType) - getRowAmount(a, _modalType);
+                });
+                sortedSubItems.forEach(row => {
+                    const subTr = document.createElement('tr');
+                    subTr.className = `modal-sub-row modal-cat-${i}`;
+                    subTr.style.display = 'none';
+                    subTr.style.background = 'rgba(255,255,255,0.02)';
+                    
+                    const rawDate = row['Date'] || row.date || '';
+                    let displayDate = rawDate;
+                    try {
+                        const d = parseDateSafe(rawDate);
+                        if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    } catch (e) { }
+
+                    const desc = row['Description'] || row.description || '-';
+                    const creditor = row['Name'] || row.name || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+                    const amount = getRowAmount(row, _modalType);
+
+                    subTr.innerHTML = `
+                        <td colspan="2" style="padding-left: 50px; color:#94a3b8; font-size:12px;">${displayDate}</td>
+                        <td style="color:#cbd5e1; font-size:12px;" title="${desc} | ${creditor}">${desc} - ${creditor}</td>
+                        <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">฿${checkValue(amount)}</td>
+                    `;
+                    fragment.appendChild(subTr);
+                });
+            }
         });
 
         tbody.appendChild(fragment);
@@ -2238,94 +2336,6 @@ ${tableHtml}
     printWindow.document.close();
 }
 
-
-function renderModalRows(rows) {
-    const tbody = document.getElementById('modal-table-body');
-    const thead = document.getElementById('modal-table-head');
-    tbody.innerHTML = '';
-    let total = 0;
-
-    if (_detailModalViewMode === 'group') {
-        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>จำนวนรายการ</th><th class="numeric">ยอดรวม (฿)</th></tr>`;
-
-        const grouped = {};
-        rows.forEach(row => {
-            const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
-            if (!grouped[cat]) grouped[cat] = { count: 0, sum: 0 };
-            grouped[cat].count++;
-            grouped[cat].sum += getRowAmount(row, _modalType);
-        });
-
-        const sortedKeys = Object.keys(grouped).sort((a, b) => grouped[b].sum - grouped[a].sum);
-        let totalCount = 0;
-
-        sortedKeys.forEach((cat, i) => {
-            const item = grouped[cat];
-            total += item.sum;
-            totalCount += item.count;
-            const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${i + 1}</td>
-                <td>${cat}</td>
-                <td>${item.count} รายการ</td>
-                <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        const countEl = document.getElementById('modal-row-count');
-        if (countEl) countEl.textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
-    } else {
-        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
-
-        rows.forEach((row, i) => {
-            const rawDate = row['Date'] || row.date || '';
-            let displayDate = rawDate;
-            try {
-                const d = new Date(rawDate);
-                if (!isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            } catch (e) { }
-
-            const desc = row['Description'] || row.description || '-';
-            // Prioritize 'Name' (Column H) over generic Party labels
-            const creditor = row['Name'] || row.name || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
-            const bank = row['Bank'] || row.bank || '-';
-            const category = row['Category'] || row.category || '-';
-            const status = row['Status'] || row.status || '-';
-
-            const numAmt = getRowAmount(row, _modalType);
-            total += numAmt;
-
-            const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${i + 1}</td>
-                <td>${displayDate}</td>
-                <td title="${desc}">${desc}</td>
-                <td title="${creditor}">${creditor}</td>
-                <td>${bank}</td>
-                <td>${category}</td>
-                <td>${status}</td>
-                <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-        const countEl = document.getElementById('modal-row-count');
-        if (countEl) countEl.textContent = `${rows.length} รายการ`;
-    }
-
-    const totalEl = document.getElementById('modal-total-amount');
-    if (totalEl) {
-        const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
-        totalEl.innerHTML = `ยอดรวม: <span class="${amtClass}">฿${checkValue(total)}</span>`;
-    }
-
-    // Always update bank summary
-    if (typeof renderModalBankSummary === 'function') renderModalBankSummary(rows);
-}
 
 function switchModalTab(tab) {
     _modalTab = tab;
@@ -3212,7 +3222,7 @@ function initMonthlySummarySticky() {
     ghost.style.cssText = `
         position: fixed;
         left: 0; right: 0;
-        z-index: 990;
+        z-index: 90;
         overflow: hidden;
         pointer-events: none;
         display: none;
@@ -3233,11 +3243,6 @@ function initMonthlySummarySticky() {
 
     // ── Sync column widths from real table ───────────────────────────────
     function syncWidths() {
-        // Sync the overall table width first
-        const realTableWidth = table.getBoundingClientRect().width;
-        ghostTable.style.width = realTableWidth + 'px';
-        ghostTable.style.minWidth = realTableWidth + 'px';
-
         const realThs = realThead.querySelectorAll('th');
         const ghostThs = ghostThead.querySelectorAll('th');
         realThs.forEach((th, i) => {
@@ -3290,15 +3295,7 @@ function initMonthlySummarySticky() {
 
     scrollContainer.addEventListener('scroll', updateGhost, { passive: true });
     tableContainer.addEventListener('scroll', updateGhost, { passive: true });
-    
-    // ── Auto-sync widths when table changes size (expansion/content) ─────
-    const resizeObserver = new ResizeObserver(() => {
-        syncWidths();
-        updateGhost();
-    });
-    resizeObserver.observe(table);
-    
-    window.addEventListener('resize', () => { syncWidths(); updateGhost(); }, { passive: true });
+    window.addEventListener('resize', function () { syncWidths(); updateGhost(); }, { passive: true });
 }
 
 function exportMonthlySummaryPdf() {

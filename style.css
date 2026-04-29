@@ -2819,7 +2819,8 @@ body.hide-balances .net-balance-amount {
 .modal-box {
     background: linear-gradient(180deg, #111b2e 0%, #0c1424 100%);
     border: 1px solid rgba(56, 189, 248, 0.12);
-    max-width: 1180px;
+    width: 96vw;
+    max-width: 1600px;
     max-height: 90vh;
     box-shadow:
         0 40px 100px rgba(0, 0, 0, 0.7),
@@ -3763,8 +3764,8 @@ body.hide-balances .sidebar-bank-total-badge span {
     background: #0d1520;
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 20px;
-    width: 100%;
-    max-width: 1150px;
+    width: 96vw;
+    max-width: 1600px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
