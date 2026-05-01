@@ -1133,12 +1133,12 @@ function updateTransactionChart() {
         nameMap[name] += amt;
     });
 
-    // 3. Filter out zero amounts, sort by descending value, Top 10
+    // 3. Filter out zero amounts, sort by descending value, Top 15
     let nameList = Object.entries(nameMap)
         .filter(([, total]) => total > 0)
         .sort(([, a], [, b]) => b - a);
 
-    const TOP = 10;
+    const TOP = 15;
     let othersSum = 0;
     if (nameList.length > TOP) {
         othersSum = nameList.slice(TOP).reduce((s, [, v]) => s + v, 0);
@@ -1183,8 +1183,6 @@ function updateTransactionChart() {
     // คำนวณความสูงกราฟตามจำนวนข้อมูล (บริษัทละ 42px)
     const chartHeight = Math.max(450, names.length * 42);
 
-    // Helper: reposition ApexCharts horizontal-bar dataLabels so they always
-    // sit to the right of each bar, regardless of bar length.
     const repositionLabels = () => {
         const chartRoot = document.querySelector('#transaction-chart');
         if (!chartRoot) return;
@@ -2033,6 +2031,17 @@ function openDetailModal(cardId) {
 
     const searchEl = document.getElementById('modal-search');
     if (searchEl) searchEl.value = '';
+
+    // Show/hide menu based on modal source
+    const modalTabs = document.querySelector('.modal-tabs');
+    const modalViewToggle = document.querySelector('.modal-view-toggle');
+    if (_isModalBankSource) {
+        if (modalTabs) modalTabs.style.display = 'none';
+        if (modalViewToggle) modalViewToggle.style.display = 'none';
+    } else {
+        if (modalTabs) modalTabs.style.display = '';
+        if (modalViewToggle) modalViewToggle.style.display = '';
+    }
 
     // Reset tab to list
     if (typeof switchModalTab === 'function') switchModalTab('list');
