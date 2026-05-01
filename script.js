@@ -57,11 +57,9 @@ function normalizeName(name) {
     let n = name.toString().trim();
     if (!n) return '';
 
-    // 1. Remove common prefixes
+    // 1. Remove common prefixes (Keep personal titles like นาย, นางสาว)
     const prefixes = [
-        /^บจก\.\s*/i, /^บริษัท\s*/i, /^หจก\.\s*/i, /^ห้างหุ้นส่วนจำกัด\s*/i,
-        /^นาย\s*/i, /^นาง\s*/i, /^นางสาว\s*/i, /^น\.ส\.\s*/i,
-        /^Mr\.\s*/i, /^Mrs\.\s*/i, /^Ms\.\s*/i
+        /^บจก\.\s*/i, /^บริษัท\s*/i, /^หจก\.\s*/i, /^ห้างหุ้นส่วนจำกัด\s*/i
     ];
     prefixes.forEach(p => n = n.replace(p, ''));
 
@@ -1127,7 +1125,7 @@ function updateTransactionChart() {
     filtered.forEach(row => {
         const rawName = (row['Name'] || row.name || '').toString().trim();
         const name = normalizeName(rawName);
-        if (!name) return;
+        if (!name || name.toLowerCase().startsWith('transfer')) return;
 
         const rType = getRowType(row);
         let amt = getRowAmount(row, rType);
@@ -2735,7 +2733,8 @@ function initTcCategoryAutocomplete() {
     if (btnClear) {
         btnClear.addEventListener('click', () => {
             currentMatches.forEach(name => selectedTcCategories.delete(name));
-            renderMsList(searchInput.value.trim());
+            searchInput.value = ''; // Clear search input
+            renderMsList('');
             updateTcCategorySelectText();
             updateTransactionChart();
         });
@@ -2894,7 +2893,8 @@ function initCreditorAutocomplete() {
 
     btnClear.addEventListener('click', () => {
         currentMatches.forEach(name => selectedCreditors.delete(name));
-        renderMsList(searchInput.value.trim());
+        searchInput.value = ''; // Clear search input
+        renderMsList('');
         updateCreditorSelectText();
         applyFilters();
     });
@@ -3032,7 +3032,9 @@ function msCatSelectAll() {
 
 function msCatClear() {
     selectedMsCategories.clear();
-    renderMsCategoryList(document.getElementById('ms-category-search-input').value);
+    const searchInput = document.getElementById('ms-category-search-input');
+    if (searchInput) searchInput.value = '';
+    renderMsCategoryList('');
     renderMonthlySummaryTable();
 }
 
