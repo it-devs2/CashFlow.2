@@ -1133,12 +1133,12 @@ function updateTransactionChart() {
         nameMap[name] += amt;
     });
 
-    // 3. Filter out zero amounts, sort by descending value, Top 15
+    // 3. Filter out zero amounts, sort by descending value, Top 10
     let nameList = Object.entries(nameMap)
         .filter(([, total]) => total > 0)
         .sort(([, a], [, b]) => b - a);
 
-    const TOP = 15;
+    const TOP = 10;
     let othersSum = 0;
     if (nameList.length > TOP) {
         othersSum = nameList.slice(TOP).reduce((s, [, v]) => s + v, 0);
@@ -1168,8 +1168,6 @@ function updateTransactionChart() {
     if (totalAmountEl) totalAmountEl.textContent = '฿' + grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (totalCountEl) totalCountEl.textContent = filtered.length.toLocaleString();
 
-    // Summary elements are now integrated into the table footer.
-
     // Show "no data" message
     const chartEl = document.querySelector('#transaction-chart');
     if (!chartEl) return;
@@ -1182,7 +1180,7 @@ function updateTransactionChart() {
         return;
     }
 
-    // คำนวณความสูงกราฟตามจำนวนข้อมูล (บริษัทละ 40px)
+    // คำนวณความสูงกราฟตามจำนวนข้อมูล (บริษัทละ 42px)
     const chartHeight = Math.max(450, names.length * 42);
 
     // Helper: reposition ApexCharts horizontal-bar dataLabels so they always
@@ -1190,8 +1188,6 @@ function updateTransactionChart() {
     const repositionLabels = () => {
         const chartRoot = document.querySelector('#transaction-chart');
         if (!chartRoot) return;
-        // ApexCharts renders each bar in g.apexcharts-bar-series > g.apexcharts-series > path.apexcharts-bar-area
-        // and each label in g.apexcharts-datalabels > text.apexcharts-datalabel
         const bars = chartRoot.querySelectorAll('path.apexcharts-bar-area');
         const labels = chartRoot.querySelectorAll('g.apexcharts-datalabels text.apexcharts-datalabel');
         if (!bars.length || !labels.length) return;
@@ -1200,10 +1196,9 @@ function updateTransactionChart() {
             if (!label) return;
             try {
                 const bbox = bar.getBBox();
-                // place label 10px to the right of bar end
                 label.setAttribute('x', bbox.x + bbox.width + 10);
                 label.setAttribute('text-anchor', 'start');
-            } catch (e) { /* ignore */ }
+            } catch (e) { }
         });
     };
 
@@ -1249,12 +1244,8 @@ function updateTransactionChart() {
             },
             offsetX: 8,
             offsetY: 1,
-            background: {
-                enabled: false
-            },
-            dropShadow: {
-                enabled: false
-            }
+            background: { enabled: false },
+            dropShadow: { enabled: false }
         },
         xaxis: {
             categories: names,
@@ -1276,10 +1267,7 @@ function updateTransactionChart() {
         grid: {
             borderColor: 'rgba(255,255,255,0.05)',
             strokeDashArray: 4,
-            padding: {
-                right: 250, // กั้นพื้นที่ขวาไว้มหาศาล 250px
-                left: 20
-            }
+            padding: { right: 250, left: 20 }
         },
         tooltip: {
             theme: 'dark',
@@ -1552,15 +1540,12 @@ function renderBankBalances() {
         const logoUrl = getBankLogoUrl(bankName);
         const safeBankName = bankName.replace(/'/g, "\\'");
 
-        // ตัดเลขบัญชีให้สั้นลงสำหรับแสดงผล
-        const shortAcct = accountNum ? (accountNum.length > 10 ? accountNum.substring(0, 7) + '...' : accountNum) : '';
-
         card.innerHTML = `
             <div class="sidebar-bank-card-top">
                 <img src="${logoUrl}" alt="${bankName}" class="sidebar-bank-logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzhiZGY4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMiIgeT0iNyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjE0IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48cGF0aCBkPSJNMTYgMjFWNWEyIDIgMCAwIDAtMi0yaC00YTIgMiAwIDAgMC0yIDJ2MTYiPjwvcGF0aD48L3N2Zz4='">
                 <div class="sidebar-bank-info">
                     <span class="sidebar-bank-name">${bankName}</span>
-                    ${accountNum ? `<span class="sidebar-bank-account" title="เลขที่บัญชี: ${accountNum}">เลขที่บัญชี: ${shortAcct}</span>` : ''}
+                    ${accountNum ? `<span class="sidebar-bank-account" title="เลขที่บัญชี: ${accountNum}">เลขที่บัญชี: ${accountNum}</span>` : ''}
                 </div>
             </div>
             <div class="sidebar-bank-balance" ${balance < 0 ? 'style="color: #ef4444;"' : ''}>฿${checkValue(balance)}</div>
@@ -2389,6 +2374,28 @@ function exportModalPdf(type) {
     // Remove all '฿' symbols from the exported HTML
     let tableHtml = tableClone.outerHTML.replace(/฿/g, '');
 
+    let pdfExtraStyles = '';
+    if (!isBank && typeof _isModalBankSource !== 'undefined' && _isModalBankSource) {
+        // Selected Balance: 1=#, 2=Bank, 3=Account No, 4=Balance
+        pdfExtraStyles = `
+            thead th:nth-child(2), tbody td:nth-child(2),
+            thead th:nth-child(3), tbody td:nth-child(3) { text-align: left !important; }
+        `;
+    } else if (mode === 'group') {
+        // Group Summary: 1=#, 2=Category/Name, 3=Count, 4=Cash In, 5=Cash Out
+        pdfExtraStyles = `
+            thead th:nth-child(2), tbody td:nth-child(2) { text-align: left !important; }
+        `;
+    } else {
+        // Detail View: 3=Desc, 4=Creditor, 5=Bank, 6=Category
+        pdfExtraStyles = `
+            thead th:nth-child(3), tbody td:nth-child(3),
+            thead th:nth-child(4), tbody td:nth-child(4),
+            thead th:nth-child(5), tbody td:nth-child(5),
+            thead th:nth-child(6), tbody td:nth-child(6) { text-align: left !important; }
+        `;
+    }
+
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) { alert('กรุณาอนุญาต Pop-up สำหรับเว็บนี้ก่อนครับ'); return; }
 
@@ -2411,7 +2418,7 @@ function exportModalPdf(type) {
   tbody tr:nth-child(odd)  { background: #fff !important; }
   tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111 !important; overflow-wrap: break-word; white-space: normal; vertical-align: middle; line-height: 1.3; text-align: center; }
   tbody td span { color: #111 !important; } /* Force spans (like bank names) to be black */
-  
+  ${pdfExtraStyles}
   /* Sub-rows styling for PDF to override inline colors */
   .modal-sub-row td { background: #f8fafc !important; color: #334155 !important; font-size: 7pt !important; text-align: center !important; }
   .modal-sub-row td:nth-child(2) { padding-left: 20px !important; text-align: left !important; }
