@@ -19,7 +19,7 @@
     <div id="global-loader" class="global-loader hidden">
         <div class="loader-content">
             <div class="loader-spinner"></div>
-            <h2>กำลังดึงข้อมูล...</h2>
+            <h2>&#3585;&#3635;&#3621;&#3633;&#3591;&#3604;&#3638;&#3591;&#3586;&#3657;&#3629;&#3617;&#3641;&#3621;...</h2>
         </div>
     </div>
 
@@ -32,9 +32,10 @@
                     <div class="brand-logo">💰</div>
                     <span class="brand-text">CASHFLOW</span>
                 </div>
-                <button class="sidebar-collapse-btn" onclick="toggleLeftSidebar()" title="หุบ/ขยาย เมนู">
-                    <svg class="collapse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M15 18l-6-6 6-6"/>
+                <button class="sidebar-collapse-btn" onclick="toggleLeftSidebar()" title="&#3627;&#3640;&#3610;/&#3586;&#3618;&#3634;&#3618; &#3648;&#3617;&#3609;&#3641;">
+                    <svg class="collapse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5">
+                        <path d="M15 18l-6-6 6-6" />
                     </svg>
                 </button>
             </div>
@@ -55,10 +56,6 @@
             </nav>
 
             <div class="sidebar-footer-wrap">
-                <button class="btn-refresh-sidebar" onclick="window.open(GOOGLE_SHEETS_URL, '_blank')" style="margin-bottom: 8px;">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-label">Google Sheets</span>
-                </button>
                 <button class="btn-refresh-sidebar" onclick="refreshData()">
                     <span class="nav-icon">🔄</span>
                     <span class="nav-label">Refresh Data</span>
@@ -68,33 +65,33 @@
         </aside>
 
         <div class="dashboard-container">
-            <!-- คอนเทนเนอร์ฝั่งซ้าย (Header + Main Content) -->
+            <!-- &#3588;&#3629;&#3609;&#3648;&#3607;&#3609;&#3648;&#3609;&#3629;&#3619;&#3660;&#3613;&#3633;&#3656;&#3591;&#3595;&#3657;&#3634;&#3618; (Header + Main Content) -->
             <div class="main-column-container">
                 <!-- Header -->
                 <header class="dashboard-header">
                     <div class="header-top-row">
                         <div class="header-title-section">
                             <h1>CashFlow Dashboard</h1>
-                            <p class="header-subtitle" id="last-sync-time-header">อัปเดตล่าสุด: --:--</p>
+                            <p class="header-subtitle" id="last-sync-time-header">&#3629;&#3633;&#3611;&#3648;&#3604;&#3605;&#3621;&#3656;&#3634;&#3626;&#3640;&#3604;: --:--</p>
                         </div>
                     </div>
                     <div class="header-left">
                         <div class="header-filters" id="header-filters">
                             <div class="hfilter-group">
-                                <label>🔍 เจ้าหนี้</label>
+                                <label>🔍 &#3648;&#3592;&#3657;&#3634;&#3627;&#3609;&#3637;&#3657;</label>
                                 <div class="multi-select-wrapper">
                                     <div class="search-trigger-box">
                                         <div class="input-ghost-wrapper">
                                             <input type="text" id="filter-creditor-search"
-                                                placeholder="ค้นหาเจ้าหนี้..." autocomplete="off">
+                                                placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3648;&#3592;&#3657;&#3634;&#3627;&#3609;&#3637;&#3657;..." autocomplete="off">
                                             <span id="creditor-ghost-text" class="ghost-text"></span>
                                         </div>
-                                        <span id="creditor-selected-count" class="selected-badge">ทั้งหมด</span>
+                                        <span id="creditor-selected-count" class="selected-badge">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
                                     </div>
                                     <div class="ms-dropdown" id="creditor-dropdown">
                                         <div class="ms-actions">
-                                            <div class="ms-action-btn" id="btn-ms-select-all">✅ เลือกทั้งหมด</div>
-                                            <div class="ms-action-btn" id="btn-ms-clear">❌ ล้าง</div>
+                                            <div class="ms-action-btn" id="btn-ms-select-all">✅ &#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</div>
+                                            <div class="ms-action-btn" id="btn-ms-clear">❌ &#3621;&#3657;&#3634;&#3591;</div>
                                         </div>
                                         <div class="ms-list" id="creditor-suggestions">
                                             <!-- Suggestions injected by JS -->
@@ -103,44 +100,44 @@
                                 </div>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-category">🗂️ หมวดหมู่</label>
+                                <label for="filter-category">🗂️ &#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;</label>
                                 <select id="filter-category">
-                                    <option value="All">ทั้งหมด</option>
+                                    <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
                                 </select>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-group">👥 กลุ่ม</label>
+                                <label for="filter-group">👥 &#3585;&#3621;&#3640;&#3656;&#3617;</label>
                                 <select id="filter-group">
-                                    <option value="All">ทั้งหมด</option>
+                                    <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
                                 </select>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-party-type">📑 ประเภท</label>
+                                <label for="filter-party-type">📑 &#3611;&#3619;&#3632;&#3648;&#3616;&#3607;</label>
                                 <select id="filter-party-type">
-                                    <option value="All">ทั้งหมด</option>
-                                    <option value="Vendor">Expense (รายจ่าย)</option>
-                                    <option value="Customer">Income (รายรับ)</option>
+                                    <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
+                                    <option value="Vendor">Expense (&#3619;&#3634;&#3618;&#3592;&#3656;&#3634;&#3618;)</option>
+                                    <option value="Customer">Income (&#3619;&#3634;&#3618;&#3619;&#3633;&#3610;)</option>
                                 </select>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-day">📅 วัน</label>
+                                <label for="filter-day">📅 &#3623;&#3633;&#3609;</label>
                                 <select id="filter-day">
-                                    <option value="All">ทั้งหมด</option>
+                                    <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
                                 </select>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-month">🗓️ เดือน</label>
+                                <label for="filter-month">🗓️ &#3648;&#3604;&#3639;&#3629;&#3609;</label>
                                 <select id="filter-month">
-                                    <option value="All">ทั้งหมด</option>
+                                    <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
                                 </select>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-year">📆 ปี</label>
+                                <label for="filter-year">📆 &#3611;&#3637;</label>
                                 <select id="filter-year">
-                                    <option value="All">ทั้งหมด</option>
+                                    <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
                                 </select>
                             </div>
-                            <button id="btn-reset-filters" class="btn-reset">↺ รีเซ็ต</button>
+                            <button id="btn-reset-filters" class="btn-reset">↺ &#3619;&#3637;&#3648;&#3595;&#3655;&#3605;</button>
                         </div>
                     </div>
                 </header>
@@ -153,17 +150,18 @@
                         <div class="card glass income-card">
                             <h3>Income (Actual)</h3>
                             <p id="income-actual" class="amount">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('income-actual')">📋 รายละเอียด</button>
+                            <button class="btn-detail" onclick="openDetailModal('income-actual')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                         <div class="card glass expense-card">
                             <h3>Expense (Actual)</h3>
                             <p id="expense-actual" class="amount">0.00</p>
                             <button class="btn-detail" onclick="openDetailModal('expense-actual')">📋
-                                รายละเอียด</button>
+                                &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                         <div class="card glass" style="border-style: solid; border-color: rgba(245, 158, 11, 0.4);">
                             <h3 style="color: #f59e0b;">Selected Balance</h3>
                             <p id="selected-balance" class="amount" style="color: #f59e0b;">0.00</p>
+                            <button class="btn-detail" onclick="openDetailModal('selected-balance')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                     </section>
 
@@ -172,12 +170,12 @@
                         <div class="card glass plan-card">
                             <h3>Income (Plan)</h3>
                             <p id="income-plan" class="amount">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('income-plan')">📋 รายละเอียด</button>
+                            <button class="btn-detail" onclick="openDetailModal('income-plan')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                         <div class="card glass plan-card expense-plan-card">
                             <h3>Expense (Plan)</h3>
                             <p id="expense-plan" class="amount">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('expense-plan')">📋 รายละเอียด</button>
+                            <button class="btn-detail" onclick="openDetailModal('expense-plan')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                         <div class="card glass plan-card net-plan-card"
                             style="border-style: solid; border-color: rgba(56, 189, 248, 0.4);">
@@ -198,7 +196,7 @@
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h2 class="section-title" style="margin:0;">Analysis</h2>
                             <button id="btn-tc-toggle" onclick="toggleTransactionAmounts()" class="btn-reset"
-                                style="padding: 5px 12px; font-size: 11px;">🔒 ซ่อนยอดเงิน</button>
+                                style="padding: 5px 12px; font-size: 11px;">🔒 &#3595;&#3656;&#3629;&#3609;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;</button>
                         </div>
 
                         <!-- Pro Analysis Toolbar (New Horizontal Design) -->
@@ -208,9 +206,9 @@
                                     <span class="toolbar-label">🔎 Type</span>
                                     <div class="toolbar-select-wrap">
                                         <select id="tc-filter-type" onchange="updateTransactionChart()">
-                                            <option value="All">ทั้งหมด</option>
-                                            <option value="income">รายรับ (Income)</option>
-                                            <option value="expense">รายจ่าย (Expense)</option>
+                                            <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
+                                            <option value="income">&#3619;&#3634;&#3618;&#3619;&#3633;&#3610; (Income)</option>
+                                            <option value="expense">&#3619;&#3634;&#3618;&#3592;&#3656;&#3634;&#3618; (Expense)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -222,17 +220,17 @@
                                         <div class="toolbar-trigger" id="btn-tc-category-dropdown">
                                             <span class="toolbar-label" style="margin-right:8px; padding:0;">📁
                                                 Category</span>
-                                            <span id="tc-category-selected-text">ทั้งหมด</span>
+                                            <span id="tc-category-selected-text">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
                                             <i class="chevron">▼</i>
                                         </div>
                                         <div class="autocomplete-dropdown" style="width: 250px;">
                                             <div class="dropdown-header">
                                                 <input type="text" id="filter-tc-category-search"
-                                                    placeholder="ค้นหาหมวดหมู่..." autocomplete="off">
+                                                    placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;..." autocomplete="off">
                                             </div>
                                             <div class="ms-actions">
-                                                <button id="btn-tc-cat-select-all">เลือกทั้งหมด</button>
-                                                <button id="btn-tc-cat-clear">ล้างค่า</button>
+                                                <button id="btn-tc-cat-select-all">&#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</button>
+                                                <button id="btn-tc-cat-clear">&#3621;&#3657;&#3634;&#3591;&#3588;&#3656;&#3634;</button>
                                             </div>
                                             <div id="tc-category-suggestions" class="autocomplete-suggestions"></div>
                                         </div>
@@ -246,12 +244,12 @@
                                     <div class="toolbar-group">
                                         <div class="toolbar-select-wrap small">
                                             <select id="tc-filter-month" onchange="updateTransactionChart()">
-                                                <option value="All">เดือน</option>
+                                                <option value="All">&#3648;&#3604;&#3639;&#3629;&#3609;</option>
                                             </select>
                                         </div>
                                         <div class="toolbar-select-wrap small">
                                             <select id="tc-filter-year" onchange="updateTransactionChart()">
-                                                <option value="All">ปี</option>
+                                                <option value="All">&#3611;&#3637;</option>
                                             </select>
                                         </div>
                                     </div>
@@ -259,7 +257,7 @@
                             </div>
 
                             <div class="toolbar-right">
-                                <button onclick="resetTcFilters()" class="btn-toolbar-reset" title="รีเซ็ตตัวกรอง">
+                                <button onclick="resetTcFilters()" class="btn-toolbar-reset" title="&#3619;&#3637;&#3648;&#3595;&#3655;&#3605;&#3605;&#3633;&#3623;&#3585;&#3619;&#3629;&#3591;">
                                     <span class="icon">↺</span> Reset
                                 </button>
                             </div>
@@ -277,26 +275,38 @@
                                     <div class="ms-report-icon">📊</div>
                                     <div class="ms-report-text">
                                         <div class="ms-report-label">Financial Report</div>
-                                        <div class="ms-report-name">สรุปยอดรายเดือน (Monthly Summary)</div>
+                                        <div class="ms-report-name">&#3626;&#3619;&#3640;&#3611;&#3618;&#3629;&#3604;&#3619;&#3634;&#3618;&#3648;&#3604;&#3639;&#3629;&#3609; (Monthly Summary)</div>
                                     </div>
                                 </div>
                                 <div class="ms-report-controls">
                                     <div class="multi-select-wrapper" id="ms-cat-wrapper">
-                                        <div class="search-trigger-box" onclick="toggleMsCatDropdown(event)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                                        <div class="search-trigger-box" onclick="toggleMsCatDropdown(event)"
+                                            style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                                             <div class="input-ghost-wrapper" style="flex:1;">
-                                                <input type="text" id="ms-category-search-display" placeholder="หมวดหมู่ (Category)" readonly style="cursor:pointer; background:transparent; border:none; color:#f1f5f9; outline:none; font-size:13px; width:100%;">
+                                                <input type="text" id="ms-category-search-display"
+                                                    placeholder="&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656; (Category)" readonly
+                                                    style="cursor:pointer; background:transparent; border:none; color:#f1f5f9; outline:none; font-size:13px; width:100%;">
                                             </div>
-                                            <span id="ms-category-selected-count" class="selected-badge">ทั้งหมด</span>
+                                            <span id="ms-category-selected-count" class="selected-badge">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
                                         </div>
-                                        <div class="ms-dropdown" id="ms-category-dropdown" style="display:none; position:absolute; top:calc(100% + 5px); right:0; width:300px; background:rgba(8, 14, 26, 0.97); border:1px solid rgba(180,140,60,0.2); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); z-index:1200; backdrop-filter:blur(12px);">
-                                            <div class="ms-actions" style="display:flex; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); gap:10px;">
-                                                <div class="ms-action-btn" onclick="msCatSelectAll()" style="flex:1; text-align:center; padding:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.15); border-radius:6px; cursor:pointer; font-size:12px; color:#c8a84b; transition:0.2s;">✅ เลือกทั้งหมด</div>
-                                                <div class="ms-action-btn" onclick="msCatClear()" style="flex:1; text-align:center; padding:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; cursor:pointer; font-size:12px; color:#64748b; transition:0.2s;">❌ ล้าง</div>
+                                        <div class="ms-dropdown" id="ms-category-dropdown"
+                                            style="display:none; position:absolute; top:calc(100% + 5px); right:0; width:300px; background:rgba(8, 14, 26, 0.97); border:1px solid rgba(180,140,60,0.2); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); z-index:1200; backdrop-filter:blur(12px);">
+                                            <div class="ms-actions"
+                                                style="display:flex; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); gap:10px;">
+                                                <div class="ms-action-btn" onclick="msCatSelectAll()"
+                                                    style="flex:1; text-align:center; padding:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.15); border-radius:6px; cursor:pointer; font-size:12px; color:#c8a84b; transition:0.2s;">
+                                                    ✅ &#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</div>
+                                                <div class="ms-action-btn" onclick="msCatClear()"
+                                                    style="flex:1; text-align:center; padding:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; cursor:pointer; font-size:12px; color:#64748b; transition:0.2s;">
+                                                    ❌ &#3621;&#3657;&#3634;&#3591;</div>
                                             </div>
                                             <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                                <input type="text" id="ms-category-search-input" placeholder="ค้นหาหมวดหมู่..." oninput="filterMsCategory()" style="width:100%; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); color:#fff; outline:none; font-size:13px;">
+                                                <input type="text" id="ms-category-search-input"
+                                                    placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;..." oninput="filterMsCategory()"
+                                                    style="width:100%; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); color:#fff; outline:none; font-size:13px;">
                                             </div>
-                                            <div class="ms-list" id="ms-category-suggestions" style="max-height:250px; overflow-y:auto; padding:5px;"></div>
+                                            <div class="ms-list" id="ms-category-suggestions"
+                                                style="max-height:250px; overflow-y:auto; padding:5px;"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -308,10 +318,19 @@
                                     <thead>
                                         <tr>
                                             <th>Category</th>
-                                            <th>ม.ค.</th><th>ก.พ.</th><th>มี.ค.</th><th>เม.ย.</th>
-                                            <th>พ.ค.</th><th>มิ.ย.</th><th>ก.ค.</th><th>ส.ค.</th>
-                                            <th>ก.ย.</th><th>ต.ค.</th><th>พ.ย.</th><th>ธ.ค.</th>
-                                            <th class="col-total">รวม (Total)</th>
+                                            <th>&#3617;.&#3588;.</th>
+                                            <th>&#3585;.&#3614;.</th>
+                                            <th>&#3617;&#3637;.&#3588;.</th>
+                                            <th>&#3648;&#3617;.&#3618;.</th>
+                                            <th>&#3614;.&#3588;.</th>
+                                            <th>&#3617;&#3636;.&#3618;.</th>
+                                            <th>&#3585;.&#3588;.</th>
+                                            <th>&#3626;.&#3588;.</th>
+                                            <th>&#3585;.&#3618;.</th>
+                                            <th>&#3605;.&#3588;.</th>
+                                            <th>&#3614;.&#3618;.</th>
+                                            <th>&#3608;.&#3588;.</th>
+                                            <th class="col-total">&#3619;&#3623;&#3617; (Total)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="monthly-summary-body"></tbody>
@@ -325,16 +344,19 @@
             </div> <!-- End main-column-container -->
 
 
-            <!-- SIDE FEED (RIGHT) - ขวาสุดติดขอบบนยาวลงมา -->
+            <!-- SIDE FEED (RIGHT) - &#3586;&#3623;&#3634;&#3626;&#3640;&#3604;&#3605;&#3636;&#3604;&#3586;&#3629;&#3610;&#3610;&#3609;&#3618;&#3634;&#3623;&#3621;&#3591;&#3617;&#3634; -->
             <aside id="view-recent" class="right-sidebar">
-                <button class="right-sidebar-close-btn" onclick="toggleRightSidebar()" title="ซ่อนแถบด้านขวา">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                <button class="right-sidebar-close-btn" onclick="toggleRightSidebar()" title="&#3595;&#3656;&#3629;&#3609;&#3649;&#3606;&#3610;&#3604;&#3657;&#3634;&#3609;&#3586;&#3623;&#3634;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M9 18l6-6-6-6" />
+                    </svg>
                 </button>
-                <!-- ยอดเงินรวม (อยู่ด้านบนสุดของแถบรายการ) -->
+                <!-- &#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;&#3619;&#3623;&#3617; (&#3629;&#3618;&#3641;&#3656;&#3604;&#3657;&#3634;&#3609;&#3610;&#3609;&#3626;&#3640;&#3604;&#3586;&#3629;&#3591;&#3649;&#3606;&#3610;&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;) -->
                 <div class="header-main-balance sidebar-balance-card">
                     <div class="balance-label">AVAILABLE BALANCE</div>
                     <div class="balance-value">
-                        <span class="currency">฿</span>
+                        <span class="currency">&#3647;</span>
                         <span id="available-balance">0.00</span>
                     </div>
                 </div>
@@ -357,8 +379,11 @@
             </aside>
 
             <!-- Floating tab to re-open right sidebar when collapsed -->
-            <button class="right-sidebar-reopen-tab" onclick="toggleRightSidebar()" title="แสดงยอดเงินธนาคาร" aria-label="แสดงยอดเงินธนาคาร">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            <button class="right-sidebar-reopen-tab" onclick="toggleRightSidebar()" title="&#3649;&#3626;&#3604;&#3591;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;"
+                aria-label="&#3649;&#3626;&#3604;&#3591;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
             </button>
 
         </div><!-- End dashboard-container -->
@@ -372,7 +397,7 @@
                     <div class="modal-header-left">
                         <div class="modal-tabs">
                             <button id="btn-modal-tab-list" class="modal-tab active" onclick="switchModalTab('list')">
-                                <span class="tab-icon">☰</span> รายการ
+                                <span class="tab-icon">☰</span> &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;
                             </button>
                             <button id="btn-modal-tab-bank" class="modal-tab" onclick="switchModalTab('bank')">
                                 <span class="tab-icon">🏦</span> Bank
@@ -380,7 +405,7 @@
                         </div>
                         <div class="modal-title-block">
                             <h2 id="modal-title" class="modal-title-text">-</h2>
-                            <span id="modal-row-count" class="modal-count-badge">0 รายการ</span>
+                            <span id="modal-row-count" class="modal-count-badge">0 &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;</span>
                         </div>
                     </div>
                     <div class="modal-header-right">
@@ -393,7 +418,7 @@
                                 <line x1="16" y1="17" x2="8" y2="17" />
                                 <polyline points="10 9 9 9 8 9" />
                             </svg>
-                            ส่งออก PDF
+                            &#3626;&#3656;&#3591;&#3629;&#3629;&#3585; PDF
                         </button>
                         <button class="modal-close-btn" onclick="closeDetailModal(null, true)">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -413,14 +438,14 @@
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
-                        <input type="text" id="modal-search" placeholder="ค้นหารายการ..." oninput="filterModalTable()">
+                        <input type="text" id="modal-search" placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;..." oninput="filterModalTable()">
                     </div>
                     <div class="modal-view-toggle">
                         <button id="btn-view-all" class="btn-toggle active" onclick="updateModalView('all')">
-                            รายการทั้งหมด
+                            &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;
                         </button>
                         <button id="btn-view-group" class="btn-toggle" onclick="updateModalView('group')">
-                            สรุปตามหมวดหมู่
+                            &#3626;&#3619;&#3640;&#3611;&#3605;&#3634;&#3617;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;
                         </button>
                     </div>
                 </div>
@@ -443,11 +468,11 @@
                 <!-- === MODAL FOOTER === -->
                 <div class="modal-footer">
                     <div class="modal-footer-left">
-                        <span id="modal-total-amount" class="modal-total-text">ยอดรวม: <span
-                                class="total-value">฿0.00</span></span>
+                        <span id="modal-total-amount" class="modal-total-text">&#3618;&#3629;&#3604;&#3619;&#3623;&#3617;: <span
+                                class="total-value">&#3647;0.00</span></span>
                     </div>
                     <div class="modal-footer-right">
-                        <span class="footer-hint">💡 กดที่แถวเพื่อดูรายละเอียด</span>
+                        <span class="footer-hint">💡 &#3585;&#3604;&#3607;&#3637;&#3656;&#3649;&#3606;&#3623;&#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</span>
                     </div>
                 </div>
 
@@ -458,8 +483,8 @@
             <div class="modal-box bank-modal-box">
                 <div class="modal-header">
                     <div class="modal-header-left">
-                        <h2 class="modal-title" id="bank-modal-title">รายละเอียดธนาคาร</h2>
-                        <span class="modal-row-count" id="bank-modal-row-count">0 รายการ</span>
+                        <h2 class="modal-title" id="bank-modal-title">&#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;</h2>
+                        <span class="modal-row-count" id="bank-modal-row-count">0 &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;</span>
                     </div>
                     <div class="modal-header-actions">
                         <button class="btn-export-pdf" onclick="exportModalPdf('bank')">💾 PDF</button>
@@ -470,9 +495,9 @@
                 <div class="modal-controls">
                     <div class="modal-view-toggle">
                         <button id="btn-bank-view-all" class="btn-toggle active"
-                            onclick="updateBankModalView('all')">รายการทั้งหมด</button>
+                            onclick="updateBankModalView('all')">&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</button>
                         <button id="btn-bank-view-group" class="btn-toggle"
-                            onclick="updateBankModalView('group')">สรุปตามหมวดหมู่</button>
+                            onclick="updateBankModalView('group')">&#3626;&#3619;&#3640;&#3611;&#3605;&#3634;&#3617;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;</button>
                     </div>
                 </div>
 
@@ -484,7 +509,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <div id="bank-modal-totals" class="modal-total">ยอดรวม: <span>฿0.00</span></div>
+                    <div id="bank-modal-totals" class="modal-total">&#3618;&#3629;&#3604;&#3619;&#3623;&#3617;: <span>&#3647;0.00</span></div>
                 </div>
             </div>
         </div>

@@ -104,7 +104,7 @@ body {
     overflow-y: auto;
     padding-right: 10px;
     padding-bottom: 50px;
-    /* เพิ่มพื้นที่ล่างสุด */
+    /* @4H!7I5H%H2*8 */
 }
 
 .transaction-card {
@@ -117,12 +117,12 @@ body {
     position: relative;
     overflow: hidden;
     flex-shrink: 0;
-    /* ห้ามบีบการ์ดให้แบน */
+    /* +I2!52#LC+IA */
     display: flex;
     flex-direction: column;
     gap: 10px;
     min-height: 100px;
-    /* กำหนดความสูงขั้นต่ำ */
+    /* 3+'2!*91IH3 */
 }
 
 .transaction-card:hover {
@@ -196,7 +196,7 @@ body {
     color: var(--expense);
 }
 
-/* ปรับ Left Panel ให้กว้างขึ้น */
+/* #1 Left Panel C+I'I26I */
 .left-panel-content {
     flex: 1;
     padding: 0 10px 0 0;
@@ -204,7 +204,7 @@ body {
 
 .left-panel-content .summary-grid {
     grid-template-columns: repeat(4, 1fr) !important;
-    /* กลับเป็น 4 คอลัมน์เหมือนเดิม */
+    /* %1@G 4 -%1!L@+!7-@4! */
 }
 
 /* Glassmorphism utility */
@@ -234,7 +234,8 @@ body {
     flex: 1;
     min-width: 0;
     padding-bottom: 10px;
-    /* เพิ่มช่องว่างด้านล่าง */
+    /* @4H!
+H-'H2I2%H2 */
 }
 
 .dashboard-header h1 {
@@ -268,13 +269,14 @@ body {
     border: 1px solid rgba(16, 185, 129, 0.3);
     padding: 22px;
     border-radius: 20px;
-    text-align: left; /* เปลี่ยนเป็นชิดซ้ายให้เข้ากับสไตล์รายการธนาคาร */
+    text-align: left; /* @%5H"@G
+4I2"C+I@I21*D%L#2"2#22# */
     width: 100%;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
     transition: all 0.3s ease;
-    margin-bottom: 5px; /* ลดระยะห่างให้ดูติดกับรายการข้างล่าง */
+    margin-bottom: 5px; /* %#0"0+H2C+I941#2"2#I2%H2 */
 }
 
 .sidebar-balance-card:hover {
@@ -296,7 +298,8 @@ body {
 .balance-value {
     display: flex;
     align-items: baseline;
-    justify-content: flex-start; /* เปลี่ยนเป็นชิดซ้าย */
+    justify-content: flex-start; /* @%5H"@G
+4I2" */
     gap: 8px;
     color: #10b981;
     font-size: 32px;
@@ -322,7 +325,7 @@ body {
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     width: 100%;
-    /* ให้แผ่เต็มพื้นที่ */
+    /* C+IAH@G!7I5H */
     margin-bottom: 10px;
 }
 
@@ -488,7 +491,8 @@ select option:hover {
     border-radius: 10px;
     padding: 2px 10px;
     width: 250px;
-    /* ขยายกว้างขึ้นนิดนึงเพื่อให้เห็นชื่อยาวๆ */
+    /* "2"'I26I46@7H-C+I@+G
+7H-"2'F */
     transition: all 0.2s ease;
 }
 
@@ -524,7 +528,7 @@ select option:hover {
     top: 50%;
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.2);
-    /* สีเทาจางๆ */
+    /* *5@22F */
     font-size: 13px;
     font-family: inherit;
     pointer-events: none;
@@ -695,7 +699,7 @@ select option:hover {
     transition: transform 0.3s ease;
 }
 
-/* Animation: หมุนไอคอนตอนกำลังโหลด */
+/* Animation: +!8D---3%1B+% */
 .btn-refresh-data.is-loading .refresh-icon {
     animation: spin-refresh 1s linear infinite;
 }
@@ -781,7 +785,7 @@ select option:hover {
 }
 
 .net-balance-amount::before {
-    content: '฿';
+    content: '?';
     font-size: 14px;
     margin-right: 4px;
     color: var(--text-muted);
@@ -791,7 +795,7 @@ select option:hover {
 .summary-cards {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    /* บังคับ 2 คอลัมน์เท่าๆ กัน */
+    /* 11 2 -%1!L@H2F 1 */
     gap: 20px;
     width: 100%;
     margin-bottom: 25px;
@@ -984,7 +988,7 @@ select option:hover {
 }
 
 .bh-value::before {
-    content: '฿';
+    content: '\0e3f';
     font-size: 16px;
     margin-right: 6px;
     color: rgba(245, 158, 11, 0.6);
@@ -1128,7 +1132,7 @@ select option:hover {
     margin-top: 1px;
 }
 
-/* ดูรายละเอียด button on bank cards */
+/*  9#2"%0@-5"  button on bank cards */
 .btn-bank-detail {
     display: inline-flex;
     align-items: center;
@@ -1228,7 +1232,7 @@ select option:hover {
 }
 
 .bank-balance::before {
-    content: '฿';
+    content: '\0e3f';
     font-size: 16px;
     vertical-align: top;
     margin-right: 6px;
@@ -1237,7 +1241,7 @@ select option:hover {
 
 /* Currency prefix */
 .card .amount::before {
-    content: '฿';
+    content: '\0e3f';
     font-size: 20px;
     vertical-align: super;
     margin-right: 6px;
@@ -1337,7 +1341,7 @@ select option:hover {
     font-size: 13.5px;
 }
 
-/* ── TYPE column cell ── */
+/*    TYPE column cell    */
 .type-cell {
     text-align: center;
     white-space: nowrap;
@@ -1826,7 +1830,7 @@ body.hide-balances .net-balance-amount {
     user-select: none;
 }
 
-/* ── Floating Google Sheets FAB ── */
+/*    Floating Google Sheets FAB    */
 #btn-open-sheets {
     position: fixed;
     bottom: 24px;
@@ -1965,7 +1969,7 @@ body.hide-balances .net-balance-amount {
         flex-wrap: wrap;
     }
 
-    /* Mobile: ซ่อนข้อความของปุ่ม refresh เหลือแค่ icon */
+    /* Mobile: H-I-'2!-8H! refresh @+%7-AH icon */
     .btn-refresh-data .refresh-text {
         display: none;
     }
@@ -2400,7 +2404,7 @@ body.hide-balances .net-balance-amount {
 }
 
 /* =========================================================================
-   COLLAPSED STATE — Only brand logo remains visible
+   COLLAPSED STATE  Only brand logo remains visible
    ========================================================================= */
 .sidebar-nav.collapsed {
     width: 64px;
@@ -2459,7 +2463,7 @@ body.hide-balances .net-balance-amount {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    /* ให้กรองอยู่บน การ์ดอยู่ล่าง */
+    /* C+I#--"9H 2#L-"9H%H2 */
     gap: 25px;
 }
 
@@ -2507,19 +2511,19 @@ body.hide-balances .net-balance-amount {
 }
 
 /* =========================================================================
-   LAYOUT CLEANUP & REORGANIZATION (ล่าสุด — override rules ที่ขัดแย้ง)
+   LAYOUT CLEANUP & REORGANIZATION (%H2*8  override rules 5H1A"I)
    ========================================================================= */
 
-/* 1. Reset dashboard-container ให้เป็น Grid หลักที่แบ่งซ้ายขวาแบบ Full Height */
+/* 1. Reset dashboard-container C+I@G Grid +%15HAHI2"'2A Full Height */
 .dashboard-container {
     max-width: none;
     margin: 0;
-    margin-left: 260px; /* เว้นที่ให้ Sidebar Nav หลัก */
+    margin-left: 260px; /* @'I5HC+I Sidebar Nav +%1 */
     padding: 0;
     display: grid;
-    grid-template-columns: 1fr 380px; /* ฝั่งซ้ายยืดหยุ่น, ฝั่งขวาคงที่ */
+    grid-template-columns: 1fr 380px; /* 1HI2""7+"8H, 1H'25H */
     height: 100vh;
-    overflow: hidden; /* ห้าม Scroll ทั้งหน้า ให้ไป Scroll แยกข้างในแทน */
+    overflow: hidden; /* +I2! Scroll 1I+I2 C+ID Scroll A"I2CA */
     width: calc(100% - 260px);
     transition: margin-left 0.38s cubic-bezier(0.4, 0, 0.2, 1),
                 width 0.38s cubic-bezier(0.4, 0, 0.2, 1),
@@ -2530,7 +2534,7 @@ body.hide-balances .net-balance-amount {
     grid-template-columns: 1fr 0px;
 }
 
-/* 2. คอนเทนเนอร์ฝั่งซ้าย (Header + Main) ให้เลื่อนได้อิสระ */
+/* 2. -@@-#L1HI2" (Header + Main) C+I@%7H-DI-4*#0 */
 .main-column-container {
     height: 100vh;
     overflow-y: auto;
@@ -2540,10 +2544,12 @@ body.hide-balances .net-balance-amount {
 }
 
 .dashboard-body {
-    display: contents; /* ยกเลิกการใช้ div นี้ไปใช้ grid ของตัวแม่แทน */
+    display: contents; /* "@%42#C
+I div 5IDC
+I grid -1'A!HA */
 }
 
-/* 3. Header ปรับใหม่: title + actions อยู่แถวบนสุด, filters อยู่แถวล่าง */
+/* 3. Header #1C+!H: title + actions -"9HA'*8, filters -"9HA'%H2 */
 .dashboard-header {
     display: flex;
     flex-direction: column;
@@ -2555,7 +2561,7 @@ body.hide-balances .net-balance-amount {
 .header-top-row {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end; /* จัดให้ฐานตัวหนังสือและกล่องเงินตรงกัน */
+    align-items: flex-end; /* 1C+I21'+1*7-A%0%H-@4#1 */
     gap: 30px;
     width: 100%;
 }
@@ -2615,7 +2621,8 @@ body.hide-balances .net-balance-amount {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    position: relative; /* ไม่ต้องใช้ sticky แล้วเพราะเป็น grid column แยก */
+    position: relative; /* D!HI-C
+I sticky A%I'@#20@G grid column A" */
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
@@ -2694,10 +2701,10 @@ body.hide-balances .net-balance-amount {
     pointer-events: auto;
 }
 
-/* 5. Summary cards — กลับมาเป็น 4 คอลัมน์เต็มบนจอกว้าง */
+/* 5. Summary cards  %1!2@G 4 -%1!L@G!-'I2 */
 .summary-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* ปรับเป็น 3 คอลัมน์ให้สมดุลกับพื้นที่หลัก */
+    grid-template-columns: repeat(3, 1fr); /* #1@G 3 -%1!LC+I*!8%17I5H+%1 */
     gap: 20px;
     width: 100%;
     margin-bottom: 0;
@@ -2727,7 +2734,7 @@ body.hide-balances .net-balance-amount {
     align-self: flex-start;
 }
 
-/* 6. Sections — ลด margin-top ที่เคย inline ในไฟล์ HTML */
+/* 6. Sections  % margin-top 5H@" inline CD%L HTML */
 .charts-section,
 .bank-balances-section {
     margin-top: 0 !important;
@@ -2806,10 +2813,10 @@ body.hide-balances .net-balance-amount {
 }
 
 /* =========================================================================
-   MODAL REDESIGN — ทำให้ Modal ดูสวยขึ้น (ล่าสุด)
+   MODAL REDESIGN  3C+I Modal 9*'"6I (%H2*8)
    ========================================================================= */
 
-/* 1. Modal Box — ใหญ่ขึ้น มีขอบ glow เบาๆ */
+/* 1. Modal Box  C+H6I !5- glow @2F */
 .modal-overlay {
     background: rgba(0, 0, 0, 0.78);
     backdrop-filter: blur(10px);
@@ -2828,7 +2835,7 @@ body.hide-balances .net-balance-amount {
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* 2. Modal Header — PDF + X อยู่ในแถวเดียวกัน */
+/* 2. Modal Header  PDF + X -"9HCA'@5"'1 */
 .modal-header {
     display: flex;
     align-items: center;
@@ -2864,7 +2871,7 @@ body.hide-balances .net-balance-amount {
 }
 
 .modal-row-count::before {
-    content: '📊 ';
+    content: '=� ';
 }
 
 .modal-header-actions {
@@ -2874,7 +2881,7 @@ body.hide-balances .net-balance-amount {
     flex-shrink: 0;
 }
 
-/* 3. PDF Button — เปลี่ยนเป็น accent color */
+/* 3. PDF Button  @%5H"@G accent color */
 .btn-export-pdf {
     font-family: inherit;
     font-size: 13px;
@@ -2925,7 +2932,7 @@ body.hide-balances .net-balance-amount {
     transform: rotate(90deg);
 }
 
-/* 5. Modal Controls — Search + View Toggle */
+/* 5. Modal Controls  Search + View Toggle */
 .modal-controls {
     display: flex;
     align-items: center;
@@ -2945,7 +2952,7 @@ body.hide-balances .net-balance-amount {
 }
 
 .modal-search-wrap::before {
-    content: '🔍';
+    content: '=';
     position: absolute;
     left: 14px;
     top: 50%;
@@ -3028,7 +3035,7 @@ body.hide-balances .net-balance-amount {
     font-size: 13px;
 }
 
-/* 8. Table Header — sticky แต่ดูสวยกว่า */
+/* 8. Table Header  sticky AH9*'"'H2 */
 .modal-table thead th,
 #modal-table thead th,
 #bank-modal-table thead th {
@@ -3056,7 +3063,7 @@ body.hide-balances .net-balance-amount {
     text-align: right;
 }
 
-/* 9. Table Rows — zebra stripes + hover */
+/* 9. Table Rows  zebra stripes + hover */
 .modal-table tbody tr,
 #modal-table tbody tr,
 #bank-modal-table tbody tr {
@@ -3099,7 +3106,7 @@ body.hide-balances .net-balance-amount {
     font-variant-numeric: tabular-nums;
 }
 
-/* 10. Last column (amount) — เน้นให้เด่น */
+/* 10. Last column (amount)  @IC+I@H */
 .modal-table tbody td:last-child,
 #modal-table tbody td:last-child,
 #bank-modal-table tbody td:last-child {
@@ -3111,10 +3118,13 @@ body.hide-balances .net-balance-amount {
     letter-spacing: -0.2px;
 }
 
-/* 11. Pill-style badges — for BANK / Category / Status columns
-   Matches text content ที่ JS ใส่ลงไปเป็น plain text — เราจะใช้ attribute data selector หรือ inline class
-   แต่เนื่องจากข้อจำกัด จะใช้วิธี style ทั้ง column ผ่าน nth-child แทน ซึ่งอาจไม่ตรง
-   ทางที่ดีคือเพิ่ม badge styling generic ที่ JS สามารถใช้ได้ */
+/* 11. Pill-style badges  for BANK / Category / Status columns
+   Matches text content 5H JS C*H%D@G plain text  @#20C
+I attribute data selector +#7- inline class
+   AH@7H-2I-31 0C
+I'45 style 1I column H2 nth-child A 6H-2D!H#
+   25H57-@4H! badge styling generic 5H JS *2!2#C
+IDI */
 .modal-table .badge,
 .modal-table .pill {
     display: inline-block;
@@ -3221,13 +3231,13 @@ td.modal-amount-expense {
 }
 
 /* =========================================================================
-   MODAL TABLE — COLUMN BADGES (nth-child targeting แบบไม่ต้องแก้ JS)
+   MODAL TABLE  COLUMN BADGES (nth-child targeting AD!HI-AI JS)
    ========================================================================= */
 
-/* Full table (8 columns): # | วันที่ | คำอธิบาย | เจ้าหนี้ | Bank | Category | Status | Amount
+/* Full table (8 columns): # | '15H | 3-42" | @I2+5I | Bank | Category | Status | Amount
    Column indexes:            1 |   2   |    3    |    4   |  5   |    6    |   7   |   8      */
 
-/* BANK column (5) — monospace tech badge */
+/* BANK column (5)  monospace tech badge */
 #modal-table tbody tr td:nth-child(5) {
     font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 11.5px;
@@ -3247,7 +3257,7 @@ td.modal-amount-expense {
     box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
 }
 
-/* Category column (6) — soft tag */
+/* Category column (6)  soft tag */
 #modal-table tbody tr td:nth-child(6) {
     color: #cbd5e1;
     font-size: 12px;
@@ -3257,10 +3267,10 @@ td.modal-amount-expense {
     display: inline-block;
 }
 
-/* Use an inner span is not possible without JS — instead, use text directly with pseudo styling */
+/* Use an inner span is not possible without JS  instead, use text directly with pseudo styling */
 /* Style the td itself as a subtle badge via a wrapper on hover, but keep it clean */
 
-/* Status column (7) — badge-style */
+/* Status column (7)  badge-style */
 #modal-table tbody tr td:nth-child(7) {
     font-size: 11.5px;
     font-weight: 700;
@@ -3268,7 +3278,7 @@ td.modal-amount-expense {
     letter-spacing: 0.5px;
 }
 
-/* Date column (2) — slight muted */
+/* Date column (2)  slight muted */
 #modal-table tbody tr td:nth-child(2) {
     color: #94a3b8;
     font-variant-numeric: tabular-nums;
@@ -3276,21 +3286,21 @@ td.modal-amount-expense {
     font-weight: 500;
 }
 
-/* Description column (3) — primary text */
+/* Description column (3)  primary text */
 #modal-table tbody tr td:nth-child(3) {
     color: #f1f5f9;
     font-weight: 500;
     max-width: 340px;
 }
 
-/* Creditor column (4) — muted */
+/* Creditor column (4)  muted */
 #modal-table tbody tr td:nth-child(4) {
     color: #94a3b8;
     font-size: 12.5px;
 }
 
 /* Apply same logic to bank-modal full view (8 columns slightly different) */
-/* bank modal full: # | วันที่ | คำอธิบาย | ประเภท | Category | Status | Cash In | Cash Out */
+/* bank modal full: # | '15H | 3-42" | #0@  | Category | Status | Cash In | Cash Out */
 #bank-modal-table tbody tr td:nth-child(2) {
     color: #94a3b8;
     font-variant-numeric: tabular-nums;
@@ -3303,8 +3313,10 @@ td.modal-amount-expense {
 }
 
 /* =========================================================================
-   BANK COLUMN — show pill background (ใช้ ::before ทำ pill ไม่ได้ครอบทั้ง text
-   ดังนั้นเราจะใช้ background + padding กับ td โดยตรง)
+   BANK COLUMN  show pill background (C
+I ::before 3 pill D!HDI#-1I text
+   11I@#20C
+I background + padding 1 td B"#)
    ========================================================================= */
 #modal-table tbody tr td:nth-child(5) {
     position: relative;
@@ -3322,14 +3334,14 @@ td.modal-amount-expense {
    TOTAL ROW EMPHASIS in summary (grouped) view
    ========================================================================= */
 
-/* Summary/Grouped view headers — different column count */
+/* Summary/Grouped view headers  different column count */
 #modal-table tbody tr td {
     /* For grouped summary view: # | Category | Count | Amount */
     /* nth-child rules above apply to full view; grouped view auto-styles since cols change */
 }
 
 /* =========================================================================
-   SMALL POLISH — loading state, empty state
+   SMALL POLISH  loading state, empty state
    ========================================================================= */
 .modal-table tbody tr td[colspan] {
     text-align: center;
@@ -3364,7 +3376,7 @@ td.modal-amount-expense {
 
 .sidebar-bank-bar {
     width: 4px;
-    height: 22px; /* เพิ่มความยาวแถบสีฟ้าตามคำขอ */
+    height: 22px; /* @4H!'2!"2'A*5I22!3- */
     background: var(--primary);
     border-radius: 4px;
 }
@@ -3392,7 +3404,7 @@ td.modal-amount-expense {
     margin-left: 4px;
 }
 
-/* Container for sidebar bank cards — vertical stack, 1 per row */
+/* Container for sidebar bank cards  vertical stack, 1 per row */
 .sidebar-bank-container {
     display: flex;
     flex-direction: column;
@@ -3559,14 +3571,14 @@ body.hide-balances .sidebar-bank-total-badge span {
     padding: 10px 15px;
     margin-bottom: 25px;
     border-radius: 14px;
-    background: #0f172a; /* พื้นหลังทึบพิเศษเพื่อบังตัวกราฟ */
+    background: #0f172a; /* 7I+%164@()@7H-11'#2 */
     border: 1px solid rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     gap: 10px;
     position: relative;
-    z-index: 2000; /* ยกทั้งแถบให้ลอยอยู่เหนือตัวกราฟทุกกรณี */
+    z-index: 2000; /* "1IAC+I%-"-"9H@+7-1'#28#5 */
 }
 
 .toolbar-left {
@@ -3574,7 +3586,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     flex-wrap: wrap;
     align-items: center;
     gap: 5px;
-    flex: 1; /* ให้ฝั่งซ้ายขยายเต็มที่ */
+    flex: 1; /* C+I1HI2""2"@G!5H */
 }
 
 .toolbar-item {
@@ -3627,7 +3639,7 @@ body.hide-balances .sidebar-bank-total-badge span {
 }
 
 .toolbar-select-wrap::after {
-    content: '▼';
+    content: '�';
     position: absolute;
     right: 10px;
     top: 50%;
@@ -3703,7 +3715,7 @@ body.hide-balances .sidebar-bank-total-badge span {
 }
 
 .multi-select-wrapper.open {
-    z-index: 2001; /* เมื่อเปิดให้ลอยสูงกว่าเพื่อน */
+    z-index: 2001; /* @!7H-@4C+I%-"*9'H2@7H- */
 }
 
 .multi-select-wrapper.open .autocomplete-dropdown {
@@ -3800,7 +3812,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     padding-top: 4px;
 }
 
-/* --- Modal Tabs (เส้นใต้แบบโปร) --- */
+/* --- Modal Tabs (@*ICIAB#) --- */
 .modal-tabs {
     display: flex;
     gap: 4px;
@@ -4211,10 +4223,10 @@ body.hide-balances .sidebar-bank-total-badge span {
 }
 
 /* =========================================================================
-   MONTHLY SUMMARY TABLE (Corporate Premium — Gold & Deep Navy)
+   MONTHLY SUMMARY TABLE (Corporate Premium  Gold & Deep Navy)
    ========================================================================= */
 
-/* ── Section wrapper: centered ── */
+/*    Section wrapper: centered    */
 #monthly-summary-section {
     max-width: 1400px;
     margin-left: auto;
@@ -4226,7 +4238,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     padding: 0 !important;
 }
 
-/* ── Outer card shell ── */
+/*    Outer card shell    */
 .ms-card-shell {
     background: linear-gradient(160deg, rgba(10, 16, 30, 0.97) 0%, rgba(8, 14, 26, 0.99) 100%);
     border: 1px solid rgba(255, 255, 255, 0.07);
@@ -4258,7 +4270,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     z-index: 2;
 }
 
-/* ── Report Header (inside card shell) ── */
+/*    Report Header (inside card shell)    */
 .ms-report-header {
     display: flex;
     align-items: center;
@@ -4268,7 +4280,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     padding: 22px 28px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     background: rgba(212, 175, 55, 0.03);
-    /* Always fill the full card width — never shrink with the table */
+    /* Always fill the full card width  never shrink with the table */
     width: 100%;
     min-width: 700px;
     box-sizing: border-box;
@@ -4322,7 +4334,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     flex-shrink: 0;
 }
 
-/* Filter wrapper — fixed width, never shrinks */
+/* Filter wrapper  fixed width, never shrinks */
 #ms-cat-wrapper {
     flex-shrink: 0 !important;
     width: 240px !important;
@@ -4348,7 +4360,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     border-radius: 10px !important;
 }
 
-/* ── Table Container ── */
+/*    Table Container    */
 .monthly-summary-container {
     width: 100%;
     overflow-x: auto;
@@ -4367,7 +4379,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     background: rgba(212, 175, 55, 0.42);
 }
 
-/* ── Table: auto layout, scroll for full number display ── */
+/*    Table: auto layout, scroll for full number display    */
 .ms-table {
     width: 100%;
     border-collapse: collapse;
@@ -4389,7 +4401,7 @@ body.hide-balances .sidebar-bank-total-badge span {
 
 .ms-table tbody tr:last-child td { border-bottom: none; }
 
-/* ── Table Header Row ── */
+/*    Table Header Row    */
 .ms-table thead th {
     font-weight: 700;
     color: #64748b;
@@ -4403,7 +4415,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* Category column — min 180px, sticky */
+/* Category column  min 180px, sticky */
 .ms-table thead th:first-child {
     text-align: left;
     position: sticky;
@@ -4416,7 +4428,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     border-right: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* Total column — min 130px, gold */
+/* Total column  min 130px, gold */
 .ms-table thead th.col-total {
     min-width: 130px;
     color: #c8a84b;
@@ -4426,7 +4438,7 @@ body.hide-balances .sidebar-bank-total-badge span {
 }
 
 
-/* ── Body Cells ── */
+/*    Body Cells    */
 .ms-table tbody td {
     color: #8da0b5;
     font-variant-numeric: tabular-nums;
@@ -4485,7 +4497,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     color: #d4af37;
 }
 
-/* ── Group Header Rows — Bold Banner Style ── */
+/*    Group Header Rows  Bold Banner Style    */
 .ms-group-header td {
     text-align: left !important;
     font-weight: 800 !important;
@@ -4535,7 +4547,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     font-weight: 400 !important;
 }
 
-/* ── Total Rows ── */
+/*    Total Rows    */
 .ms-total-row td {
     background: rgba(180, 140, 60, 0.065) !important;
     border-top: 1px solid rgba(180, 140, 60, 0.28) !important;
@@ -4552,7 +4564,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     background: rgba(38, 28, 4, 0.55) !important;
 }
 
-/* ── Net Cash Flow Row ── */
+/*    Net Cash Flow Row    */
 .ms-net-row td {
     background: rgba(180, 140, 60, 0.1) !important;
     border-top: 2px solid rgba(212, 175, 55, 0.38) !important;
@@ -4572,11 +4584,11 @@ body.hide-balances .sidebar-bank-total-badge span {
     letter-spacing: -0.5px;
 }
 
-/* ── Amount colours ── */
+/*    Amount colours    */
 .modal-amount-income { color: #34d399 !important; }
 .modal-amount-expense { color: #f87171 !important; }
 
-/* ── Expand Toggle Button ── */
+/*    Expand Toggle Button    */
 .ms-expand-btn {
     display: inline-flex;
     align-items: center;
@@ -4603,7 +4615,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     color: #c8a84b;
 }
 
-/* ── Row Indicators ── */
+/*    Row Indicators    */
 .ms-row-income td:first-child {
     border-left: 4px solid var(--income) !important;
 }
@@ -4616,7 +4628,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     align-items: center;
 }
 
-/* ── Name Sub-rows ── */
+/*    Name Sub-rows    */
 .ms-name-row td {
     font-size: 12px !important;
     font-weight: 400 !important;
@@ -4652,7 +4664,7 @@ body.hide-balances .sidebar-bank-total-badge span {
 .ms-name-row-income td:first-child { border-left: 3px solid rgba(16,185,129,0.35) !important; }
 .ms-name-row-expense td:first-child { border-left: 3px solid rgba(239,68,68,0.35) !important; }
 
-/* ── Category Row (Main Row / Total Row) — Reverted to Normal ── */
+/*    Category Row (Main Row / Total Row)  Reverted to Normal    */
 .ms-category-row td {
     background: rgba(30, 41, 59, 0.4) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -4665,7 +4677,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     font-weight: 700 !important;
 }
 
-/* ── Name Sub-rows (Bright Orange Details) ── */
+/*    Name Sub-rows (Bright Orange Details)    */
 .ms-name-row td {
     font-size: 12px !important;
     font-weight: 400 !important;
@@ -4691,7 +4703,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     color: rgba(249, 115, 22, 0.3) !important;
 }
 
-/* ── PREMIUM MONTHLY SUMMARY REDESIGN ── */
+/*    PREMIUM MONTHLY SUMMARY REDESIGN    */
 #monthly-summary-section {
     max-width: 100%;
     margin: 28px 0;
@@ -4735,7 +4747,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     transition: box-shadow 0.3s ease;
 }
 
-/* ── STICKY STATE: activated by JS when section scrolls past container top ── */
+/*    STICKY STATE: activated by JS when section scrolls past container top    */
 #monthly-summary-section.ms-headers-stuck .ms-report-header {
     position: sticky;
     top: 0;
@@ -4784,7 +4796,7 @@ body.hide-balances .sidebar-bank-total-badge span {
     transition: all 0.2s ease;
 }
 
-/* Sticky Category Column (left axis) – only data cells, NOT header cells */
+/* Sticky Category Column (left axis)  only data cells, NOT header cells */
 .ms-table td:first-child {
     position: sticky;
     left: 0;
@@ -4909,10 +4921,10 @@ body.hide-balances .sidebar-bank-total-badge span {
 }
 
 .ms-name-row {
-    /* No animation — rows appear instantly */
+    /* No animation  rows appear instantly */
 }
 
-/* ── FILTER BAR PREMIUM ANIMATIONS ── */
+/*    FILTER BAR PREMIUM ANIMATIONS    */
 .header-filters {
     display: flex;
     flex-wrap: wrap;

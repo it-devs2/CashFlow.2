@@ -91,8 +91,12 @@ function getRowType(row) {
     if (party === 'customer' || party === 'ลูกหนี้') return 'income';
     if (party === 'vendor' || party === 'เจ้าหนี้') return 'expense';
 
-    if (row['Customer'] || row.customer || row['Incoming'] || row.incoming) return 'income';
-    if (row['Vendor'] || row.vendor || row['Payment'] || row.payment) return 'expense';
+    // เช็คค่าในคอลัมน์ Incoming และ Payment โดยตรง
+    if (parseSafe(row['Incoming'] || row.incoming) > 0) return 'income';
+    if (parseSafe(row['Payment'] || row.payment) > 0) return 'expense';
+
+    if (row['Customer'] || row.customer) return 'income';
+    if (row['Vendor'] || row.vendor) return 'expense';
 
     // 3. ค้นหาจาก Keyword ใน Description หรือ Category
     const desc = (row['Description'] || row.description || '').toString().trim().toLowerCase();
@@ -139,11 +143,15 @@ function getRowAmount(row, targetType) {
             foundAmount = true;
         }
 
-        // 2. ลำดับรองลงมา: ช่อง Cash In / Cash Out / รับ / จ่าย
-        if (k.includes('cash') && k.includes('in')) cIn = parseSafe(val);
-        if (k.includes('cash') && k.includes('out')) cOut = parseSafe(val);
-        if (k.includes('รับ')) cIn = parseSafe(val);
-        if (k.includes('จ่าย')) cOut = parseSafe(val);
+        // ลำดับ 2.1: ตรงกับชื่อคอลัมน์ใน Cash_Flow_Summary เป๊ะๆ
+        if (k === 'incoming') cIn = parseSafe(val);
+        if (k === 'payment') cOut = parseSafe(val);
+
+        // ลำดับ 2.2: คำอื่นๆ ที่ใกล้เคียง (สำหรับชีตเก่า)
+        if (k.includes('cash') && k.includes('in')) cIn = cIn || parseSafe(val);
+        if (k.includes('cash') && k.includes('out')) cOut = cOut || parseSafe(val);
+        if (k === 'รับ' || k === 'รายรับ') cIn = cIn || parseSafe(val);
+        if (k === 'จ่าย' || k === 'รายจ่าย') cOut = cOut || parseSafe(val);
     });
 
     if (targetType === 'income') {
@@ -155,6 +163,12 @@ function getRowAmount(row, targetType) {
         if (foundAmount && generic !== 0) return Math.abs(generic);
         if (cOut > 0) return cOut;
         return 0;
+    }
+    if (targetType === 'balance') {
+        // Return signed amount: Income positive, Expense negative
+        const type = getRowType(row);
+        const amt = Math.abs(generic || cIn || cOut || 0);
+        return type === 'income' ? amt : -amt;
     }
     return Math.abs(generic || cIn || cOut || 0);
 }
@@ -695,10 +709,8 @@ function renderTable(transactionsData, plansData = []) {
             if (key.toLowerCase().includes('status')) rowStatus = (row[key] || '').toString().trim().toLowerCase();
         });
 
-        // ในหน้า Plan, ถ้าสถานะเป็น Actual/Paid/Received ให้ข้ามไป (เพราะควรไปนับที่หน้า Transactions แทนเพื่อกันการนับซ้ำ)
-        const isActual = rowStatus.includes('received') || rowStatus.includes('paid') || rowStatus.includes('actual') || rowStatus.includes('รับแล้ว') || rowStatus.includes('จ่ายแล้ว');
-
-        if (!isActual) {
+        // กรองเฉพาะรายการที่ระบุ Status ว่า 'plan' เท่านั้น (ตามที่คุณลูกค้าระบุ)
+        if (rowStatus.includes('plan')) {
             if (rowType === 'income') totalIncomePlan += amt;
             if (rowType === 'expense') totalExpensePlan += Math.abs(amt);
         }
@@ -1553,7 +1565,7 @@ function renderBankBalances() {
                     ${accountNum ? `<span class="sidebar-bank-account" title="เลขที่บัญชี: ${accountNum}">เลขที่บัญชี: ${shortAcct}</span>` : ''}
                 </div>
             </div>
-            <div class="sidebar-bank-balance">฿${checkValue(balance)}</div>
+            <div class="sidebar-bank-balance" ${balance < 0 ? 'style="color: #ef4444;"' : ''}>฿${checkValue(balance)}</div>
         `;
         container.appendChild(card);
     });
@@ -1800,7 +1812,9 @@ function renderBankDetailRows(rows) {
                     return amtB - amtA;
                 });
                 
-                sortedSubItems.forEach(row => {
+                sortedSubItems.forEach((row, subIdx) => {
+                    const isLast = subIdx === sortedSubItems.length - 1;
+
                     const subTr = document.createElement('tr');
                     subTr.className = `modal-sub-row bank-cat-${i}`;
                     subTr.style.display = 'none';
@@ -1813,7 +1827,7 @@ function renderBankDetailRows(rows) {
                         if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
                     } catch (e) { }
 
-                    const desc = row['Description'] || row.description || '-';
+                    const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
                     const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
                     const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
 
@@ -1821,8 +1835,8 @@ function renderBankDetailRows(rows) {
                         <td style="color:#64748b; font-size:11px; text-align:center; white-space:nowrap;">
                             <span>${displayDate}</span>
                         </td>
-                        <td style="padding-left: 20px;">
-                            <span style="color:#cbd5e1; font-size:12px;" title="${desc}">${desc}</span>
+                        <td style="padding-left: 30px; text-align: left;">
+                            <span style="color:#cbd5e1; font-size:12px;" title="${creditor}">${creditor}</span>
                         </td>
                         <td></td>
                         <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">${cashIn > 0 ? '฿' + checkValue(cashIn) : '-'}</td>
@@ -1975,20 +1989,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Store currently displayed modal rows for search filtering
 let _modalRows = [];
-let _modalType = '';  // 'income' | 'expense'
+let _modalType = '';  // 'income' | 'expense' | 'balance'
 let _modalTab = 'list'; // 'list' | 'bank'
+let _isModalBankSource = false;
 
 const MODAL_LABELS = {
     'income-actual': { title: '📥 Income (Actual)', color: 'income' },
     'income-plan': { title: '📋 Income (Plan)', color: 'income' },
     'expense-actual': { title: '📤 Expense (Actual)', color: 'expense' },
     'expense-plan': { title: '📋 Expense (Plan)', color: 'expense' },
+    'selected-balance': { title: '⚖️ Selected Balance (Bank Details)', color: 'balance', isBankSource: true },
 };
 
 function openDetailModal(cardId) {
     const meta = MODAL_LABELS[cardId];
     if (!meta) return;
     _modalType = meta.color;
+    _isModalBankSource = !!meta.isBankSource;
 
     let rows = [];
     if (cardId === 'income-actual') {
@@ -2021,6 +2038,8 @@ function openDetailModal(cardId) {
             return getRowType(row) === 'expense' && s === 'plan';
         }) : [];
         rows = [...fromPlans, ...fromTx];
+    } else if (cardId === 'selected-balance') {
+        rows = [...bankBalances];
     }
 
     _modalRows = rows;
@@ -2079,7 +2098,36 @@ function renderModalRows(rows) {
     const isGrouped = typeof _detailModalViewMode !== 'undefined' && _detailModalViewMode === 'group';
     const fragment = document.createDocumentFragment();
 
-    if (isGrouped) {
+    if (_isModalBankSource) {
+        // Special rendering for Bank Balance data
+        thead.innerHTML = `<tr><th>#</th><th>Bank</th><th>Account No</th><th class="numeric">Selected Balance (฿)</th></tr>`;
+        rows.forEach((b, i) => {
+            const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
+            const keys = Object.keys(b).join(', ');
+            
+            // Flexible lookup for Selected Balance
+            const sbKey = Object.keys(b).find(k => {
+                const normalized = k.toLowerCase().replace(/\s/g, '');
+                return normalized.includes('selected') && normalized.includes('balance');
+            });
+            const amt = parseSafe(sbKey ? b[sbKey] : 0);
+            const accountNum = (b['Account No'] || b.accountNo || b.account || '-').trim();
+
+            if (amt !== 0) total += amt;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td><span style="color:#fff; font-weight:600;">${bankName}</span></td>
+                <td><span style="color:#94a3b8; font-size:12px;">${accountNum}</span></td>
+                <td class="numeric modal-amount-income" style="font-weight:600;">฿${checkValue(amt)}</td>
+            `;
+            fragment.appendChild(tr);
+        });
+        tbody.appendChild(fragment);
+        const countEl = document.getElementById('modal-row-count');
+        if (countEl) countEl.textContent = `${rows.length} ธนาคาร`;
+    } else if (isGrouped) {
         thead.innerHTML = `<tr><th>#</th><th>Category</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
         const grouped = {};
         rows.forEach(row => {
@@ -2097,7 +2145,12 @@ function renderModalRows(rows) {
             const item = grouped[cat];
             total += item.sum;
             totalCount += item.count;
-            const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+            
+            let amtClass = 'modal-amount-expense';
+            if (_modalType === 'income') amtClass = 'modal-amount-income';
+            else if (_modalType === 'balance') {
+                amtClass = item.sum >= 0 ? 'modal-amount-income' : 'modal-amount-expense';
+            }
 
             const hasSubRows = item.items.length > 0;
             const tr = document.createElement('tr');
@@ -2119,7 +2172,9 @@ function renderModalRows(rows) {
                 const sortedSubItems = [...item.items].sort((a, b) => {
                     return getRowAmount(b, _modalType) - getRowAmount(a, _modalType);
                 });
-                sortedSubItems.forEach(row => {
+                sortedSubItems.forEach((row, subIdx) => {
+                    const isLast = subIdx === sortedSubItems.length - 1;
+
                     const subTr = document.createElement('tr');
                     subTr.className = `modal-sub-row modal-cat-${i}`;
                     subTr.style.display = 'none';
@@ -2132,19 +2187,20 @@ function renderModalRows(rows) {
                         if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
                     } catch (e) { }
 
-                    const desc = row['Description'] || row.description || '-';
-                    const creditor = row['Name'] || row.name || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+                    const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
                     const amount = getRowAmount(row, _modalType);
+                    const rowType = getRowType(row);
+                    const rowAmtClass = rowType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
 
                     subTr.innerHTML = `
                         <td style="color:#64748b; font-size:11px; text-align:center; white-space:nowrap;">
                             <span>${displayDate}</span>
                         </td>
-                        <td style="padding-left: 20px;">
-                            <span style="color:#cbd5e1; font-size:12px;" title="${desc} | ${creditor}">${desc} ${creditor !== '-' ? ' - ' + creditor : ''}</span>
+                        <td style="padding-left: 30px; text-align: left;">
+                            <span style="color:#cbd5e1; font-size:12px;" title="${creditor}">${creditor}</span>
                         </td>
                         <td></td>
-                        <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">฿${checkValue(amount)}</td>
+                        <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">฿${checkValue(Math.abs(amount))}</td>
                     `;
                     fragment.appendChild(subTr);
                 });
@@ -2174,7 +2230,7 @@ function renderModalRows(rows) {
             } catch (e) { }
 
             const desc = row['Description'] || row.description || '-';
-            const creditor = row['Name'] || row.name || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+            const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
             const bank = row['Bank'] || row.bank || '-';
             const category = row['Category'] || row.category || '-';
             const status = row['Status'] || row.status || '-';
@@ -2211,7 +2267,12 @@ function renderModalRows(rows) {
 
     const totalEl = document.getElementById('modal-total-amount');
     if (totalEl) {
-        const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+        let amtClass = 'modal-amount-expense';
+        if (_modalType === 'income') amtClass = 'modal-amount-income';
+        else if (_modalType === 'balance') {
+            amtClass = total >= 0 ? 'modal-amount-income' : 'modal-amount-expense';
+        }
+
         const valueSpan = totalEl.querySelector('.total-value');
         if (valueSpan) {
             valueSpan.className = `total-value ${amtClass}`;
@@ -2267,23 +2328,32 @@ function exportModalPdf(type) {
     // Inject colgroup for precise column widths to avoid wrapping (A4 portrait ~190mm usable)
     // Different widths for group vs detail view
     let colgroupHtml = '';
-    if (mode === 'group') {
+    
+    if (!isBank && typeof _isModalBankSource !== 'undefined' && _isModalBankSource) {
+        // # | Bank | Account No | Selected Balance (฿)
+        colgroupHtml = `<colgroup>
+            <col style="width:10%">
+            <col style="width:40%">
+            <col style="width:25%">
+            <col style="width:25%">
+        </colgroup>`;
+    } else if (mode === 'group') {
         if (isBank) {
             // # | Category | Count | CashIn | CashOut
             colgroupHtml = `<colgroup>
-                <col style="width:6%">
-                <col style="width:36%">
+                <col style="width:10%">
+                <col style="width:40%">
+                <col style="width:14%">
                 <col style="width:18%">
-                <col style="width:20%">
-                <col style="width:20%">
+                <col style="width:18%">
             </colgroup>`;
         } else {
             // # | Category | Count | Total
             colgroupHtml = `<colgroup>
-                <col style="width:6%">
-                <col style="width:52%">
-                <col style="width:18%">
-                <col style="width:24%">
+                <col style="width:12%">
+                <col style="width:50%">
+                <col style="width:15%">
+                <col style="width:23%">
             </colgroup>`;
         }
     } else {
@@ -2314,11 +2384,12 @@ function exportModalPdf(type) {
         }
     }
 
-    // Insert colgroup right after <table tag
-    let tableHtml = tableClone.outerHTML.replace(/^<table[^>]*>/, match => match + colgroupHtml);
+    if (colgroupHtml) {
+        tableClone.insertAdjacentHTML('afterbegin', colgroupHtml);
+    }
     
     // Remove all '฿' symbols from the exported HTML
-    tableHtml = tableHtml.replace(/฿/g, '');
+    let tableHtml = tableClone.outerHTML.replace(/฿/g, '');
 
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     if (!printWindow) { alert('กรุณาอนุญาต Pop-up สำหรับเว็บนี้ก่อนครับ'); return; }
@@ -2336,15 +2407,17 @@ function exportModalPdf(type) {
   .hdr h1 { font-size: 15pt; color: #1e3a5f; font-weight: 700; margin-bottom: 4px; }
   .hdr h2 { font-size: 11pt; color: #334155; font-weight: 600; margin-bottom: 4px; }
   .hdr p  { font-size: 8pt; color: #555; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 7pt; table-layout: fixed; }
-  thead th { background: #1e3a5f; color: #fff; padding: 7px 5px; text-align: left; font-weight: 700; border: 1px solid #1e3a5f; white-space: nowrap; overflow: hidden; font-size: 7pt; }
+  table { width: 100%; max-width: 100%; margin: 0 auto 14px auto; border-collapse: collapse; font-size: 7pt; table-layout: fixed; }
+  thead th { background: #1e3a5f; color: #fff; padding: 7px 5px; text-align: center; font-weight: 700; border: 1px solid #1e3a5f; white-space: nowrap; overflow: hidden; font-size: 7pt; }
   tbody tr:nth-child(even) { background: #f0f4f8 !important; }
   tbody tr:nth-child(odd)  { background: #fff !important; }
-  tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111 !important; overflow-wrap: break-word; white-space: normal; vertical-align: top; line-height: 1.2; }
+  tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111 !important; overflow-wrap: break-word; white-space: normal; vertical-align: middle; line-height: 1.3; text-align: center; }
+  tbody td span { color: #111 !important; } /* Force spans (like bank names) to be black */
   
   /* Sub-rows styling for PDF to override inline colors */
-  .modal-sub-row td { background: #f8fafc !important; color: #334155 !important; font-size: 7pt !important; border-top: 1px dashed #cbd5e1 !important; }
-  .modal-sub-row td.numeric { color: #0f172a !important; font-weight: bold !important; }
+  .modal-sub-row td { background: #f8fafc !important; color: #334155 !important; font-size: 7pt !important; text-align: center !important; }
+  .modal-sub-row td:nth-child(2) { padding-left: 20px !important; text-align: left !important; }
+  .modal-sub-row td.numeric { color: #0f172a !important; font-weight: bold !important; text-align: right !important; }
   
   /* Hide the expand button in PDF */
   .btn-ms-expand { display: none !important; }
@@ -3103,7 +3176,7 @@ function renderMonthlySummaryTable() {
 
         // Build toggle button for expandable rows
         let toggleBtn = '';
-        if (catKey && nameCount > 1) {
+        if (catKey && nameCount > 0) {
             const isExpanded = expandedMsCategories.has(catKey);
             const expandedClass = isExpanded ? ' expanded' : '';
             toggleBtn = `<span class="ms-expand-btn${expandedClass}" onclick="toggleMsExpand(event, '${catKey.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" title="แสดงรายชื่อ">${isExpanded ? '&#x2212;' : '&#x2B;'}</span>`;
