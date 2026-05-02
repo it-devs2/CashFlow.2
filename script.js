@@ -2152,7 +2152,7 @@ function renderModalRows(rows) {
 
     if (_isModalBankSource) {
         // Special rendering for Bank Balance data
-        thead.innerHTML = `<tr><th>#</th><th>Bank</th><th>Account No</th><th>Air Code</th><th class="numeric">Selected Balance (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Bank</th><th>Account No</th><th style="text-align:center;">Air Code</th><th class="numeric">Selected Balance (฿)</th></tr>`;
         rows.forEach((b, i) => {
             const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
             const keys = Object.keys(b).join(', ');
@@ -2173,7 +2173,7 @@ function renderModalRows(rows) {
                 <td>${i + 1}</td>
                 <td><span style="color:#fff; font-weight:600;">${bankName}</span></td>
                 <td><span style="color:#94a3b8; font-size:12px;">${accountNum}</span></td>
-                <td><span style="color:#fcd34d; font-size:12px; font-weight:600;">${airCode}</span></td>
+                <td style="text-align:center;"><span style="color:#fcd34d; font-size:12px; font-weight:600;">${airCode}</span></td>
                 <td class="numeric modal-amount-income" style="font-weight:600;">฿${checkValue(amt)}</td>
             `;
             fragment.appendChild(tr);
@@ -2182,7 +2182,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `${rows.length} ธนาคาร`;
     } else if (isGrouped) {
-        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Category</th><th style="text-align:center;">Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
@@ -2271,7 +2271,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
-        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th>Air Code</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th style="text-align:center;">Air Code</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
 
         // Calculate total first across ALL rows
         rows.forEach(row => {
@@ -2308,7 +2308,7 @@ function renderModalRows(rows) {
                 <td>${bank}</td>
                 <td>${category}</td>
                 <td><span class="status-badge ${statusClass}">${status}</span></td>
-                <td><span style="color:#fcd34d; font-weight:600;">${airCode}</span></td>
+                <td style="text-align:center;"><span style="color:#fcd34d; font-weight:600;">${airCode}</span></td>
                 <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
             `;
             fragment.appendChild(tr);
@@ -3760,11 +3760,13 @@ function renderDayList(q = '') {
 }
 
 function filterDayList() {
-    renderDayList(document.getElementById('day-search-input').value);
+    const input = document.getElementById('day-search-input');
+    renderDayList(input ? input.value : '');
 }
 
 function daySelectAll() {
-    const q = document.getElementById('day-search-input').value.trim();
+    const input = document.getElementById('day-search-input');
+    const q = input ? input.value.trim() : '';
     const matches = availableDays.filter(d => d.includes(q));
     matches.forEach(d => selectedDays.add(d));
     renderDayList(q);
@@ -3772,7 +3774,8 @@ function daySelectAll() {
 }
 
 function dayClear() {
-    const q = document.getElementById('day-search-input').value.trim();
+    const input = document.getElementById('day-search-input');
+    const q = input ? input.value.trim() : '';
     const matches = availableDays.filter(d => d.includes(q));
     matches.forEach(d => selectedDays.delete(d));
     renderDayList(q);
