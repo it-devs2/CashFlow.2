@@ -19,7 +19,8 @@
     <div id="global-loader" class="global-loader hidden">
         <div class="loader-content">
             <div class="loader-spinner"></div>
-            <h2>&#3585;&#3635;&#3621;&#3633;&#3591;&#3604;&#3638;&#3591;&#3586;&#3657;&#3629;&#3617;&#3641;&#3621;...</h2>
+            <h2>&#3585;&#3635;&#3621;&#3633;&#3591;&#3604;&#3638;&#3591;&#3586;&#3657;&#3629;&#3617;&#3641;&#3621;...
+            </h2>
         </div>
     </div>
 
@@ -32,7 +33,8 @@
                     <div class="brand-logo">💰</div>
                     <span class="brand-text">CASHFLOW</span>
                 </div>
-                <button class="sidebar-collapse-btn" onclick="toggleLeftSidebar()" title="&#3627;&#3640;&#3610;/&#3586;&#3618;&#3634;&#3618; &#3648;&#3617;&#3609;&#3641;">
+                <button class="sidebar-collapse-btn" onclick="toggleLeftSidebar()"
+                    title="&#3627;&#3640;&#3610;/&#3586;&#3618;&#3634;&#3618; &#3648;&#3617;&#3609;&#3641;">
                     <svg class="collapse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5">
                         <path d="M15 18l-6-6 6-6" />
@@ -56,7 +58,8 @@
             </nav>
 
             <div class="sidebar-footer-wrap">
-                <a href="https://docs.google.com/spreadsheets/d/1DQ5cBiusMosPtpxOJeO_1lRyf19uvT9Le18__YucbKk/edit?gid=391257604#gid=391257604" target="_blank" class="nav-link" style="margin-bottom: 15px; color: #38bdf8;">
+                <a href="https://docs.google.com/spreadsheets/d/1DQ5cBiusMosPtpxOJeO_1lRyf19uvT9Le18__YucbKk/edit?gid=391257604#gid=391257604"
+                    target="_blank" class="nav-link" style="margin-bottom: 15px; color: #38bdf8;">
                     <span class="nav-icon">📊</span>
                     <span class="nav-label">Google Sheets</span>
                 </a>
@@ -76,7 +79,9 @@
                     <div class="header-top-row">
                         <div class="header-title-section">
                             <h1>CashFlow Dashboard</h1>
-                            <p class="header-subtitle" id="last-sync-time-header">&#3629;&#3633;&#3611;&#3648;&#3604;&#3605;&#3621;&#3656;&#3634;&#3626;&#3640;&#3604;: --:--</p>
+                            <p class="header-subtitle" id="last-sync-time-header">
+                                &#3629;&#3633;&#3611;&#3648;&#3604;&#3605;&#3621;&#3656;&#3634;&#3626;&#3640;&#3604;:
+                                --:--</p>
                         </div>
                     </div>
                     <div class="header-left">
@@ -87,15 +92,20 @@
                                     <div class="search-trigger-box">
                                         <div class="input-ghost-wrapper">
                                             <input type="text" id="filter-creditor-search"
-                                                placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3648;&#3592;&#3657;&#3634;&#3627;&#3609;&#3637;&#3657;..." autocomplete="off">
+                                                placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3648;&#3592;&#3657;&#3634;&#3627;&#3609;&#3637;&#3657;..."
+                                                autocomplete="off">
                                             <span id="creditor-ghost-text" class="ghost-text"></span>
                                         </div>
-                                        <span id="creditor-selected-count" class="selected-badge">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
+                                        <span id="creditor-selected-count"
+                                            class="selected-badge">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
                                     </div>
                                     <div class="ms-dropdown" id="creditor-dropdown">
                                         <div class="ms-actions">
-                                            <div class="ms-action-btn" id="btn-ms-select-all">✅ &#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</div>
-                                            <div class="ms-action-btn" id="btn-ms-clear">❌ &#3621;&#3657;&#3634;&#3591;</div>
+                                            <div class="ms-action-btn" id="btn-ms-select-all">✅
+                                                &#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;
+                                            </div>
+                                            <div class="ms-action-btn" id="btn-ms-clear">❌ &#3621;&#3657;&#3634;&#3591;
+                                            </div>
                                         </div>
                                         <div class="ms-list" id="creditor-suggestions">
                                             <!-- Suggestions injected by JS -->
@@ -104,7 +114,8 @@
                                 </div>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-category">🗂️ &#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;</label>
+                                <label for="filter-category">🗂️
+                                    &#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;</label>
                                 <select id="filter-category">
                                     <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
                                 </select>
@@ -119,15 +130,33 @@
                                 <label for="filter-party-type">📑 &#3611;&#3619;&#3632;&#3648;&#3616;&#3607;</label>
                                 <select id="filter-party-type">
                                     <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
-                                    <option value="Vendor">Expense (&#3619;&#3634;&#3618;&#3592;&#3656;&#3634;&#3618;)</option>
-                                    <option value="Customer">Income (&#3619;&#3634;&#3618;&#3619;&#3633;&#3610;)</option>
+                                    <option value="Vendor">Expense (&#3619;&#3634;&#3618;&#3592;&#3656;&#3634;&#3618;)
+                                    </option>
+                                    <option value="Customer">Income (&#3619;&#3634;&#3618;&#3619;&#3633;&#3610;)
+                                    </option>
                                 </select>
                             </div>
                             <div class="hfilter-group">
-                                <label for="filter-day">📅 &#3623;&#3633;&#3609;</label>
-                                <select id="filter-day">
-                                    <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
-                                </select>
+                                <label>📅 วัน</label>
+                                <div class="multi-select-wrapper" id="day-wrapper">
+                                    <div class="search-trigger-box" onclick="toggleDayDropdown(event)" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; height: 100%;">
+                                        <div class="input-ghost-wrapper" style="flex:1;">
+                                            <input type="text" id="day-search-display" placeholder="เลือกวัน" readonly style="cursor:pointer; background:transparent; border:none; color:#f1f5f9; outline:none; font-size:13px; width:100%;">
+                                        </div>
+                                        <span id="day-selected-count" class="selected-badge">ทั้งหมด</span>
+                                    </div>
+                                    <div class="ms-dropdown" id="day-dropdown" style="display:none; position:absolute; top:calc(100% + 5px); right:0; width:180px; background:rgba(8, 14, 26, 0.97); border:1px solid rgba(180,140,60,0.2); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); z-index:1200; backdrop-filter:blur(12px);">
+                                        <div class="ms-actions" style="display:flex; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); gap:10px;">
+                                            <div class="ms-action-btn" onclick="daySelectAll()" style="flex:1; text-align:center; padding:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.15); border-radius:6px; cursor:pointer; font-size:12px; color:#c8a84b; transition:0.2s;">
+                                                ✅ เลือกทั้งหมด
+                                            </div>
+                                            <div class="ms-action-btn" onclick="dayClear()" style="flex:1; text-align:center; padding:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; cursor:pointer; font-size:12px; color:#64748b; transition:0.2s;">
+                                                ❌ ล้าง
+                                            </div>
+                                        </div>
+                                        <div class="ms-list" id="day-suggestions" style="max-height:200px; overflow-y:auto; padding:5px;"></div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="hfilter-group">
                                 <label for="filter-month">🗓️ &#3648;&#3604;&#3639;&#3629;&#3609;</label>
@@ -141,7 +170,8 @@
                                     <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
                                 </select>
                             </div>
-                            <button id="btn-reset-filters" class="btn-reset">↺ &#3619;&#3637;&#3648;&#3595;&#3655;&#3605;</button>
+                            <button id="btn-reset-filters" class="btn-reset">↺
+                                &#3619;&#3637;&#3648;&#3595;&#3655;&#3605;</button>
                         </div>
                     </div>
                 </header>
@@ -154,7 +184,8 @@
                         <div class="card glass income-card">
                             <h3>Income (Actual)</h3>
                             <p id="income-actual" class="amount">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('income-actual')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
+                            <button class="btn-detail" onclick="openDetailModal('income-actual')">📋
+                                &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                         <div class="card glass expense-card">
                             <h3>Expense (Actual)</h3>
@@ -165,7 +196,8 @@
                         <div class="card glass" style="border-style: solid; border-color: rgba(245, 158, 11, 0.4);">
                             <h3 style="color: #f59e0b;">Selected Balance</h3>
                             <p id="selected-balance" class="amount" style="color: #f59e0b;">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('selected-balance')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
+                            <button class="btn-detail" onclick="openDetailModal('selected-balance')">📋
+                                &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                     </section>
 
@@ -174,12 +206,14 @@
                         <div class="card glass plan-card">
                             <h3>Income (Plan)</h3>
                             <p id="income-plan" class="amount">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('income-plan')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
+                            <button class="btn-detail" onclick="openDetailModal('income-plan')">📋
+                                &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                         <div class="card glass plan-card expense-plan-card">
                             <h3>Expense (Plan)</h3>
                             <p id="expense-plan" class="amount">0.00</p>
-                            <button class="btn-detail" onclick="openDetailModal('expense-plan')">📋 &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
+                            <button class="btn-detail" onclick="openDetailModal('expense-plan')">📋
+                                &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</button>
                         </div>
                         <div class="card glass plan-card net-plan-card"
                             style="border-style: solid; border-color: rgba(56, 189, 248, 0.4);">
@@ -200,7 +234,8 @@
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h2 class="section-title" style="margin:0;">Analysis</h2>
                             <button id="btn-tc-toggle" onclick="toggleTransactionAmounts()" class="btn-reset"
-                                style="padding: 5px 12px; font-size: 11px;">🔒 &#3595;&#3656;&#3629;&#3609;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;</button>
+                                style="padding: 5px 12px; font-size: 11px;">🔒
+                                &#3595;&#3656;&#3629;&#3609;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;</button>
                         </div>
 
                         <!-- Pro Analysis Toolbar (New Horizontal Design) -->
@@ -210,9 +245,12 @@
                                     <span class="toolbar-label">🔎 Type</span>
                                     <div class="toolbar-select-wrap">
                                         <select id="tc-filter-type" onchange="updateTransactionChart()">
-                                            <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</option>
-                                            <option value="income">&#3619;&#3634;&#3618;&#3619;&#3633;&#3610; (Income)</option>
-                                            <option value="expense">&#3619;&#3634;&#3618;&#3592;&#3656;&#3634;&#3618; (Expense)</option>
+                                            <option value="All">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;
+                                            </option>
+                                            <option value="income">&#3619;&#3634;&#3618;&#3619;&#3633;&#3610; (Income)
+                                            </option>
+                                            <option value="expense">&#3619;&#3634;&#3618;&#3592;&#3656;&#3634;&#3618;
+                                                (Expense)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -224,17 +262,21 @@
                                         <div class="toolbar-trigger" id="btn-tc-category-dropdown">
                                             <span class="toolbar-label" style="margin-right:8px; padding:0;">📁
                                                 Category</span>
-                                            <span id="tc-category-selected-text">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
+                                            <span
+                                                id="tc-category-selected-text">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
                                             <i class="chevron">▼</i>
                                         </div>
                                         <div class="autocomplete-dropdown" style="width: 250px;">
                                             <div class="dropdown-header">
                                                 <input type="text" id="filter-tc-category-search"
-                                                    placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;..." autocomplete="off">
+                                                    placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;..."
+                                                    autocomplete="off">
                                             </div>
                                             <div class="ms-actions">
-                                                <button id="btn-tc-cat-select-all">&#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</button>
-                                                <button id="btn-tc-cat-clear">&#3621;&#3657;&#3634;&#3591;&#3588;&#3656;&#3634;</button>
+                                                <button
+                                                    id="btn-tc-cat-select-all">&#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</button>
+                                                <button
+                                                    id="btn-tc-cat-clear">&#3621;&#3657;&#3634;&#3591;&#3588;&#3656;&#3634;</button>
                                             </div>
                                             <div id="tc-category-suggestions" class="autocomplete-suggestions"></div>
                                         </div>
@@ -261,12 +303,22 @@
                             </div>
 
                             <div class="toolbar-right">
-                                <button onclick="resetTcFilters()" class="btn-toolbar-reset" title="&#3619;&#3637;&#3648;&#3595;&#3655;&#3605;&#3605;&#3633;&#3623;&#3585;&#3619;&#3629;&#3591;">
+                                <button onclick="resetTcFilters()" class="btn-toolbar-reset"
+                                    title="&#3619;&#3637;&#3648;&#3595;&#3655;&#3605;&#3605;&#3633;&#3623;&#3585;&#3619;&#3629;&#3591;">
                                     <span class="icon">↺</span> Reset
                                 </button>
                             </div>
                         </div>
-                        <div id="transaction-chart"></div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;" id="transaction-charts-container">
+                            <div class="chart-box" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px;">
+                                <h3 style="color: #34d399; margin-top: 0; margin-bottom: 10px; font-size: 15px; text-align: center;">🟢 รายได้ Top 10 (หมวดหมู่)</h3>
+                                <div id="transaction-chart-income"></div>
+                            </div>
+                            <div class="chart-box" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px;">
+                                <h3 style="color: #f87171; margin-top: 0; margin-bottom: 10px; font-size: 15px; text-align: center;">🔴 รายจ่าย Top 10 (หมวดหมู่)</h3>
+                                <div id="transaction-chart-expense"></div>
+                            </div>
+                        </div>
                     </section>
 
                     <!-- Monthly Summary Section -->
@@ -279,7 +331,9 @@
                                     <div class="ms-report-icon">📊</div>
                                     <div class="ms-report-text">
                                         <div class="ms-report-label">Financial Report</div>
-                                        <div class="ms-report-name">&#3626;&#3619;&#3640;&#3611;&#3618;&#3629;&#3604;&#3619;&#3634;&#3618;&#3648;&#3604;&#3639;&#3629;&#3609; (Monthly Summary)</div>
+                                        <div class="ms-report-name">
+                                            &#3626;&#3619;&#3640;&#3611;&#3618;&#3629;&#3604;&#3619;&#3634;&#3618;&#3648;&#3604;&#3639;&#3629;&#3609;
+                                            (Monthly Summary)</div>
                                     </div>
                                 </div>
                                 <div class="ms-report-controls">
@@ -288,10 +342,12 @@
                                             style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                                             <div class="input-ghost-wrapper" style="flex:1;">
                                                 <input type="text" id="ms-category-search-display"
-                                                    placeholder="&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656; (Category)" readonly
+                                                    placeholder="&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656; (Category)"
+                                                    readonly
                                                     style="cursor:pointer; background:transparent; border:none; color:#f1f5f9; outline:none; font-size:13px; width:100%;">
                                             </div>
-                                            <span id="ms-category-selected-count" class="selected-badge">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
+                                            <span id="ms-category-selected-count"
+                                                class="selected-badge">&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</span>
                                         </div>
                                         <div class="ms-dropdown" id="ms-category-dropdown"
                                             style="display:none; position:absolute; top:calc(100% + 5px); right:0; width:300px; background:rgba(8, 14, 26, 0.97); border:1px solid rgba(180,140,60,0.2); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.6); z-index:1200; backdrop-filter:blur(12px);">
@@ -299,14 +355,17 @@
                                                 style="display:flex; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); gap:10px;">
                                                 <div class="ms-action-btn" onclick="msCatSelectAll()"
                                                     style="flex:1; text-align:center; padding:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.15); border-radius:6px; cursor:pointer; font-size:12px; color:#c8a84b; transition:0.2s;">
-                                                    ✅ &#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;</div>
+                                                    ✅
+                                                    &#3648;&#3621;&#3639;&#3629;&#3585;&#3607;&#3633;&#3657;&#3591;&#3627;&#3617;&#3604;
+                                                </div>
                                                 <div class="ms-action-btn" onclick="msCatClear()"
                                                     style="flex:1; text-align:center; padding:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; cursor:pointer; font-size:12px; color:#64748b; transition:0.2s;">
                                                     ❌ &#3621;&#3657;&#3634;&#3591;</div>
                                             </div>
                                             <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
                                                 <input type="text" id="ms-category-search-input"
-                                                    placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;..." oninput="filterMsCategory()"
+                                                    placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3627;&#3617;&#3623;&#3604;&#3627;&#3617;&#3641;&#3656;..."
+                                                    oninput="filterMsCategory()"
                                                     style="width:100%; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); color:#fff; outline:none; font-size:13px;">
                                             </div>
                                             <div class="ms-list" id="ms-category-suggestions"
@@ -350,7 +409,8 @@
 
             <!-- SIDE FEED (RIGHT) - &#3586;&#3623;&#3634;&#3626;&#3640;&#3604;&#3605;&#3636;&#3604;&#3586;&#3629;&#3610;&#3610;&#3609;&#3618;&#3634;&#3623;&#3621;&#3591;&#3617;&#3634; -->
             <aside id="view-recent" class="right-sidebar">
-                <button class="right-sidebar-close-btn" onclick="toggleRightSidebar()" title="&#3595;&#3656;&#3629;&#3609;&#3649;&#3606;&#3610;&#3604;&#3657;&#3634;&#3609;&#3586;&#3623;&#3634;">
+                <button class="right-sidebar-close-btn" onclick="toggleRightSidebar()"
+                    title="&#3595;&#3656;&#3629;&#3609;&#3649;&#3606;&#3610;&#3604;&#3657;&#3634;&#3609;&#3586;&#3623;&#3634;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.5">
                         <path d="M9 18l6-6-6-6" />
@@ -383,7 +443,8 @@
             </aside>
 
             <!-- Floating tab to re-open right sidebar when collapsed -->
-            <button class="right-sidebar-reopen-tab" onclick="toggleRightSidebar()" title="&#3649;&#3626;&#3604;&#3591;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;"
+            <button class="right-sidebar-reopen-tab" onclick="toggleRightSidebar()"
+                title="&#3649;&#3626;&#3604;&#3591;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;"
                 aria-label="&#3649;&#3626;&#3604;&#3591;&#3618;&#3629;&#3604;&#3648;&#3591;&#3636;&#3609;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M15 18l-6-6 6-6" />
@@ -409,7 +470,8 @@
                         </div>
                         <div class="modal-title-block">
                             <h2 id="modal-title" class="modal-title-text">-</h2>
-                            <span id="modal-row-count" class="modal-count-badge">0 &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;</span>
+                            <span id="modal-row-count" class="modal-count-badge">0
+                                &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;</span>
                         </div>
                     </div>
                     <div class="modal-header-right">
@@ -442,7 +504,9 @@
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
-                        <input type="text" id="modal-search" placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;..." oninput="filterModalTable()">
+                        <input type="text" id="modal-search"
+                            placeholder="&#3588;&#3657;&#3609;&#3627;&#3634;&#3619;&#3634;&#3618;&#3585;&#3634;&#3619;..."
+                            oninput="filterModalTable()">
                     </div>
                     <div class="modal-view-toggle">
                         <button id="btn-view-all" class="btn-toggle active" onclick="updateModalView('all')">
@@ -472,11 +536,13 @@
                 <!-- === MODAL FOOTER === -->
                 <div class="modal-footer">
                     <div class="modal-footer-left">
-                        <span id="modal-total-amount" class="modal-total-text">&#3618;&#3629;&#3604;&#3619;&#3623;&#3617;: <span
+                        <span id="modal-total-amount"
+                            class="modal-total-text">&#3618;&#3629;&#3604;&#3619;&#3623;&#3617;: <span
                                 class="total-value">&#3647;0.00</span></span>
                     </div>
                     <div class="modal-footer-right">
-                        <span class="footer-hint">💡 &#3585;&#3604;&#3607;&#3637;&#3656;&#3649;&#3606;&#3623;&#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</span>
+                        <span class="footer-hint">💡
+                            &#3585;&#3604;&#3607;&#3637;&#3656;&#3649;&#3606;&#3623;&#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;</span>
                     </div>
                 </div>
 
@@ -487,8 +553,11 @@
             <div class="modal-box bank-modal-box">
                 <div class="modal-header">
                     <div class="modal-header-left">
-                        <h2 class="modal-title" id="bank-modal-title">&#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;</h2>
-                        <span class="modal-row-count" id="bank-modal-row-count">0 &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;</span>
+                        <h2 class="modal-title" id="bank-modal-title">
+                            &#3619;&#3634;&#3618;&#3621;&#3632;&#3648;&#3629;&#3637;&#3618;&#3604;&#3608;&#3609;&#3634;&#3588;&#3634;&#3619;
+                        </h2>
+                        <span class="modal-row-count" id="bank-modal-row-count">0
+                            &#3619;&#3634;&#3618;&#3585;&#3634;&#3619;</span>
                     </div>
                     <div class="modal-header-actions">
                         <button class="btn-export-pdf" onclick="exportModalPdf('bank')">💾 PDF</button>
@@ -513,7 +582,8 @@
                 </div>
 
                 <div class="modal-footer">
-                    <div id="bank-modal-totals" class="modal-total">&#3618;&#3629;&#3604;&#3619;&#3623;&#3617;: <span>&#3647;0.00</span></div>
+                    <div id="bank-modal-totals" class="modal-total">&#3618;&#3629;&#3604;&#3619;&#3623;&#3617;:
+                        <span>&#3647;0.00</span></div>
                 </div>
             </div>
         </div>

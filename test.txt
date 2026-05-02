@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbziK3WYyfBBGTQUJ1f-3q295Z-SqxUaeRuNBi8qZFnqNjrF0W55bTd1t-m_Lput9A/exec";
+﻿const API_URL = "https://script.google.com/macros/s/AKfycbziK3WYyfBBGTQUJ1f-3q295Z-SqxUaeRuNBi8qZFnqNjrF0W55bTd1t-m_Lput9A/exec";
 const GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/1DQ5cBiusMosPtpxOJeO_1lRyf19uvT9Le18__YucbKk/edit?gid=391257604#gid=391257604";
 
 // Caching Constants
@@ -202,7 +202,8 @@ let allTcCategories = [];
 let selectedTcCategories = new Set();
 
 let comparisonChart; // ApexCharts instance for Overview
-let transactionChart = null; // ApexCharts for Transaction Analysis by Name
+let transactionIncomeChart = null;
+let transactionExpenseChart = null;
 
 const CHART_COLORS = [
     '#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#a78bfa',
@@ -524,12 +525,7 @@ function populateFilterDropdowns(transactions, plans) {
 
     updateSelect('filter-category', [...categories].sort());
     updateSelect('filter-group', [...groups].sort());
-    
-    // Day Multi-Select Filter
-    availableDays = [...days].sort((a, b) => a - b).map(d => String(d).padStart(2, '0'));
-    renderDayList();
-    updateDayUI();
-
+    updateSelect('filter-day', [...days].sort((a, b) => a - b), d => String(d).padStart(2, '0'));
     updateSelect('filter-month', [...months].sort((a, b) => a - b), m => `${String(m).padStart(2, '0')} - ${monthNames[m - 1]}`);
     updateSelect('filter-year', [...years].sort((a, b) => b - a));
 
@@ -568,6 +564,7 @@ function applyFilters() {
     const category = document.getElementById('filter-category')?.value || 'All';
     const group = document.getElementById('filter-group')?.value || 'All';
     const partyType = document.getElementById('filter-party-type')?.value || 'All';
+    const day = document.getElementById('filter-day')?.value || 'All';
     const month = document.getElementById('filter-month')?.value || 'All';
     const year = document.getElementById('filter-year')?.value || 'All';
 
@@ -639,10 +636,9 @@ function applyFilters() {
         // Apply filtering
         if (month !== 'All' && rowMonth !== Number(month)) return false;
         if (year !== 'All' && rowYear !== Number(year)) return false;
-        
-        if (selectedDays.size > 0 && rawDate) {
+        if (day !== 'All' && rawDate) {
             const d = parseDateSafe(rawDate);
-            if (d && !selectedDays.has(String(d.getDate()).padStart(2, '0'))) return false;
+            if (d && d.getDate() !== Number(day)) return false;
         }
 
         return true;
@@ -655,7 +651,7 @@ function applyFilters() {
     _lastFilteredTransactions = filteredTransactions;
     _lastFilteredPlans = filteredPlans;
 
-    const isFiltered = selectedCreditors.size > 0 || category !== 'All' || group !== 'All' || partyType !== 'All' || selectedDays.size > 0 || month !== 'All' || year !== 'All';
+    const isFiltered = selectedCreditors.size > 0 || category !== 'All' || group !== 'All' || partyType !== 'All' || day !== 'All' || month !== 'All' || year !== 'All';
 
     window.tableRenderLimit = 150; // Reset load limit on filter change
 
@@ -1078,12 +1074,10 @@ function populateTransactionChartFilters(transactions) {
 }
 
 function updateTransactionChart() {
-    const rawType = document.getElementById('tc-filter-type')?.value || 'All';
     const rawYear = document.getElementById('tc-filter-year')?.value || 'All';
     const rawMonth = document.getElementById('tc-filter-month')?.value || 'All';
 
     // 1. Filter Transactions
-    // เริ่มจากข้อมูล Transactions ที่ผ่าน filter หลักแล้ว (sync กับกราฟเส้น)
     let filtered = (_lastFilteredTransactions && _lastFilteredTransactions.length > 0)
         ? [..._lastFilteredTransactions]
         : [...allTransactions];
@@ -1097,18 +1091,13 @@ function updateTransactionChart() {
         return !rowStatus.includes('plan');
     });
 
-    if (rawType !== 'All') {
-        filtered = filtered.filter(row => {
-            const t = getRowType(row);
-            return t === rawType;
-        });
-    }
     if (selectedTcCategories.size > 0) {
         filtered = filtered.filter(row => {
             const c = (row['Category'] || row.category || '').toString().trim();
             return selectedTcCategories.has(c);
         });
     }
+
     if (rawYear !== 'All') {
         filtered = filtered.filter(row => {
             const date = parseDateSafe(row['Date'] || row.date);
@@ -1125,221 +1114,213 @@ function updateTransactionChart() {
     const totalAmountEl = document.getElementById('tc-total-amount');
     const totalCountEl = document.getElementById('tc-total-count');
 
-    // 2. Aggregate by Category (Column H) — separate Income and Expense
+    // 2. Aggregate by Name & Type
     const incomeMap = {};
     const expenseMap = {};
     
     filtered.forEach(row => {
-        const cat = (row['Category'] || row.category || '').toString().trim();
-        if (!cat) return;
-        
-        // Exclude Transfer Categories
-        if (cat === 'Transfer-รับ' || cat === 'Transfer-จ่าย' || cat.toLowerCase().startsWith('transfer')) return;
+        const rawName = (row['Name'] || row.name || '').toString().trim();
+        const name = normalizeName(rawName);
+        if (!name || name.toLowerCase().startsWith('transfer')) return;
 
         const rType = getRowType(row);
+        const rTypeUpper = rType.toUpperCase();
         let amt = getRowAmount(row, rType);
         
-        const rTypeUpper = rType.toUpperCase();
         if (rTypeUpper.includes('INCOME')) {
-            if (!incomeMap[cat]) incomeMap[cat] = 0;
-            incomeMap[cat] += amt;
+            if (!incomeMap[name]) incomeMap[name] = 0;
+            incomeMap[name] += amt;
         } else if (rTypeUpper.includes('EXPENSE')) {
-            if (!expenseMap[cat]) expenseMap[cat] = 0;
-            expenseMap[cat] += amt;
+            if (!expenseMap[name]) expenseMap[name] = 0;
+            expenseMap[name] += amt;
         }
     });
 
-    // 3. Sort & Get Top 10 for Income
+    const TOP = 10;
+
+    // 3. Process Income Top 10
     let incomeList = Object.entries(incomeMap)
-        .filter(([, v]) => v > 0)
+        .filter(([, total]) => total > 0)
         .sort(([, a], [, b]) => b - a);
-    
-    let othersIncome = 0;
-    if (incomeList.length > 10) {
-        othersIncome = incomeList.slice(10).reduce((s, [, v]) => s + v, 0);
-        incomeList = incomeList.slice(0, 10);
-        if (othersIncome > 0) incomeList.push(['อื่น ๆ (Others)', othersIncome]);
+
+    let othersSumIn = 0;
+    if (incomeList.length > TOP) {
+        othersSumIn = incomeList.slice(TOP).reduce((s, [, v]) => s + v, 0);
+        incomeList = incomeList.slice(0, TOP);
+        if (othersSumIn > 0) incomeList.push(['อื่น ๆ (Others)', othersSumIn]);
     }
-    
-    // 3. Sort & Get Top 10 for Expense
+    const incomeTotal = incomeList.reduce((s, [, v]) => s + v, 0);
+
+    // 4. Process Expense Top 10
     let expenseList = Object.entries(expenseMap)
-        .filter(([, v]) => v > 0)
+        .filter(([, total]) => total > 0)
         .sort(([, a], [, b]) => b - a);
         
-    let othersExpense = 0;
-    if (expenseList.length > 10) {
-        othersExpense = expenseList.slice(10).reduce((s, [, v]) => s + v, 0);
-        expenseList = expenseList.slice(0, 10);
-        if (othersExpense > 0) expenseList.push(['อื่น ๆ (Others)', othersExpense]);
+    let othersSumOut = 0;
+    if (expenseList.length > TOP) {
+        othersSumOut = expenseList.slice(TOP).reduce((s, [, v]) => s + v, 0);
+        expenseList = expenseList.slice(0, TOP);
+        if (othersSumOut > 0) expenseList.push(['อื่น ๆ (Others)', othersSumOut]);
     }
+    const expenseTotal = expenseList.reduce((s, [, v]) => s + v, 0);
 
-    const grandTotalIncome = incomeList.reduce((s, [, v]) => s + v, 0);
-    const grandTotalExpense = expenseList.reduce((s, [, v]) => s + v, 0);
-    const grandTotal = grandTotalIncome + grandTotalExpense;
-
-    // Update summary numbers
-    if (totalAmountEl) totalAmountEl.textContent = '฿' + grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (totalAmountEl) totalAmountEl.textContent = '฿' + (incomeTotal + expenseTotal).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (totalCountEl) totalCountEl.textContent = filtered.length.toLocaleString();
 
-    // Chart containers
-    const chartElIncome = document.querySelector('#transaction-chart-income');
-    const chartElExpense = document.querySelector('#transaction-chart-expense');
-    
-    if (window.transactionChartIncome) { window.transactionChartIncome.destroy(); window.transactionChartIncome = null; }
-    if (window.transactionChartExpense) { window.transactionChartExpense.destroy(); window.transactionChartExpense = null; }
-    
-    if (chartElIncome) chartElIncome.innerHTML = '';
-    if (chartElExpense) chartElExpense.innerHTML = '';
+    // 5. Render Income Chart
+    const incomeChartEl = document.querySelector('#transaction-income-chart');
+    if (incomeChartEl) {
+        if (incomeList.length === 0) {
+            if (transactionIncomeChart) { transactionIncomeChart.destroy(); transactionIncomeChart = null; }
+            incomeChartEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100px;color:#64748b;font-size:14px;">ไม่พบข้อมูลรายได้</div>`;
+        } else {
+            const namesIn = incomeList.map(([n]) => n);
+            const valuesIn = incomeList.map(([, v]) => Math.round(v * 100) / 100);
+            const chartHeightIn = Math.max(250, namesIn.length * 42);
+            
+            const pctsIn = incomeList.map(([_, val]) => incomeTotal > 0 ? parseFloat(((val / incomeTotal) * 100).toFixed(2)) : 0);
+            let pctsSum = pctsIn.reduce((a, b) => a + b, 0);
+            let pctsDiff = 100 - pctsSum;
+            if (Math.abs(pctsDiff) > 0.001 && pctsIn.length > 0) {
+                let maxIdx = 0, maxVal = -1;
+                pctsIn.forEach((v, idx) => { if (v > maxVal) { maxVal = v; maxIdx = idx; } });
+                pctsIn[maxIdx] = parseFloat((pctsIn[maxIdx] + pctsDiff).toFixed(2));
+            }
 
-    if (incomeList.length === 0 && expenseList.length === 0) {
-        if (chartElIncome) chartElIncome.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100px;color:#64748b;font-size:14px;">ไม่พบข้อมูล</div>`;
-        if (chartElExpense) chartElExpense.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100px;color:#64748b;font-size:14px;">ไม่พบข้อมูล</div>`;
-        if (totalAmountEl) totalAmountEl.textContent = '-';
-        if (totalCountEl) totalCountEl.textContent = '';
-        return;
+            const chartDataIn = createSubChartConfig('transaction-income-chart', namesIn, valuesIn, pctsIn, incomeTotal, chartHeightIn);
+            if (transactionIncomeChart) { transactionIncomeChart.destroy(); transactionIncomeChart = null; }
+            incomeChartEl.innerHTML = '';
+            transactionIncomeChart = new ApexCharts(incomeChartEl, chartDataIn);
+            transactionIncomeChart.render();
+        }
     }
 
-    const repositionLabelsIncome = () => {
-        if (!chartElIncome) return;
-        const bars = chartElIncome.querySelectorAll('path.apexcharts-bar-area');
-        const labels = chartElIncome.querySelectorAll('g.apexcharts-datalabels text.apexcharts-datalabel');
-        if (!bars.length || !labels.length) return;
-        bars.forEach((bar, i) => {
-            const label = labels[i];
-            if (!label) return;
-            try {
-                const bbox = bar.getBBox();
-                label.setAttribute('x', bbox.x + bbox.width + 10);
-                label.setAttribute('text-anchor', 'start');
-            } catch (e) { }
-        });
-    };
-    
-    const repositionLabelsExpense = () => {
-        if (!chartElExpense) return;
-        const bars = chartElExpense.querySelectorAll('path.apexcharts-bar-area');
-        const labels = chartElExpense.querySelectorAll('g.apexcharts-datalabels text.apexcharts-datalabel');
-        if (!bars.length || !labels.length) return;
-        bars.forEach((bar, i) => {
-            const label = labels[i];
-            if (!label) return;
-            try {
-                const bbox = bar.getBBox();
-                label.setAttribute('x', bbox.x + bbox.width + 10);
-                label.setAttribute('text-anchor', 'start');
-            } catch (e) { }
-        });
-    };
+    // 6. Render Expense Chart
+    const expenseChartEl = document.querySelector('#transaction-expense-chart');
+    if (expenseChartEl) {
+        if (expenseList.length === 0) {
+            if (transactionExpenseChart) { transactionExpenseChart.destroy(); transactionExpenseChart = null; }
+            expenseChartEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100px;color:#64748b;font-size:14px;">ไม่พบข้อมูลรายจ่าย</div>`;
+        } else {
+            const namesOut = expenseList.map(([n]) => n);
+            const valuesOut = expenseList.map(([, v]) => Math.round(v * 100) / 100);
+            const chartHeightOut = Math.max(250, namesOut.length * 42);
+            
+            const pctsOut = expenseList.map(([_, val]) => expenseTotal > 0 ? parseFloat(((val / expenseTotal) * 100).toFixed(2)) : 0);
+            let pctsSum = pctsOut.reduce((a, b) => a + b, 0);
+            let pctsDiff = 100 - pctsSum;
+            if (Math.abs(pctsDiff) > 0.001 && pctsOut.length > 0) {
+                let maxIdx = 0, maxVal = -1;
+                pctsOut.forEach((v, idx) => { if (v > maxVal) { maxVal = v; maxIdx = idx; } });
+                pctsOut[maxIdx] = parseFloat((pctsOut[maxIdx] + pctsDiff).toFixed(2));
+            }
 
-    // Helper to render chart
-    const renderChart = (el, list, grandTotal, colors, repositionFn) => {
-        if (!el || list.length === 0) {
-            if (el) el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:150px;color:#64748b;font-size:14px;">ไม่มีข้อมูล</div>`;
-            return null;
+            const chartDataOut = createSubChartConfig('transaction-expense-chart', namesOut, valuesOut, pctsOut, expenseTotal, chartHeightOut);
+            if (transactionExpenseChart) { transactionExpenseChart.destroy(); transactionExpenseChart = null; }
+            expenseChartEl.innerHTML = '';
+            transactionExpenseChart = new ApexCharts(expenseChartEl, chartDataOut);
+            transactionExpenseChart.render();
         }
-        
-        const names = list.map(([n]) => n);
-        const values = list.map(([, v]) => Math.round(v * 100) / 100);
-        const chartHeight = Math.max(300, names.length * 40);
-        
-        let calculatedPcts = list.map(([_, val]) => {
-            return grandTotal > 0 ? parseFloat(((val / grandTotal) * 100).toFixed(2)) : 0;
-        });
-        
-        // Adjust for rounding errors to exactly 100%
-        let pctsSum = calculatedPcts.reduce((a, b) => a + b, 0);
-        let pctsDiff = 100 - pctsSum;
-        if (Math.abs(pctsDiff) > 0.001 && calculatedPcts.length > 0) {
-            let maxIdx = 0, maxVal = -1;
-            calculatedPcts.forEach((v, idx) => { if (v > maxVal) { maxVal = v; maxIdx = idx; } });
-            calculatedPcts[maxIdx] = parseFloat((calculatedPcts[maxIdx] + pctsDiff).toFixed(2));
-        }
+    }
+}
 
-        const data = {
-            series: [{ name: 'ยอดเงิน', data: values }],
-            chart: {
-                type: 'bar',
-                height: chartHeight,
-                toolbar: { show: false },
+function repositionChartLabels(chartId) {
+    const chartRoot = document.getElementById(chartId);
+    if (!chartRoot) return;
+    const bars = chartRoot.querySelectorAll('path.apexcharts-bar-area');
+    const labels = chartRoot.querySelectorAll('g.apexcharts-datalabels text.apexcharts-datalabel');
+    if (!bars.length || !labels.length) return;
+    bars.forEach((bar, i) => {
+        const label = labels[i];
+        if (!label) return;
+        try {
+            const bbox = bar.getBBox();
+            label.setAttribute('x', bbox.x + bbox.width + 10);
+            label.setAttribute('text-anchor', 'start');
+        } catch (e) { }
+    });
+}
+
+function createSubChartConfig(chartId, names, values, pcts, grandTotal, height) {
+    return {
+        series: [{ name: 'ยอดเงิน', data: values }],
+        chart: {
+            type: 'bar',
+            height: height,
+            toolbar: { show: false },
+            fontFamily: 'Outfit, sans-serif',
+            zoom: { enabled: false },
+            animations: { enabled: false },
+            events: {
+                mounted: function() { repositionChartLabels(chartId); },
+                updated: function() { repositionChartLabels(chartId); }
+            }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                distributed: true,
+                borderRadius: 4,
+                barHeight: '55%'
+            }
+        },
+        colors: CHART_COLORS,
+        dataLabels: {
+            enabled: true,
+            textAnchor: 'start',
+            style: {
+                fontSize: '12px',
+                fontWeight: 700,
                 fontFamily: 'Outfit, sans-serif',
-                zoom: { enabled: false },
-                animations: { enabled: false },
-                events: { mounted: repositionFn, updated: repositionFn }
+                colors: ['#e2e8f0']
             },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    distributed: true,
-                    borderRadius: 4,
-                    barHeight: '55%'
-                }
+            formatter: function (val, opt) {
+                const i = opt.dataPointIndex;
+                const pct = pcts[i] ? pcts[i].toFixed(2) : '0.00';
+                const money = val >= 1000000 ? '฿' + (val / 1000000).toFixed(2) + 'M'
+                    : val >= 1000 ? '฿' + (val / 1000).toFixed(1) + 'K'
+                        : '฿' + val.toLocaleString('th-TH');
+                return `${money}  (${pct}%)`;
             },
-            colors: colors,
-            dataLabels: {
-                enabled: true,
-                textAnchor: 'start',
-                style: { fontSize: '11px', fontWeight: 700, fontFamily: 'Outfit, sans-serif', colors: ['#e2e8f0'] },
-                formatter: function (val, opt) {
-                    const i = opt.dataPointIndex;
-                    const pct = calculatedPcts[i].toFixed(1);
-                    const money = val >= 1000000 ? '฿' + (val / 1000000).toFixed(2) + 'M'
-                        : val >= 1000 ? '฿' + (val / 1000).toFixed(1) + 'K'
-                            : '฿' + val.toLocaleString('th-TH');
-                    return `${money}  (${pct}%)`;
-                },
-                offsetX: 8,
-                offsetY: 1,
-                background: { enabled: false },
-                dropShadow: { enabled: false }
-            },
-            xaxis: {
-                categories: names,
-                max: Math.max(...values) * 1.8,
-                labels: { show: false },
-                axisBorder: { show: false },
-                axisTicks: { show: false }
-            },
-            yaxis: {
-                labels: {
-                    style: { colors: '#cbd5e1', fontSize: '12px', fontWeight: 600, fontFamily: 'Sarabun, Outfit, sans-serif' },
-                    maxWidth: 200,
-                    minWidth: 100,
-                    align: 'left',
-                    offsetX: 0
-                }
-            },
-            legend: { show: false },
-            grid: {
-                borderColor: 'rgba(255,255,255,0.05)',
-                strokeDashArray: 4,
-                padding: { right: 120, left: 10 }
-            },
-            tooltip: {
-                theme: 'dark',
-                y: {
-                    formatter: function (val) {
-                        const pct = grandTotal > 0 ? ((val / grandTotal) * 100).toFixed(2) : '0.00';
-                        const money = val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        return `฿ ${money} (${pct}%)`;
-                    }
+            offsetX: 8,
+            offsetY: 1,
+            background: { enabled: false },
+            dropShadow: { enabled: false }
+        },
+        xaxis: {
+            categories: names,
+            max: Math.max(...values) * 2.2,
+            labels: { show: false },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            labels: {
+                style: { colors: '#cbd5e1', fontSize: '13px', fontWeight: 600, fontFamily: 'Sarabun, Outfit, sans-serif' },
+                maxWidth: 350,
+                minWidth: 250,
+                align: 'left',
+                offsetX: 0
+            }
+        },
+        legend: { show: false },
+        grid: {
+            borderColor: 'rgba(255,255,255,0.05)',
+            strokeDashArray: 4,
+            padding: { right: 250, left: 20 }
+        },
+        tooltip: {
+            theme: 'dark',
+            y: {
+                formatter: function (val) {
+                    const pct = grandTotal > 0 ? ((val / grandTotal) * 100).toFixed(2) : '0.00';
+                    const money = val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `฿ ${money} (${pct}%)`;
                 }
             }
-        };
-
-        const chart = new ApexCharts(el, data);
-        chart.render();
-        return chart;
+        }
     };
-
-    const incomeColors = ['#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#047857', '#065f46', '#064e3b', '#14b8a6', '#2dd4bf', '#5eead4'];
-    const expenseColors = ['#dc2626', '#ef4444', '#f87171', '#fca5a5', '#fecaca', '#b91c1c', '#991b1b', '#7f1d1d', '#e11d48', '#f43f5e', '#fb7185'];
-
-    window.transactionChartIncome = renderChart(chartElIncome, incomeList, grandTotalIncome, incomeColors, repositionLabelsIncome);
-    window.transactionChartExpense = renderChart(chartElExpense, expenseList, grandTotalExpense, expenseColors, repositionLabelsExpense);
-    
-    // Clear the old summary table if it exists
-    const container = document.getElementById('tc-name-table');
-    if (container) container.innerHTML = '';
+    renderTransactionTable(nameList, grandTotal, CHART_COLORS, filtered.length, nameList.length, calculatedPcts);
 }
 
 function renderTransactionTable(nameList, grandTotal, colors, transactionCount, itemCount, calculatedPcts) {
@@ -1433,8 +1414,7 @@ function toggleTransactionAmounts() {
         if (totalEl) totalEl.style.filter = 'blur(8px)';
         if (countEl) countEl.style.filter = 'blur(6px)';
         // Hide chart data labels
-        if (window.transactionChartIncome) window.transactionChartIncome.updateOptions({ dataLabels: { enabled: false } });
-        if (window.transactionChartExpense) window.transactionChartExpense.updateOptions({ dataLabels: { enabled: false } });
+        if (transactionChart) transactionChart.updateOptions({ dataLabels: { enabled: false } });
     } else {
         // Show
         if (btn) {
@@ -1446,8 +1426,7 @@ function toggleTransactionAmounts() {
         if (totalEl) totalEl.style.filter = '';
         if (countEl) countEl.style.filter = '';
         // Restore data labels
-        if (window.transactionChartIncome) window.transactionChartIncome.updateOptions({ dataLabels: { enabled: true } });
-        if (window.transactionChartExpense) window.transactionChartExpense.updateOptions({ dataLabels: { enabled: true } });
+        if (transactionChart) transactionChart.updateOptions({ dataLabels: { enabled: true } });
     }
 }
 
@@ -1974,7 +1953,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Listen to filter inputs (exclude creditor - handled by autocomplete)
-    ['filter-category', 'filter-group', 'filter-party-type', 'filter-month', 'filter-year'].forEach(id => {
+    ['filter-category', 'filter-group', 'filter-party-type', 'filter-day', 'filter-month', 'filter-year'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', applyFilters);
@@ -1990,11 +1969,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCreditorSelectText();
         document.getElementById('filter-creditor-search').value = '';
 
-        selectedDays.clear();
-        updateDayUI();
-        document.getElementById('day-search-input').value = '';
-
-        const ids = ['filter-category', 'filter-group', 'filter-party-type', 'filter-month', 'filter-year'];
+        const ids = ['filter-category', 'filter-group', 'filter-party-type', 'filter-day', 'filter-month', 'filter-year'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = 'All';
@@ -2152,7 +2127,7 @@ function renderModalRows(rows) {
 
     if (_isModalBankSource) {
         // Special rendering for Bank Balance data
-        thead.innerHTML = `<tr><th>#</th><th>Bank</th><th>Account No</th><th>Air Code</th><th class="numeric">Selected Balance (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Bank</th><th>Account No</th><th class="numeric">Selected Balance (฿)</th></tr>`;
         rows.forEach((b, i) => {
             const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
             const keys = Object.keys(b).join(', ');
@@ -2164,7 +2139,6 @@ function renderModalRows(rows) {
             });
             const amt = parseSafe(sbKey ? b[sbKey] : 0);
             const accountNum = (b['Account No'] || b.accountNo || b.account || '-').trim();
-            const airCode = (b['Air Code'] || b.airCode || b['Air code'] || b['air code'] || '-').trim(); // Added Air Code
 
             if (amt !== 0) total += amt;
 
@@ -2173,7 +2147,6 @@ function renderModalRows(rows) {
                 <td>${i + 1}</td>
                 <td><span style="color:#fff; font-weight:600;">${bankName}</span></td>
                 <td><span style="color:#94a3b8; font-size:12px;">${accountNum}</span></td>
-                <td><span style="color:#fcd34d; font-size:12px; font-weight:600;">${airCode}</span></td>
                 <td class="numeric modal-amount-income" style="font-weight:600;">฿${checkValue(amt)}</td>
             `;
             fragment.appendChild(tr);
@@ -2182,7 +2155,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `${rows.length} ธนาคาร`;
     } else if (isGrouped) {
-        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
@@ -2216,7 +2189,6 @@ function renderModalRows(rows) {
                         <span>${cat}</span>
                     </div>
                 </td>
-                <td></td>
                 <td>${item.count} รายการ</td>
                 <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
             `;
@@ -2243,7 +2215,6 @@ function renderModalRows(rows) {
                     } catch (e) { }
 
                     const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
-                    const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '').trim();
                     const amount = getRowAmount(row, _modalType);
                     const rowType = getRowType(row);
                     const rowAmtClass = rowType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
@@ -2254,9 +2225,6 @@ function renderModalRows(rows) {
                         </td>
                         <td style="padding-left: 30px; text-align: left;">
                             <span style="color:#cbd5e1; font-size:12px;" title="${creditor}">${creditor}</span>
-                        </td>
-                        <td style="color:#fcd34d; font-size:11px; text-align:center;">
-                            <span>${airCode}</span>
                         </td>
                         <td></td>
                         <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">฿${checkValue(Math.abs(amount))}</td>
@@ -2271,7 +2239,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
-        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th>Air Code</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
 
         // Calculate total first across ALL rows
         rows.forEach(row => {
@@ -2293,7 +2261,6 @@ function renderModalRows(rows) {
             const bank = row['Bank'] || row.bank || '-';
             const category = row['Category'] || row.category || '-';
             const status = row['Status'] || row.status || '-';
-            const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '-').trim();
             const statusClass = status.toLowerCase().includes('plan') ? 'plan' : 'actual';
 
             const numAmt = getRowAmount(row, _modalType);
@@ -2308,7 +2275,6 @@ function renderModalRows(rows) {
                 <td>${bank}</td>
                 <td>${category}</td>
                 <td><span class="status-badge ${statusClass}">${status}</span></td>
-                <td><span style="color:#fcd34d; font-weight:600;">${airCode}</span></td>
                 <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
             `;
             fragment.appendChild(tr);
@@ -2391,13 +2357,12 @@ function exportModalPdf(type) {
     let colgroupHtml = '';
     
     if (!isBank && typeof _isModalBankSource !== 'undefined' && _isModalBankSource) {
-        // # | Bank | Account No | Air Code | Selected Balance (฿)
+        // # | Bank | Account No | Selected Balance (฿)
         colgroupHtml = `<colgroup>
-            <col style="width:8%">
-            <col style="width:32%">
-            <col style="width:20%">
-            <col style="width:20%">
-            <col style="width:20%">
+            <col style="width:10%">
+            <col style="width:40%">
+            <col style="width:25%">
+            <col style="width:25%">
         </colgroup>`;
     } else if (mode === 'group') {
         if (isBank) {
@@ -2410,13 +2375,12 @@ function exportModalPdf(type) {
                 <col style="width:18%">
             </colgroup>`;
         } else {
-            // # | Category | Air Code | Count | Total
+            // # | Category | Count | Total
             colgroupHtml = `<colgroup>
-                <col style="width:8%">
-                <col style="width:40%">
+                <col style="width:12%">
+                <col style="width:50%">
                 <col style="width:15%">
-                <col style="width:15%">
-                <col style="width:22%">
+                <col style="width:23%">
             </colgroup>`;
         }
     } else {
@@ -2433,17 +2397,16 @@ function exportModalPdf(type) {
                 <col style="width:18%">
             </colgroup>`;
         } else {
-            // # | Date | Desc | Party | Bank | Category | Status | Air Code | Amount
+            // # | Date | Desc | Party | Bank | Category | Status | Amount
             colgroupHtml = `<colgroup>
-                <col style="width:3%">
-                <col style="width:8%">
-                <col style="width:17%">
-                <col style="width:16%">
+                <col style="width:4%">
                 <col style="width:10%">
+                <col style="width:23%">
+                <col style="width:20%">
                 <col style="width:10%">
+                <col style="width:11%">
                 <col style="width:7%">
-                <col style="width:13%">
-                <col style="width:16%">
+                <col style="width:15%">
             </colgroup>`;
         }
     }
@@ -2457,26 +2420,23 @@ function exportModalPdf(type) {
 
     let pdfExtraStyles = '';
     if (!isBank && typeof _isModalBankSource !== 'undefined' && _isModalBankSource) {
-        // Selected Balance: 1=#, 2=Bank, 3=Account No, 4=Air Code, 5=Balance
+        // Selected Balance: 1=#, 2=Bank, 3=Account No, 4=Balance
         pdfExtraStyles = `
             thead th:nth-child(2), tbody td:nth-child(2),
-            thead th:nth-child(3), tbody td:nth-child(3),
-            thead th:nth-child(4), tbody td:nth-child(4) { text-align: left !important; }
+            thead th:nth-child(3), tbody td:nth-child(3) { text-align: left !important; }
         `;
     } else if (mode === 'group') {
-        // Group Summary: 1=#, 2=Category/Name, 3=Air Code, 4=Count, 5=Total
+        // Group Summary: 1=#, 2=Category/Name, 3=Count, 4=Cash In, 5=Cash Out
         pdfExtraStyles = `
             thead th:nth-child(2), tbody td:nth-child(2) { text-align: left !important; }
-            thead th:nth-child(3), tbody td:nth-child(3) { text-align: center !important; }
         `;
     } else {
-        // Detail View: 3=Desc, 4=Creditor, 5=Bank, 6=Category, 8=Air Code
+        // Detail View: 3=Desc, 4=Creditor, 5=Bank, 6=Category
         pdfExtraStyles = `
             thead th:nth-child(3), tbody td:nth-child(3),
             thead th:nth-child(4), tbody td:nth-child(4),
             thead th:nth-child(5), tbody td:nth-child(5),
-            thead th:nth-child(6), tbody td:nth-child(6),
-            thead th:nth-child(8), tbody td:nth-child(8) { text-align: left !important; }
+            thead th:nth-child(6), tbody td:nth-child(6) { text-align: left !important; }
         `;
     }
 
@@ -3457,9 +3417,8 @@ function initMonthlySummarySticky() {
 
     // ── Sync horizontal scroll ───────────────────────────────────────────
     tableContainer.addEventListener('scroll', function () {
-        if (ghost && ghost.style.display !== 'none') {
-            ghost.scrollLeft = tableContainer.scrollLeft;
-        }
+        ghost.scrollLeft = tableContainer.scrollLeft;
+        ghost.style.left = (tableContainer.getBoundingClientRect().left - tableContainer.scrollLeft) + 'px';
     }, { passive: true });
 
     // ── Main scroll handler ───────────────────────────────────────────────
@@ -3487,11 +3446,8 @@ function initMonthlySummarySticky() {
             ghost.style.top = reportBottom + 'px';
             ghost.style.left = tableContainer.getBoundingClientRect().left + 'px';
             ghost.style.width = tableContainer.getBoundingClientRect().width + 'px';
-            
-            // Sync horizontal scroll position correctly
-            ghost.scrollLeft = tableContainer.scrollLeft;
-            // Remove transform that caused double scrolling
-            ghost.querySelector('table').style.transform = 'none';
+            // Sync horizontal scroll position
+            ghost.querySelector('table').style.transform = `translateX(-${tableContainer.scrollLeft}px)`;
         } else {
             ghost.style.display = 'none';
         }
@@ -3649,141 +3605,4 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(() => {
         if (typeof refreshData === 'function') refreshData(true);
     }, 600000);
-});
-
-// ========================================
-// DAY MULTI-SELECT FILTER
-// ========================================
-let selectedDays = new Set();
-let availableDays = [];
-
-function toggleDayDropdown(e) {
-    if (e) e.stopPropagation();
-    const dropdown = document.getElementById('day-dropdown');
-    if (!dropdown) return;
-    
-    const isVisible = dropdown.style.display === 'block';
-    
-    // Close other custom dropdowns
-    const tcDrop = document.getElementById('tc-category-dropdown');
-    if (tcDrop) tcDrop.classList.remove('open');
-    const msDrop = document.getElementById('ms-category-dropdown');
-    if (msDrop) msDrop.style.display = 'none';
-
-    dropdown.style.display = isVisible ? 'none' : 'block';
-    if (!isVisible) {
-        document.getElementById('day-search-input').focus();
-        renderDayList(document.getElementById('day-search-input').value);
-    }
-}
-
-function updateDayUI() {
-    const badge = document.getElementById('day-selected-count');
-    const display = document.getElementById('day-search-display');
-    if (!badge || !display) return;
-
-    if (selectedDays.size === 0) {
-        badge.textContent = 'ทั้งหมด';
-        badge.style.background = 'rgba(255,255,255,0.1)';
-        badge.style.color = '#fff';
-        display.value = '';
-    } else {
-        badge.textContent = selectedDays.size;
-        badge.style.background = '#3b82f6';
-        badge.style.color = '#fff';
-        
-        const arr = Array.from(selectedDays).sort((a,b) => a - b);
-        if (arr.length <= 2) {
-            display.value = arr.join(', ');
-        } else {
-            display.value = arr[0] + ', ' + arr[1] + '...';
-        }
-    }
-    
-    // Trigger filter update
-    if (typeof applyFilters === 'function') applyFilters();
-}
-
-function renderDayList(q = '') {
-    const list = document.getElementById('day-suggestions');
-    if (!list) return;
-
-    const searchTerm = q.trim();
-    const matches = availableDays.filter(d => d.includes(searchTerm));
-
-    list.innerHTML = '';
-    
-    if (matches.length === 0) {
-        list.innerHTML = `<div style="padding:10px; color:#64748b; font-size:12px; text-align:center;">ไม่พบข้อมูล</div>`;
-        return;
-    }
-
-    matches.forEach(d => {
-        const item = document.createElement('div');
-        item.style.padding = '8px 10px';
-        item.style.cursor = 'pointer';
-        item.style.display = 'flex';
-        item.style.alignItems = 'center';
-        item.style.gap = '8px';
-        item.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-        item.style.transition = '0.2s';
-        
-        item.onmouseover = () => item.style.background = 'rgba(255,255,255,0.05)';
-        item.onmouseout = () => item.style.background = 'transparent';
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = selectedDays.has(d);
-        checkbox.style.cursor = 'pointer';
-
-        const span = document.createElement('span');
-        span.textContent = d;
-        span.style.color = checkbox.checked ? '#34d399' : '#e2e8f0';
-        span.style.fontSize = '13px';
-
-        item.onclick = (e) => {
-            e.stopPropagation();
-            if (selectedDays.has(d)) {
-                selectedDays.delete(d);
-            } else {
-                selectedDays.add(d);
-            }
-            checkbox.checked = selectedDays.has(d);
-            span.style.color = checkbox.checked ? '#34d399' : '#e2e8f0';
-            updateDayUI();
-        };
-
-        item.appendChild(checkbox);
-        item.appendChild(span);
-        list.appendChild(item);
-    });
-}
-
-function filterDayList() {
-    renderDayList(document.getElementById('day-search-input').value);
-}
-
-function daySelectAll() {
-    const q = document.getElementById('day-search-input').value.trim();
-    const matches = availableDays.filter(d => d.includes(q));
-    matches.forEach(d => selectedDays.add(d));
-    renderDayList(q);
-    updateDayUI();
-}
-
-function dayClear() {
-    const q = document.getElementById('day-search-input').value.trim();
-    const matches = availableDays.filter(d => d.includes(q));
-    matches.forEach(d => selectedDays.delete(d));
-    renderDayList(q);
-    updateDayUI();
-}
-
-// Close day dropdown when clicking outside
-document.addEventListener('click', (e) => {
-    const dayWrap = document.getElementById('day-wrapper');
-    const dayDrop = document.getElementById('day-dropdown');
-    if (dayWrap && dayDrop && !dayWrap.contains(e.target)) {
-        dayDrop.style.display = 'none';
-    }
 });
