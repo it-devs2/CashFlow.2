@@ -51,30 +51,14 @@ function parseDateSafe(dateVal) {
     return null;
 }
 
-// Utility: Normalize Name (Consolidate variations)
+// Utility: Normalize Name
+// ใช้ชื่อตามชีต 100% — ไม่ตัดคำนำหน้า/คำต่อท้าย/สาขา ใด ๆ
+// ทำแค่ 2 อย่างเพื่อกันชื่อพิมพ์พลาด:
+//   1. แทน non-breaking space (\u00A0) เป็น space ปกติ
+//   2. ยุบช่องว่างหลายช่องที่ติดกันให้เหลือช่องเดียว และตัดช่องว่างหัวท้าย
 function normalizeName(name) {
     if (!name) return '';
-    let n = name.toString().trim();
-    if (!n) return '';
-
-    // 1. Remove common prefixes (Keep personal titles like นาย, นางสาว)
-    const prefixes = [
-        /^บจก\.\s*/i, /^บริษัท\s*/i, /^หจก\.\s*/i, /^ห้างหุ้นส่วนจำกัด\s*/i
-    ];
-    prefixes.forEach(p => n = n.replace(p, ''));
-
-    // 2. Remove branch info
-    const branchPatterns = [
-        /\s*\(สาขา.*\)/i, /\s*สาขา.*/i, /\s*\(Branch.*\)/i, /\s*Branch.*/i,
-        /\s*\(สำนักงานใหญ่\)/i, /\s*สำนักงานใหญ่/i
-    ];
-    branchPatterns.forEach(p => n = n.replace(p, ''));
-
-    // 3. Common suffixes/extras
-    n = n.replace(/\s*\(จำกัด\)$/i, '');
-    n = n.replace(/\s*\(มหาชน\)$/i, '');
-
-    return n.trim();
+    return name.toString().replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 // Utility: Robust Row Detection & Value Extraction
@@ -343,10 +327,11 @@ function processData(dataStatus) {
         const cleaned = {};
         for (const key in row) {
             const val = row[key];
+            const cleanKey = key.toString().trim(); // Trim the key/header
             if (typeof val === 'string') {
-                cleaned[key] = val.replace(/\u00A0/g, ' ').trim();
+                cleaned[cleanKey] = val.replace(/\u00A0/g, ' ').trim();
             } else {
-                cleaned[key] = val;
+                cleaned[cleanKey] = val;
             }
         }
         return cleaned;
@@ -373,12 +358,16 @@ function processData(dataStatus) {
     } else {
         const nameSet = new Set();
         [...allTransactions, ...allPlans].forEach(row => {
-            ['Customer', 'customer', 'Vendor', 'vendor', 'Party', 'party', 'Name', 'name'].forEach(k => {
-                const val = row[k];
+            for (let key in row) {
+                const val = row[key];
                 if (val && val.toString().trim()) {
-                    nameSet.add(normalizeName(val.toString().trim()));
+                    // Avoid adding values that look like numbers or are too short to be names
+                    const s = val.toString().trim();
+                    if (s.length > 1 && isNaN(s)) {
+                        nameSet.add(normalizeName(s));
+                    }
                 }
-            });
+            }
         });
         allParties = [...nameSet].filter(n => n !== '').sort((a, b) => a.localeCompare(b, 'th'));
     }
@@ -524,7 +513,7 @@ function populateFilterDropdowns(transactions, plans) {
 
     updateSelect('filter-category', [...categories].sort());
     updateSelect('filter-group', [...groups].sort());
-    
+
     // Day Multi-Select Filter
     availableDays = [...days].sort((a, b) => a - b).map(d => String(d).padStart(2, '0'));
     renderDayList();
@@ -572,23 +561,37 @@ function applyFilters() {
     const year = document.getElementById('filter-year')?.value || 'All';
 
     function matchRow(row) {
-        // 1. Creditor filter: search across Customer, Vendor, Name, Party
+        // 1. Creditor filter: Search across ALL columns for the selected name
         if (selectedCreditors.size > 0) {
-            const fields = [
-                row['Customer'], row['Vendor'], row['Name'], row['Party'], row.customer, row.vendor, row.name, row.party
-            ].map(v => normalizeName((v || '').toString().trim()));
-
-            const rawDesc = (row['Description'] || row.description || '').toString().trim();
-
             let matched = false;
-            for (let f of fields) {
-                if (f && selectedCreditors.has(f)) { matched = true; break; }
-            }
-            if (!matched && rawDesc) {
-                for (let cred of selectedCreditors) {
-                    if (rawDesc.includes(cred)) { matched = true; break; }
+
+            // Check every single value in the row
+            for (let key in row) {
+                const val = row[key];
+                if (val === null || val === undefined) continue;
+
+                const normalizedVal = normalizeName(val.toString());
+                if (!normalizedVal) continue;
+
+                if (selectedCreditors.has(normalizedVal)) {
+                    matched = true;
+                    break;
                 }
             }
+
+            // Fallback: search in Description (long text includes)
+            if (!matched) {
+                const rawDesc = (row['Description'] || row.description || row['คำอธิบาย'] || '').toString().toLowerCase();
+                if (rawDesc) {
+                    for (let selectedCred of selectedCreditors) {
+                        if (rawDesc.includes(selectedCred.toLowerCase())) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
             if (!matched) return false;
         }
 
@@ -639,7 +642,7 @@ function applyFilters() {
         // Apply filtering
         if (month !== 'All' && rowMonth !== Number(month)) return false;
         if (year !== 'All' && rowYear !== Number(year)) return false;
-        
+
         if (selectedDays.size > 0 && rawDate) {
             const d = parseDateSafe(rawDate);
             if (d && !selectedDays.has(String(d.getDate()).padStart(2, '0'))) return false;
@@ -1128,17 +1131,17 @@ function updateTransactionChart() {
     // 2. Aggregate by Category (Column H) — separate Income and Expense
     const incomeMap = {};
     const expenseMap = {};
-    
+
     filtered.forEach(row => {
         const cat = (row['Category'] || row.category || '').toString().trim();
         if (!cat) return;
-        
+
         // Exclude Transfer Categories
         if (cat === 'Transfer-รับ' || cat === 'Transfer-จ่าย' || cat.toLowerCase().startsWith('transfer')) return;
 
         const rType = getRowType(row);
         let amt = getRowAmount(row, rType);
-        
+
         const rTypeUpper = rType.toUpperCase();
         if (rTypeUpper.includes('INCOME')) {
             if (!incomeMap[cat]) incomeMap[cat] = 0;
@@ -1149,33 +1152,28 @@ function updateTransactionChart() {
         }
     });
 
-    // 3. Sort & Get Top 10 for Income
+    // Calculate Grand Totals BEFORE slicing
+    const grandTotalIncome = Object.values(incomeMap).reduce((s, v) => s + v, 0);
+    const grandTotalExpense = Object.values(expenseMap).reduce((s, v) => s + v, 0);
+    const grandTotal = grandTotalIncome + grandTotalExpense;
+
+    // 3. Sort Income & get Top 10
     let incomeList = Object.entries(incomeMap)
         .filter(([, v]) => v > 0)
         .sort(([, a], [, b]) => b - a);
-    
-    let othersIncome = 0;
+
     if (incomeList.length > 10) {
-        othersIncome = incomeList.slice(10).reduce((s, [, v]) => s + v, 0);
         incomeList = incomeList.slice(0, 10);
-        if (othersIncome > 0) incomeList.push(['อื่น ๆ (Others)', othersIncome]);
     }
-    
-    // 3. Sort & Get Top 10 for Expense
+
+    // 3. Sort Expense & get Top 10
     let expenseList = Object.entries(expenseMap)
         .filter(([, v]) => v > 0)
         .sort(([, a], [, b]) => b - a);
-        
-    let othersExpense = 0;
-    if (expenseList.length > 10) {
-        othersExpense = expenseList.slice(10).reduce((s, [, v]) => s + v, 0);
-        expenseList = expenseList.slice(0, 10);
-        if (othersExpense > 0) expenseList.push(['อื่น ๆ (Others)', othersExpense]);
-    }
 
-    const grandTotalIncome = incomeList.reduce((s, [, v]) => s + v, 0);
-    const grandTotalExpense = expenseList.reduce((s, [, v]) => s + v, 0);
-    const grandTotal = grandTotalIncome + grandTotalExpense;
+    if (expenseList.length > 10) {
+        expenseList = expenseList.slice(0, 10);
+    }
 
     // Update summary numbers
     if (totalAmountEl) totalAmountEl.textContent = '฿' + grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1184,10 +1182,10 @@ function updateTransactionChart() {
     // Chart containers
     const chartElIncome = document.querySelector('#transaction-chart-income');
     const chartElExpense = document.querySelector('#transaction-chart-expense');
-    
+
     if (window.transactionChartIncome) { window.transactionChartIncome.destroy(); window.transactionChartIncome = null; }
     if (window.transactionChartExpense) { window.transactionChartExpense.destroy(); window.transactionChartExpense = null; }
-    
+
     if (chartElIncome) chartElIncome.innerHTML = '';
     if (chartElExpense) chartElExpense.innerHTML = '';
 
@@ -1214,7 +1212,7 @@ function updateTransactionChart() {
             } catch (e) { }
         });
     };
-    
+
     const repositionLabelsExpense = () => {
         if (!chartElExpense) return;
         const bars = chartElExpense.querySelectorAll('path.apexcharts-bar-area');
@@ -1237,19 +1235,19 @@ function updateTransactionChart() {
             if (el) el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:150px;color:#64748b;font-size:14px;">ไม่มีข้อมูล</div>`;
             return null;
         }
-        
+
         const names = list.map(([n]) => n);
         const values = list.map(([, v]) => Math.round(v * 100) / 100);
         const chartHeight = Math.max(300, names.length * 40);
-        
+
         let calculatedPcts = list.map(([_, val]) => {
             return grandTotal > 0 ? parseFloat(((val / grandTotal) * 100).toFixed(2)) : 0;
         });
-        
-        // Adjust for rounding errors to exactly 100%
+
+        // Adjust for rounding errors to exactly 100% only if the difference is small
         let pctsSum = calculatedPcts.reduce((a, b) => a + b, 0);
         let pctsDiff = 100 - pctsSum;
-        if (Math.abs(pctsDiff) > 0.001 && calculatedPcts.length > 0) {
+        if (Math.abs(pctsDiff) > 0.001 && Math.abs(pctsDiff) < 1 && calculatedPcts.length > 0) {
             let maxIdx = 0, maxVal = -1;
             calculatedPcts.forEach((v, idx) => { if (v > maxVal) { maxVal = v; maxIdx = idx; } });
             calculatedPcts[maxIdx] = parseFloat((calculatedPcts[maxIdx] + pctsDiff).toFixed(2));
@@ -1336,7 +1334,7 @@ function updateTransactionChart() {
 
     window.transactionChartIncome = renderChart(chartElIncome, incomeList, grandTotalIncome, incomeColors, repositionLabelsIncome);
     window.transactionChartExpense = renderChart(chartElExpense, expenseList, grandTotalExpense, expenseColors, repositionLabelsExpense);
-    
+
     // Clear the old summary table if it exists
     const container = document.getElementById('tc-name-table');
     if (container) container.innerHTML = '';
@@ -1848,7 +1846,7 @@ function renderBankDetailRows(rows) {
                     const amtB = Math.max(Number(b['Cash In'] || b.cashIn) || 0, Number(b['Cash Out'] || b.cashOut) || 0);
                     return amtB - amtA;
                 });
-                
+
                 sortedSubItems.forEach((row, subIdx) => {
                     const isLast = subIdx === sortedSubItems.length - 1;
 
@@ -1856,7 +1854,7 @@ function renderBankDetailRows(rows) {
                     subTr.className = `modal-sub-row bank-cat-${i}`;
                     subTr.style.display = 'none';
                     subTr.style.background = 'rgba(255,255,255,0.02)';
-                    
+
                     const rawDate = row['Date'] || row.date || '';
                     let displayDate = rawDate;
                     try {
@@ -2124,13 +2122,13 @@ function toggleModalGroupExpand(e, catClass) {
     e.stopPropagation();
     const btn = e.currentTarget;
     const isExpanded = btn.textContent === '-';
-    
+
     // Toggle sub rows
     const subRows = document.querySelectorAll(`.${catClass}`);
     subRows.forEach(row => {
         row.style.display = isExpanded ? 'none' : 'table-row';
     });
-    
+
     // Update button state
     btn.textContent = isExpanded ? '+' : '-';
     btn.style.background = isExpanded ? 'rgba(255,255,255,0.05)' : 'rgba(56,189,248,0.2)';
@@ -2156,7 +2154,7 @@ function renderModalRows(rows) {
         rows.forEach((b, i) => {
             const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
             const keys = Object.keys(b).join(', ');
-            
+
             // Flexible lookup for Selected Balance
             const sbKey = Object.keys(b).find(k => {
                 const normalized = k.toLowerCase().replace(/\s/g, '');
@@ -2199,7 +2197,7 @@ function renderModalRows(rows) {
             const item = grouped[cat];
             total += item.sum;
             totalCount += item.count;
-            
+
             let amtClass = 'modal-amount-expense';
             if (_modalType === 'income') amtClass = 'modal-amount-income';
             else if (_modalType === 'balance') {
@@ -2234,7 +2232,7 @@ function renderModalRows(rows) {
                     subTr.className = `modal-sub-row modal-cat-${i}`;
                     subTr.style.display = 'none';
                     subTr.style.background = 'rgba(255,255,255,0.02)';
-                    
+
                     const rawDate = row['Date'] || row.date || '';
                     let displayDate = rawDate;
                     try {
@@ -2389,7 +2387,7 @@ function exportModalPdf(type) {
     // Inject colgroup for precise column widths to avoid wrapping (A4 portrait ~190mm usable)
     // Different widths for group vs detail view
     let colgroupHtml = '';
-    
+
     if (!isBank && typeof _isModalBankSource !== 'undefined' && _isModalBankSource) {
         // # | Bank | Account No | Air Code | Selected Balance (฿)
         colgroupHtml = `<colgroup>
@@ -2451,7 +2449,7 @@ function exportModalPdf(type) {
     if (colgroupHtml) {
         tableClone.insertAdjacentHTML('afterbegin', colgroupHtml);
     }
-    
+
     // Remove all '฿' symbols from the exported HTML
     let tableHtml = tableClone.outerHTML.replace(/฿/g, '');
 
@@ -3487,7 +3485,7 @@ function initMonthlySummarySticky() {
             ghost.style.top = reportBottom + 'px';
             ghost.style.left = tableContainer.getBoundingClientRect().left + 'px';
             ghost.style.width = tableContainer.getBoundingClientRect().width + 'px';
-            
+
             // Sync horizontal scroll position correctly
             ghost.scrollLeft = tableContainer.scrollLeft;
             // Remove transform that caused double scrolling
@@ -3661,9 +3659,9 @@ function toggleDayDropdown(e) {
     if (e) e.stopPropagation();
     const dropdown = document.getElementById('day-dropdown');
     if (!dropdown) return;
-    
+
     const isVisible = dropdown.style.display === 'block';
-    
+
     // Close other custom dropdowns
     const tcDrop = document.getElementById('tc-category-dropdown');
     if (tcDrop) tcDrop.classList.remove('open');
@@ -3691,15 +3689,15 @@ function updateDayUI() {
         badge.textContent = selectedDays.size;
         badge.style.background = '#3b82f6';
         badge.style.color = '#fff';
-        
-        const arr = Array.from(selectedDays).sort((a,b) => a - b);
+
+        const arr = Array.from(selectedDays).sort((a, b) => a - b);
         if (arr.length <= 2) {
             display.value = arr.join(', ');
         } else {
             display.value = arr[0] + ', ' + arr[1] + '...';
         }
     }
-    
+
     // Trigger filter update
     if (typeof applyFilters === 'function') applyFilters();
 }
@@ -3712,7 +3710,7 @@ function renderDayList(q = '') {
     const matches = availableDays.filter(d => d.includes(searchTerm));
 
     list.innerHTML = '';
-    
+
     if (matches.length === 0) {
         list.innerHTML = `<div style="padding:10px; color:#64748b; font-size:12px; text-align:center;">ไม่พบข้อมูล</div>`;
         return;
@@ -3727,7 +3725,7 @@ function renderDayList(q = '') {
         item.style.gap = '8px';
         item.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
         item.style.transition = '0.2s';
-        
+
         item.onmouseover = () => item.style.background = 'rgba(255,255,255,0.05)';
         item.onmouseout = () => item.style.background = 'transparent';
 
