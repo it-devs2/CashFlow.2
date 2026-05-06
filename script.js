@@ -815,7 +815,7 @@ function updateSummary(isFiltered = false) {
     updateWithAnimation('expense-plan', dispExpensePlan);
 
     // Calculate Net Balance (Plan)
-    const netPlanBalance = dispIncomePlan - dispExpensePlan;
+    const netPlanBalance = dispIncomePlan - dispExpensePlan - _selectedBalance;
     updateWithAnimation('net-plan', netPlanBalance);
 
     const netPlanEl = document.getElementById('net-plan');
