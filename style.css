@@ -1749,6 +1749,11 @@ select option:hover {
     width: 40px;
 }
 
+#modal-table tbody td:nth-child(2) {
+    min-width: 130px;
+    white-space: nowrap;
+}
+
 .modal-amount-income {
     color: var(--income);
 }
@@ -3060,6 +3065,10 @@ I sticky A%I'@#20@G grid column A" */
     border-top-left-radius: 12px;
 }
 
+#modal-table thead th:nth-child(2) {
+    min-width: 120px;
+}
+
 .modal-table thead th:last-child {
     border-top-right-radius: 12px;
     text-align: right;
@@ -3286,6 +3295,8 @@ td.modal-amount-expense {
     font-variant-numeric: tabular-nums;
     font-size: 12.5px;
     font-weight: 500;
+    min-width: 120px;
+    white-space: nowrap;
 }
 
 /* Description column (3)  primary text */
@@ -4093,6 +4104,11 @@ body.hide-balances .sidebar-bank-total-badge span {
     padding-left: 20px;
 }
 
+#modal-table thead th:nth-child(2) {
+    min-width: 130px;
+    white-space: nowrap;
+}
+
 /* Row styles */
 #modal-table tbody tr {
     transition: background 0.15s ease;
@@ -4119,6 +4135,12 @@ body.hide-balances .sidebar-bank-total-badge span {
     font-weight: 700;
     font-size: 11px;
     width: 36px;
+}
+
+#modal-table tbody td:nth-child(2) {
+    min-width: 130px;
+    white-space: nowrap;
+    color: #94a3b8;
 }
 
 /* Numeric Column */

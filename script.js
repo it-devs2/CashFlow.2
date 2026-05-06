@@ -201,6 +201,7 @@ let bankBalances = [];
 // Bank Detail Modal state
 let _bankModalRows = [];
 let _currentBankName = '';
+let _currentModalFilteredRows = null; // Tracks rows currently displayed in the modal (after search or bank drill-down)
 
 // ✅ เพิ่มตัวแปรสำหรับรับค่าจาก Cell G1 และ H2 โดยตรง
 let _availableBalanceH2 = 0;
@@ -2141,6 +2142,9 @@ function renderModalRows(rows) {
     const tbody = document.getElementById('modal-table-body');
     if (!thead || !tbody) return;
 
+    // Save current filtered view for PDF export
+    _currentModalFilteredRows = rows;
+
     thead.innerHTML = '';
     tbody.innerHTML = '';
     let total = 0;
@@ -2367,18 +2371,142 @@ function exportModalPdf(type) {
     const footerCount = document.getElementById(isBank ? 'bank-modal-row-count' : 'modal-row-count').textContent;
     const footerTotal = document.getElementById(isBank ? 'bank-modal-totals' : 'modal-total-amount').innerText.replace(/฿/g, '');
 
-    // Clone the visible table including all rendered rows
+    // We will generate the FULL table body for export
+    // If it's the detail modal, use the currently filtered rows if they exist
+    const rows = isBank ? _bankModalRows : (_currentModalFilteredRows || _modalRows);
+    
+    // Create a container for the export table
     const tableClone = sourceTable.cloneNode(true);
     tableClone.removeAttribute('id');
+    const tbodyClone = tableClone.querySelector('tbody');
+    tbodyClone.innerHTML = '';
+
+    if (_isModalBankSource) {
+        rows.forEach((b, i) => {
+            const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
+            const accountNum = (b['Account No'] || b.accountNo || b.account || '-').trim();
+            const airCode = (b['Air Code'] || b.airCode || b['Air code'] || b['air code'] || '-').trim();
+            const sbKey = Object.keys(b).find(k => k.toLowerCase().replace(/\s/g, '').includes('selected') && k.toLowerCase().replace(/\s/g, '').includes('balance'));
+            const amt = parseSafe(sbKey ? b[sbKey] : 0);
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td><span style="font-weight:600;">${bankName}</span></td>
+                <td><span>${accountNum}</span></td>
+                <td style="text-align:center;"><span>${airCode}</span></td>
+                <td class="numeric modal-amount-income" style="font-weight:600;">฿${checkValue(amt)}</td>
+            `;
+            tbodyClone.appendChild(tr);
+        });
+    } else if (mode === 'group') {
+        // Find which categories are expanded in the UI
+        const expandedCategories = new Set();
+        const uiExpandBtns = sourceTable.querySelectorAll('.btn-ms-expand');
+        uiExpandBtns.forEach(btn => {
+            if (btn.textContent === '-') {
+                // Find the category name in the parent row
+                const catName = btn.closest('tr').querySelector('td:nth-child(2) span').textContent;
+                expandedCategories.add(catName);
+            }
+        });
+
+        const grouped = {};
+        rows.forEach(row => {
+            const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
+            if (!grouped[cat]) grouped[cat] = { count: 0, sum: 0, items: [] };
+            grouped[cat].count++;
+            grouped[cat].sum += getRowAmount(row, _modalType);
+            grouped[cat].items.push(row);
+        });
+
+        const sortedKeys = Object.keys(grouped).sort((a, b) => grouped[b].sum - grouped[a].sum);
+        sortedKeys.forEach((cat, i) => {
+            const item = grouped[cat];
+            let amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+            if (_modalType === 'balance') amtClass = item.sum >= 0 ? 'modal-amount-income' : 'modal-amount-expense';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td style="text-align:left;"><span>${cat}</span></td>
+                <td></td>
+                <td>${item.count} รายการ</td>
+                <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
+            `;
+            tbodyClone.appendChild(tr);
+
+            // Only render sub-rows if this category was expanded in the UI
+            if (expandedCategories.has(cat)) {
+                const sortedSubItems = [...item.items].sort((a, b) => getRowAmount(b, _modalType) - getRowAmount(a, _modalType));
+                sortedSubItems.forEach((row) => {
+                    const subTr = document.createElement('tr');
+                    subTr.className = 'modal-sub-row';
+                    subTr.style.display = 'table-row'; 
+
+                    const rawDate = row['Date'] || row.date || '';
+                    let displayDate = rawDate;
+                    try {
+                        const d = parseDateSafe(rawDate);
+                        if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    } catch (e) { }
+
+                    const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+                    const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '').trim();
+                    const amount = getRowAmount(row, _modalType);
+
+                    subTr.innerHTML = `
+                        <td style="text-align:center;"><span>${displayDate}</span></td>
+                        <td style="padding-left: 20px; text-align: left;"><span>${creditor}</span></td>
+                        <td style="text-align:center;"><span>${airCode}</span></td>
+                        <td></td>
+                        <td class="numeric" style="color:#f97316; font-weight:600;">฿${checkValue(Math.abs(amount))}</td>
+                    `;
+                    tbodyClone.appendChild(subTr);
+                });
+            }
+        });
+    } else {
+        rows.forEach((row, i) => {
+            const rawDate = row['Date'] || row.date || '';
+            let displayDate = rawDate;
+            try {
+                const d = parseDateSafe(rawDate);
+                if (d && !isNaN(d)) displayDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } catch (e) { }
+
+            const desc = row['Description'] || row.description || '-';
+            const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+            const bank = row['Bank'] || row.bank || '-';
+            const category = row['Category'] || row.category || '-';
+            const status = row['Status'] || row.status || '-';
+            const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '-').trim();
+            const statusClass = status.toLowerCase().includes('plan') ? 'plan' : 'actual';
+            const numAmt = getRowAmount(row, _modalType);
+            const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${displayDate}</td>
+                <td style="text-align:left;">${desc}</td>
+                <td style="text-align:left;">${creditor}</td>
+                <td>${bank}</td>
+                <td>${category}</td>
+                <td>${status}</td>
+                <td style="text-align:center;">${airCode}</td>
+                <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
+            `;
+            tbodyClone.appendChild(tr);
+        });
+    }
 
     // Force PDF-friendly styles on cloned sub-rows
     const subTds = tableClone.querySelectorAll('.modal-sub-row td');
     subTds.forEach(td => {
-        td.style.color = '#334155'; // Darker text for readability in print
+        td.style.color = '#334155';
         const spans = td.querySelectorAll('span');
-        spans.forEach(span => {
-            span.style.color = ''; // Remove inline color from spans so they inherit td color
-        });
+        spans.forEach(span => { span.style.color = 'inherit'; });
     });
     const expandBtns = tableClone.querySelectorAll('.btn-ms-expand');
     expandBtns.forEach(btn => btn.remove());
@@ -2433,15 +2561,15 @@ function exportModalPdf(type) {
         } else {
             // # | Date | Desc | Party | Bank | Category | Status | Air Code | Amount
             colgroupHtml = `<colgroup>
-                <col style="width:3%">
-                <col style="width:8%">
-                <col style="width:17%">
+                <col style="width:2%">
+                <col style="width:12%">
+                <col style="width:18%">
                 <col style="width:16%">
-                <col style="width:10%">
+                <col style="width:14%">
                 <col style="width:10%">
                 <col style="width:7%">
-                <col style="width:13%">
-                <col style="width:16%">
+                <col style="width:6%">
+                <col style="width:15%">
             </colgroup>`;
         }
     }
@@ -2485,35 +2613,40 @@ function exportModalPdf(type) {
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>${title}</title>
+<title>&#8203;</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Sarabun', sans-serif; font-size: 7.5pt; color: #111; background: #fff; padding: 18px 20px; }
-  .hdr { text-align: center; border-bottom: 2px solid #1e3a5f; padding-bottom: 10px; margin-bottom: 14px; }
-  .hdr h1 { font-size: 15pt; color: #1e3a5f; font-weight: 700; margin-bottom: 4px; }
-  .hdr h2 { font-size: 11pt; color: #334155; font-weight: 600; margin-bottom: 4px; }
-  .hdr p  { font-size: 8pt; color: #555; }
-  table { width: 100%; max-width: 100%; margin: 0 auto 14px auto; border-collapse: collapse; font-size: 7pt; table-layout: fixed; }
-  thead th { background: #1e3a5f; color: #fff; padding: 7px 5px; text-align: center; font-weight: 700; border: 1px solid #1e3a5f; white-space: nowrap; overflow: hidden; font-size: 7pt; }
-  tbody tr:nth-child(even) { background: #f0f4f8 !important; }
-  tbody tr:nth-child(odd)  { background: #fff !important; }
-  tbody td { padding: 6px 5px; border: 1px solid #d1d5db; color: #111 !important; overflow-wrap: break-word; white-space: normal; vertical-align: middle; line-height: 1.3; text-align: center; }
-  tbody td span { color: #111 !important; } /* Force spans (like bank names) to be black */
+  body { font-family: 'Sarabun', sans-serif; font-size: 7.5pt; color: #111; background: #fff; padding: 18px 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .hdr { text-align: center; border-bottom: 3px solid #1e3a5f; padding-bottom: 12px; margin-bottom: 16px; }
+  .hdr h1 { font-size: 18pt; color: #1e3a5f; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  .hdr h2 { font-size: 13pt; color: #2563eb; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .hdr p  { font-size: 8.5pt; color: #475569; font-weight: 500; }
+  table { width: 100%; max-width: 100%; margin: 0 auto 14px auto; border-collapse: collapse; font-size: 7pt; table-layout: auto; }
+  thead th { background: #1e3a5f !important; color: #ffffff !important; padding: 8px 5px; text-align: center; font-weight: 700; border: 1px solid #1e3a5f; white-space: nowrap; overflow: hidden; font-size: 7.5pt; }
+  tbody tr:nth-child(even) { background: #f8fafc !important; }
+  tbody tr:nth-child(odd)  { background: #ffffff !important; }
+  tbody td { padding: 6px 4px; border: 1px solid #e2e8f0; color: #1e293b !important; white-space: normal; vertical-align: middle; line-height: 1.3; text-align: center; }
+  tbody td:nth-child(1) { width: 25pt; font-weight: 600; color: #64748b !important; }
+  tbody td:nth-child(2) { white-space: nowrap; width: 65pt; font-weight: 600; }
+  tbody td:nth-child(3) { text-align: left; width: auto; font-weight: 500; }
+  tbody td:nth-child(8) { width: 45pt; font-weight: 600; }
+  tbody td:nth-child(9) { width: 65pt; text-align: right; font-weight: 700; }
+  tbody td span { color: inherit !important; }
   ${pdfExtraStyles}
   /* Sub-rows styling for PDF to override inline colors */
-  .modal-sub-row td { background: #f8fafc !important; color: #334155 !important; font-size: 7pt !important; text-align: center !important; }
+  .modal-sub-row td { background: #f1f5f9 !important; color: #334155 !important; font-size: 7pt !important; text-align: center !important; font-weight: 500 !important; }
   .modal-sub-row td:nth-child(2) { padding-left: 20px !important; text-align: left !important; }
-  .modal-sub-row td.numeric { color: #0f172a !important; font-weight: bold !important; text-align: right !important; }
+  .modal-sub-row td.numeric { color: #0f172a !important; font-weight: 700 !important; text-align: right !important; }
   
   /* Hide the expand button in PDF */
   .btn-ms-expand { display: none !important; }
 
   .numeric { text-align: right; font-family: monospace; white-space: nowrap; }
   thead th.numeric { text-align: right; }
-  .modal-amount-income { color: #16a34a !important; font-weight: 700; }
-  .modal-amount-expense { color: #dc2626 !important; font-weight: 700; }
-  .ftr { border-top: 2px solid #1e3a5f; padding-top: 8px; display: flex; justify-content: space-between; font-weight: 700; font-size: 9pt; color: #1e3a5f; }
+  .modal-amount-income { color: #15803d !important; font-weight: 700; }
+  .modal-amount-expense { color: #b91c1c !important; font-weight: 700; }
+  .ftr { border-top: 2px solid #1e3a5f; padding-top: 10px; display: flex; justify-content: space-between; font-weight: 700; font-size: 10pt; color: #1e3a5f; margin-top: 10px; }
   @media print { @page { size: A4 portrait; margin: 1cm; } body { padding: 0; } }
 </style>
 </head>
@@ -2525,7 +2658,12 @@ function exportModalPdf(type) {
 </div>
 ${tableHtml}
 <div class="ftr"><span>${footerCount}</span><span>${footerTotal}</span></div>
-<script>window.onload=function(){window.print();}<\/script>
+<script>
+  window.onload=function(){
+    try { history.pushState({}, '', 'Report'); } catch(e) {}
+    window.print();
+  }
+<\/script>
 </body></html>`);
     printWindow.document.close();
 }
