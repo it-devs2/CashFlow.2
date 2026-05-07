@@ -2184,7 +2184,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `${rows.length} ธนาคาร`;
     } else if (isGrouped) {
-        thead.innerHTML = `<tr><th>#</th><th>Category</th><th style="text-align:center;">Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>คำอธิบาย (Column C)</th><th style="text-align:left; padding-left:10px;">Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
@@ -2219,6 +2219,7 @@ function renderModalRows(rows) {
                     </div>
                 </td>
                 <td></td>
+                <td></td>
                 <td>${item.count} รายการ</td>
                 <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
             `;
@@ -2245,6 +2246,7 @@ function renderModalRows(rows) {
                     } catch (e) { }
 
                     const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+                    const desc = row['Description'] || row.description || '-';
                     const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '').trim();
                     const amount = getRowAmount(row, _modalType);
                     const rowType = getRowType(row);
@@ -2257,7 +2259,10 @@ function renderModalRows(rows) {
                         <td style="padding-left: 30px; text-align: left;">
                             <span style="color:#cbd5e1; font-size:12px;" title="${creditor}">${creditor}</span>
                         </td>
-                        <td style="color:#fcd34d; font-size:11px; text-align:center;">
+                        <td style="text-align: left; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 10px;">
+                            <span style="color:#94a3b8; font-size:11px;" title="${desc}">${desc}</span>
+                        </td>
+                        <td style="color:#fcd34d; font-size:11px; text-align:left; padding-left:10px;">
                             <span>${airCode}</span>
                         </td>
                         <td></td>
@@ -2273,7 +2278,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
-        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th style="text-align:center;">Air Code</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย (Column C)</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th style="text-align:left; padding-left:10px;">Air Code</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
 
         // Calculate total first across ALL rows
         rows.forEach(row => {
@@ -2310,7 +2315,7 @@ function renderModalRows(rows) {
                 <td>${bank}</td>
                 <td>${category}</td>
                 <td><span class="status-badge ${statusClass}">${status}</span></td>
-                <td style="text-align:center;"><span style="color:#fcd34d; font-weight:600;">${airCode}</span></td>
+                <td style="text-align:left; padding-left:10px;"><span style="color:#fcd34d; font-weight:600;">${airCode}</span></td>
                 <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
             `;
             fragment.appendChild(tr);
@@ -2431,6 +2436,7 @@ function exportModalPdf(type) {
                 <td>${i + 1}</td>
                 <td style="text-align:left;"><span>${cat}</span></td>
                 <td></td>
+                <td></td>
                 <td>${item.count} รายการ</td>
                 <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
             `;
@@ -2452,13 +2458,15 @@ function exportModalPdf(type) {
                     } catch (e) { }
 
                     const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+                    const desc = row['Description'] || row.description || '-';
                     const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '').trim();
                     const amount = getRowAmount(row, _modalType);
 
                     subTr.innerHTML = `
                         <td style="text-align:center;"><span>${displayDate}</span></td>
                         <td style="padding-left: 20px; text-align: left;"><span>${creditor}</span></td>
-                        <td style="text-align:center;"><span>${airCode}</span></td>
+                        <td style="text-align: left;"><span>${desc}</span></td>
+                        <td style="text-align:left; padding-left:10px;"><span>${airCode}</span></td>
                         <td></td>
                         <td class="numeric" style="color:#f97316; font-weight:600;">฿${checkValue(Math.abs(amount))}</td>
                     `;
@@ -2494,7 +2502,7 @@ function exportModalPdf(type) {
                 <td>${bank}</td>
                 <td>${category}</td>
                 <td>${status}</td>
-                <td style="text-align:center;">${airCode}</td>
+                <td style="text-align:left; padding-left:10px;">${airCode}</td>
                 <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
             `;
             tbodyClone.appendChild(tr);
@@ -2536,13 +2544,14 @@ function exportModalPdf(type) {
                 <col style="width:18%">
             </colgroup>`;
         } else {
-            // # | Category | Air Code | Count | Total
+            // # | Category | Description | Air Code | Count | Total
             colgroupHtml = `<colgroup>
-                <col style="width:8%">
-                <col style="width:40%">
-                <col style="width:15%">
-                <col style="width:15%">
-                <col style="width:22%">
+                <col style="width:5%">
+                <col style="width:30%">
+                <col style="width:25%">
+                <col style="width:12%">
+                <col style="width:12%">
+                <col style="width:16%">
             </colgroup>`;
         }
     } else {
@@ -2590,10 +2599,11 @@ function exportModalPdf(type) {
             thead th:nth-child(4), tbody td:nth-child(4) { text-align: left !important; }
         `;
     } else if (mode === 'group') {
-        // Group Summary: 1=#, 2=Category/Name, 3=Air Code, 4=Count, 5=Total
+        // Group Summary: 1=#, 2=Category/Name, 3=Description, 4=Air Code, 5=Count, 6=Total
         pdfExtraStyles = `
-            thead th:nth-child(2), tbody td:nth-child(2) { text-align: left !important; }
-            thead th:nth-child(3), tbody td:nth-child(3) { text-align: center !important; }
+            thead th:nth-child(2), tbody td:nth-child(2),
+            thead th:nth-child(3), tbody td:nth-child(3),
+            thead th:nth-child(4), tbody td:nth-child(4) { text-align: left !important; }
         `;
     } else {
         // Detail View: 3=Desc, 4=Creditor, 5=Bank, 6=Category, 8=Air Code
@@ -2636,7 +2646,7 @@ function exportModalPdf(type) {
   ${pdfExtraStyles}
   /* Sub-rows styling for PDF to override inline colors */
   .modal-sub-row td { background: #f1f5f9 !important; color: #334155 !important; font-size: 7pt !important; text-align: center !important; font-weight: 500 !important; }
-  .modal-sub-row td:nth-child(2) { padding-left: 20px !important; text-align: left !important; }
+  .modal-sub-row td:nth-child(2), .modal-sub-row td:nth-child(3), .modal-sub-row td:nth-child(4) { text-align: left !important; padding-left: 15px !important; }
   .modal-sub-row td.numeric { color: #0f172a !important; font-weight: 700 !important; text-align: right !important; }
   
   /* Hide the expand button in PDF */
