@@ -2164,35 +2164,45 @@ function renderModalRows(rows) {
 
     if (_isModalBankSource) {
         // Special rendering for Bank Balance data
-        thead.innerHTML = `<tr><th>#</th><th>Bank</th><th>Account No</th><th style="text-align:center;">Air Code</th><th class="numeric">Selected Balance (฿)</th></tr>`;
-        rows.forEach((b, i) => {
-            const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
-            const keys = Object.keys(b).join(', ');
+        thead.innerHTML = `<tr><th>#</th><th>Bank</th><th>Account No</th><th style="text-align:left; padding-left:10px;">Air Code</th><th class="numeric">Selected Balance (฿)</th></tr>`;
+        
+        // ✅ Filter out banks with zero balance as requested
+        const filteredRows = rows.filter(b => {
+            const sbKey = Object.keys(b).find(k => {
+                const normalized = k.toLowerCase().replace(/\s/g, '');
+                return normalized.includes('selected') && normalized.includes('balance');
+            });
+            return parseSafe(sbKey ? b[sbKey] : 0) !== 0;
+        });
 
-            // Flexible lookup for Selected Balance
+        // Save filtered rows for PDF export
+        _currentModalFilteredRows = filteredRows;
+
+        filteredRows.forEach((b, i) => {
+            const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
             const sbKey = Object.keys(b).find(k => {
                 const normalized = k.toLowerCase().replace(/\s/g, '');
                 return normalized.includes('selected') && normalized.includes('balance');
             });
             const amt = parseSafe(sbKey ? b[sbKey] : 0);
             const accountNum = (b['Account No'] || b.accountNo || b.account || '-').trim();
-            const airCode = (b['Air Code'] || b.airCode || b['Air code'] || b['air code'] || '-').trim(); // Added Air Code
+            const airCode = (b['Air Code'] || b.airCode || b['Air code'] || b['air code'] || '-').trim();
 
-            if (amt !== 0) total += amt;
+            total += amt;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td><span style="color:#fff; font-weight:600;">${bankName}</span></td>
                 <td><span style="color:#94a3b8; font-size:12px;">${accountNum}</span></td>
-                <td style="text-align:center;"><span style="color:#fcd34d; font-size:12px; font-weight:600;">${airCode}</span></td>
+                <td style="text-align:left; padding-left:10px;"><span style="color:#fcd34d; font-size:12px; font-weight:600;">${airCode}</span></td>
                 <td class="numeric modal-amount-income" style="font-weight:600;">฿${checkValue(amt)}</td>
             `;
             fragment.appendChild(tr);
         });
         tbody.appendChild(fragment);
         const countEl = document.getElementById('modal-row-count');
-        if (countEl) countEl.textContent = `${rows.length} ธนาคาร`;
+        if (countEl) countEl.textContent = `${filteredRows.length} ธนาคาร`;
     } else if (isGrouped) {
         thead.innerHTML = `<tr><th>#</th><th>Category</th><th>คำอธิบาย</th><th style="text-align:left; padding-left:10px;">Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
         const grouped = {};
@@ -2403,7 +2413,15 @@ function exportModalPdf(type) {
 
     if (_isModalBankSource) {
         // Selected Balance: # | Bank | Account No | Air Code | Balance
-        rows.forEach((b, i) => {
+        const filtered = rows.filter(b => {
+            const sbKey = Object.keys(b).find(k => {
+                const normalized = k.toLowerCase().replace(/\s/g, '');
+                return normalized.includes('selected') && normalized.includes('balance');
+            });
+            return parseSafe(sbKey ? b[sbKey] : 0) !== 0;
+        });
+
+        filtered.forEach((b, i) => {
             const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
             const accountNum = (b['Account No'] || b.accountNo || b.account || '-').trim();
             const airCode = (b['Air Code'] || b.airCode || b['Air code'] || b['air code'] || '-').trim();
