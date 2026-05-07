@@ -1799,7 +1799,7 @@ function renderBankDetailRows(rows) {
     let totalIn = 0, totalOut = 0;
 
     if (_bankModalViewMode === 'group') {
-        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>คำอธิบาย (Column C)</th><th style="text-align:left; padding-left:10px;">Air Code</th><th>จำนวนรายการ</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>คำอธิบาย</th><th style="text-align:left; padding-left:10px;">Air Code</th><th>จำนวนรายการ</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
 
         const grouped = {};
         rows.forEach(row => {
@@ -1893,7 +1893,7 @@ function renderBankDetailRows(rows) {
         });
         document.getElementById('bank-modal-row-count').textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
-        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย (Column C)</th><th>ประเภท</th><th>Category</th><th>Status</th><th style="text-align:left; padding-left:10px;">Air Code</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>ประเภท</th><th>Category</th><th>Status</th><th style="text-align:left; padding-left:10px;">Air Code</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
 
         rows.forEach(row => {
             const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
@@ -2194,7 +2194,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `${rows.length} ธนาคาร`;
     } else if (isGrouped) {
-        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>คำอธิบาย (Column C)</th><th style="text-align:left; padding-left:10px;">Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>คำอธิบาย</th><th style="text-align:left; padding-left:10px;">Air Code</th><th>รายการ</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
@@ -2293,7 +2293,7 @@ function renderModalRows(rows) {
         const countEl = document.getElementById('modal-row-count');
         if (countEl) countEl.textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
-        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย (Column C)</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th style="text-align:left; padding-left:10px;">Air Code</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>เจ้าหนี้ / ลูกหนี้</th><th>Bank</th><th>Category</th><th>Status</th><th style="text-align:left; padding-left:10px;">Air Code</th><th class="numeric">จำนวนเงิน (฿)</th></tr>`;
 
         // Calculate total first across ALL rows
         rows.forEach(row => {
