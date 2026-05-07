@@ -1799,13 +1799,12 @@ function renderBankDetailRows(rows) {
     let totalIn = 0, totalOut = 0;
 
     if (_bankModalViewMode === 'group') {
-        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>จำนวนรายการ</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>Category</th><th>คำอธิบาย (Column C)</th><th style="text-align:left; padding-left:10px;">Air Code</th><th>จำนวนรายการ</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
 
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
             if (!grouped[cat]) grouped[cat] = { count: 0, in: 0, out: 0, items: [] };
-            // ✅ FIX: ใช้ค่า Cash In / Cash Out ตรงๆ จาก row (ตรงกับ Google Sheets)
             const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
             const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
 
@@ -1834,6 +1833,8 @@ function renderBankDetailRows(rows) {
                         <span>${cat}</span>
                     </div>
                 </td>
+                <td></td>
+                <td></td>
                 <td>${item.count} รายการ</td>
                 <td class="numeric modal-amount-income">${item.in > 0 ? '฿' + checkValue(item.in) : '-'}</td>
                 <td class="numeric modal-amount-expense">${item.out > 0 ? '฿' + checkValue(item.out) : '-'}</td>
@@ -1841,16 +1842,16 @@ function renderBankDetailRows(rows) {
             tbody.appendChild(tr);
 
             if (hasSubRows) {
-                // Sort sub-items by amount descending (using max of cashIn and cashOut)
                 const sortedSubItems = [...item.items].sort((a, b) => {
-                    const amtA = Math.max(Number(a['Cash In'] || a.cashIn) || 0, Number(a['Cash Out'] || a.cashOut) || 0);
-                    const amtB = Math.max(Number(b['Cash In'] || b.cashIn) || 0, Number(b['Cash Out'] || b.cashOut) || 0);
-                    return amtB - amtA;
+                    const dA = parseDateSafe(a['Date'] || a.date);
+                    const dB = parseDateSafe(b['Date'] || b.date);
+                    if (!dA && !dB) return 0;
+                    if (!dA) return 1;
+                    if (!dB) return -1;
+                    return dA - dB;
                 });
 
                 sortedSubItems.forEach((row, subIdx) => {
-                    const isLast = subIdx === sortedSubItems.length - 1;
-
                     const subTr = document.createElement('tr');
                     subTr.className = `modal-sub-row bank-cat-${i}`;
                     subTr.style.display = 'none';
@@ -1864,6 +1865,8 @@ function renderBankDetailRows(rows) {
                     } catch (e) { }
 
                     const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+                    const desc = row['Description'] || row.description || '-';
+                    const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '-').trim();
                     const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
                     const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
 
@@ -1873,6 +1876,12 @@ function renderBankDetailRows(rows) {
                         </td>
                         <td style="padding-left: 30px; text-align: left;">
                             <span style="color:#cbd5e1; font-size:12px;" title="${creditor}">${creditor}</span>
+                        </td>
+                        <td style="text-align: left; padding-left:10px;">
+                            <span style="color:#94a3b8; font-size:11px;" title="${desc}">${desc}</span>
+                        </td>
+                        <td style="color:#fcd34d; font-size:11px; text-align:left; padding-left:10px;">
+                            <span>${airCode}</span>
                         </td>
                         <td></td>
                         <td class="numeric" style="color:#f97316; font-size:12px; font-weight:600;">${cashIn > 0 ? '฿' + checkValue(cashIn) : '-'}</td>
@@ -1884,9 +1893,8 @@ function renderBankDetailRows(rows) {
         });
         document.getElementById('bank-modal-row-count').textContent = `รวม ${totalCount} รายการ (${sortedKeys.length} หมวดหมู่)`;
     } else {
-        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย</th><th>ประเภท</th><th>Category</th><th>Status</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
+        thead.innerHTML = `<tr><th>#</th><th>วันที่</th><th>คำอธิบาย (Column C)</th><th>ประเภท</th><th>Category</th><th>Status</th><th style="text-align:left; padding-left:10px;">Air Code</th><th class="numeric">Cash In (฿)</th><th class="numeric">Cash Out (฿)</th></tr>`;
 
-        // Calculate total first
         rows.forEach(row => {
             const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
             const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
@@ -1908,6 +1916,7 @@ function renderBankDetailRows(rows) {
             const type = row['Type'] || row.type || '-';
             const category = row['Category'] || row.category || '-';
             const status = row['Status'] || row.status || '-';
+            const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '-').trim();
             const cashIn = Number(row['Cash In'] || row.cashIn) || 0;
             const cashOut = Number(row['Cash Out'] || row.cashOut) || 0;
 
@@ -1915,10 +1924,11 @@ function renderBankDetailRows(rows) {
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td>${displayDate}</td>
-                <td title="${desc}">${desc}</td>
+                <td style="text-align:left;" title="${desc}">${desc}</td>
                 <td><span class="type-${type.toLowerCase()}">${type}</span></td>
                 <td>${category}</td>
                 <td>${status}</td>
+                <td style="text-align:left; padding-left:10px;"><span style="color:#fcd34d; font-weight:600;">${airCode}</span></td>
                 <td class="numeric modal-amount-income">${cashIn > 0 ? '฿' + checkValue(cashIn) : '-'}</td>
                 <td class="numeric modal-amount-expense">${cashOut > 0 ? '฿' + checkValue(cashOut) : '-'}</td>
             `;
@@ -1927,7 +1937,7 @@ function renderBankDetailRows(rows) {
 
         if (rows.length > (window._bankModalRenderLimit || 200)) {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td colspan="8" style="text-align:center; padding:15px; cursor:pointer; color:#38bdf8; font-weight:bold; background:rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="loadMoreBankModalRows()">👇 โหลดเพิ่มเติม... (เหลืออีก ${rows.length - (window._bankModalRenderLimit || 200)} รายการ)</td>`;
+            tr.innerHTML = `<td colspan="9" style="text-align:center; padding:15px; cursor:pointer; color:#38bdf8; font-weight:bold; background:rgba(255,255,255,0.05); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="loadMoreBankModalRows()">👇 โหลดเพิ่มเติม... (เหลืออีก ${rows.length - (window._bankModalRenderLimit || 200)} รายการ)</td>`;
             tbody.appendChild(tr);
         }
 
@@ -2226,9 +2236,14 @@ function renderModalRows(rows) {
             fragment.appendChild(tr);
 
             if (hasSubRows) {
-                // Sort sub-items by amount descending
+                // Sort sub-items by date ascending
                 const sortedSubItems = [...item.items].sort((a, b) => {
-                    return getRowAmount(b, _modalType) - getRowAmount(a, _modalType);
+                    const dA = parseDateSafe(a['Date'] || a.date);
+                    const dB = parseDateSafe(b['Date'] || b.date);
+                    if (!dA && !dB) return 0;
+                    if (!dA) return 1;
+                    if (!dB) return -1;
+                    return dA - dB;
                 });
                 sortedSubItems.forEach((row, subIdx) => {
                     const isLast = subIdx === sortedSubItems.length - 1;
@@ -2387,6 +2402,7 @@ function exportModalPdf(type) {
     tbodyClone.innerHTML = '';
 
     if (_isModalBankSource) {
+        // Selected Balance: # | Bank | Account No | Air Code | Balance
         rows.forEach((b, i) => {
             const bankName = (b['Bank Name'] || b.bankName || b.bank || '').trim();
             const accountNum = (b['Account No'] || b.accountNo || b.account || '-').trim();
@@ -2399,18 +2415,16 @@ function exportModalPdf(type) {
                 <td>${i + 1}</td>
                 <td><span style="font-weight:600;">${bankName}</span></td>
                 <td><span>${accountNum}</span></td>
-                <td style="text-align:center;"><span>${airCode}</span></td>
+                <td style="text-align:left; padding-left:10px;"><span>${airCode}</span></td>
                 <td class="numeric modal-amount-income" style="font-weight:600;">฿${checkValue(amt)}</td>
             `;
             tbodyClone.appendChild(tr);
         });
     } else if (mode === 'group') {
-        // Find which categories are expanded in the UI
         const expandedCategories = new Set();
         const uiExpandBtns = sourceTable.querySelectorAll('.btn-ms-expand');
         uiExpandBtns.forEach(btn => {
             if (btn.textContent === '-') {
-                // Find the category name in the parent row
                 const catName = btn.closest('tr').querySelector('td:nth-child(2) span').textContent;
                 expandedCategories.add(catName);
             }
@@ -2419,37 +2433,64 @@ function exportModalPdf(type) {
         const grouped = {};
         rows.forEach(row => {
             const cat = row['Category'] || row.category || 'ไม่ระบุหมวดหมู่';
-            if (!grouped[cat]) grouped[cat] = { count: 0, sum: 0, items: [] };
-            grouped[cat].count++;
-            grouped[cat].sum += getRowAmount(row, _modalType);
+            if (isBank) {
+                if (!grouped[cat]) grouped[cat] = { count: 0, in: 0, out: 0, items: [] };
+                grouped[cat].count++;
+                grouped[cat].in += Number(row['Cash In'] || row.cashIn) || 0;
+                grouped[cat].out += Number(row['Cash Out'] || row.cashOut) || 0;
+            } else {
+                if (!grouped[cat]) grouped[cat] = { count: 0, sum: 0, items: [] };
+                grouped[cat].count++;
+                grouped[cat].sum += getRowAmount(row, _modalType);
+            }
             grouped[cat].items.push(row);
         });
 
-        const sortedKeys = Object.keys(grouped).sort((a, b) => grouped[b].sum - grouped[a].sum);
+        const sortedKeys = Object.keys(grouped).sort((a, b) => {
+            if (isBank) return (grouped[b].in + grouped[b].out) - (grouped[a].in + grouped[a].out);
+            return grouped[b].sum - grouped[a].sum;
+        });
+
         sortedKeys.forEach((cat, i) => {
             const item = grouped[cat];
-            let amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
-            if (_modalType === 'balance') amtClass = item.sum >= 0 ? 'modal-amount-income' : 'modal-amount-expense';
-
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${i + 1}</td>
-                <td style="text-align:left;"><span>${cat}</span></td>
-                <td></td>
-                <td></td>
-                <td>${item.count} รายการ</td>
-                <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
-            `;
+            if (isBank) {
+                tr.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td style="text-align:left;"><span>${cat}</span></td>
+                    <td></td>
+                    <td></td>
+                    <td>${item.count} รายการ</td>
+                    <td class="numeric modal-amount-income">฿${checkValue(item.in)}</td>
+                    <td class="numeric modal-amount-expense">฿${checkValue(item.out)}</td>
+                `;
+            } else {
+                let amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+                if (_modalType === 'balance') amtClass = item.sum >= 0 ? 'modal-amount-income' : 'modal-amount-expense';
+                tr.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td style="text-align:left;"><span>${cat}</span></td>
+                    <td></td>
+                    <td></td>
+                    <td>${item.count} รายการ</td>
+                    <td class="numeric ${amtClass}">฿${checkValue(item.sum)}</td>
+                `;
+            }
             tbodyClone.appendChild(tr);
 
-            // Only render sub-rows if this category was expanded in the UI
             if (expandedCategories.has(cat)) {
-                const sortedSubItems = [...item.items].sort((a, b) => getRowAmount(b, _modalType) - getRowAmount(a, _modalType));
+                const sortedSubItems = [...item.items].sort((a, b) => {
+                    const dA = parseDateSafe(a['Date'] || a.date);
+                    const dB = parseDateSafe(b['Date'] || b.date);
+                    if (!dA && !dB) return 0;
+                    if (!dA) return 1;
+                    if (!dB) return -1;
+                    return dA - dB;
+                });
                 sortedSubItems.forEach((row) => {
                     const subTr = document.createElement('tr');
                     subTr.className = 'modal-sub-row';
                     subTr.style.display = 'table-row'; 
-
                     const rawDate = row['Date'] || row.date || '';
                     let displayDate = rawDate;
                     try {
@@ -2460,16 +2501,30 @@ function exportModalPdf(type) {
                     const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
                     const desc = row['Description'] || row.description || '-';
                     const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '').trim();
-                    const amount = getRowAmount(row, _modalType);
 
-                    subTr.innerHTML = `
-                        <td style="text-align:center;"><span>${displayDate}</span></td>
-                        <td style="padding-left: 20px; text-align: left;"><span>${creditor}</span></td>
-                        <td style="text-align: left;"><span>${desc}</span></td>
-                        <td style="text-align:left; padding-left:10px;"><span>${airCode}</span></td>
-                        <td></td>
-                        <td class="numeric" style="color:#f97316; font-weight:600;">฿${checkValue(Math.abs(amount))}</td>
-                    `;
+                    if (isBank) {
+                        const cIn = Number(row['Cash In'] || row.cashIn) || 0;
+                        const cOut = Number(row['Cash Out'] || row.cashOut) || 0;
+                        subTr.innerHTML = `
+                            <td style="text-align:center;"><span>${displayDate}</span></td>
+                            <td style="padding-left: 20px; text-align: left;"><span>${creditor}</span></td>
+                            <td style="text-align: left;"><span>${desc}</span></td>
+                            <td style="text-align:left; padding-left:10px;"><span>${airCode}</span></td>
+                            <td></td>
+                            <td class="numeric">฿${checkValue(cIn)}</td>
+                            <td class="numeric">฿${checkValue(cOut)}</td>
+                        `;
+                    } else {
+                        const amount = getRowAmount(row, _modalType);
+                        subTr.innerHTML = `
+                            <td style="text-align:center;"><span>${displayDate}</span></td>
+                            <td style="padding-left: 20px; text-align: left;"><span>${creditor}</span></td>
+                            <td style="text-align: left;"><span>${desc}</span></td>
+                            <td style="text-align:left; padding-left:10px;"><span>${airCode}</span></td>
+                            <td></td>
+                            <td class="numeric" style="color:#f97316; font-weight:600;">฿${checkValue(Math.abs(amount))}</td>
+                        `;
+                    }
                     tbodyClone.appendChild(subTr);
                 });
             }
@@ -2484,27 +2539,45 @@ function exportModalPdf(type) {
             } catch (e) { }
 
             const desc = row['Description'] || row.description || '-';
-            const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
-            const bank = row['Bank'] || row.bank || '-';
-            const category = row['Category'] || row.category || '-';
-            const status = row['Status'] || row.status || '-';
             const airCode = (row['Air Code'] || row.airCode || row['Air code'] || row['air code'] || '-').trim();
-            const statusClass = status.toLowerCase().includes('plan') ? 'plan' : 'actual';
-            const numAmt = getRowAmount(row, _modalType);
-            const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
-
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${i + 1}</td>
-                <td>${displayDate}</td>
-                <td style="text-align:left;">${desc}</td>
-                <td style="text-align:left;">${creditor}</td>
-                <td>${bank}</td>
-                <td>${category}</td>
-                <td>${status}</td>
-                <td style="text-align:left; padding-left:10px;">${airCode}</td>
-                <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
-            `;
+
+            if (isBank) {
+                const type = row['Type'] || row.type || '-';
+                const category = row['Category'] || row.category || '-';
+                const status = row['Status'] || row.status || '-';
+                const cIn = Number(row['Cash In'] || row.cashIn) || 0;
+                const cOut = Number(row['Cash Out'] || row.cashOut) || 0;
+                tr.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td>${displayDate}</td>
+                    <td style="text-align:left;">${desc}</td>
+                    <td>${type}</td>
+                    <td>${category}</td>
+                    <td>${status}</td>
+                    <td style="text-align:left; padding-left:10px;">${airCode}</td>
+                    <td class="numeric">฿${checkValue(cIn)}</td>
+                    <td class="numeric">฿${checkValue(cOut)}</td>
+                `;
+            } else {
+                const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+                const bank = row['Bank'] || row.bank || '-';
+                const category = row['Category'] || row.category || '-';
+                const status = row['Status'] || row.status || '-';
+                const numAmt = getRowAmount(row, _modalType);
+                const amtClass = _modalType === 'income' ? 'modal-amount-income' : 'modal-amount-expense';
+                tr.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td>${displayDate}</td>
+                    <td style="text-align:left;">${desc}</td>
+                    <td style="text-align:left;">${creditor}</td>
+                    <td>${bank}</td>
+                    <td>${category}</td>
+                    <td>${status}</td>
+                    <td style="text-align:left; padding-left:10px;">${airCode}</td>
+                    <td class="numeric ${amtClass}">฿${checkValue(numAmt)}</td>
+                `;
+            }
             tbodyClone.appendChild(tr);
         });
     }
@@ -2535,13 +2608,15 @@ function exportModalPdf(type) {
         </colgroup>`;
     } else if (mode === 'group') {
         if (isBank) {
-            // # | Category | Count | CashIn | CashOut
+            // # | Category | Description | Air Code | Count | CashIn | CashOut
             colgroupHtml = `<colgroup>
-                <col style="width:10%">
-                <col style="width:40%">
-                <col style="width:14%">
-                <col style="width:18%">
-                <col style="width:18%">
+                <col style="width:5%">
+                <col style="width:25%">
+                <col style="width:20%">
+                <col style="width:12%">
+                <col style="width:12%">
+                <col style="width:13%">
+                <col style="width:13%">
             </colgroup>`;
         } else {
             // # | Category | Description | Air Code | Count | Total
@@ -2556,16 +2631,17 @@ function exportModalPdf(type) {
         }
     } else {
         if (isBank) {
-            // # | Date | Desc | Type | Category | Status | CashIn | CashOut
+            // # | Date | Desc | Type | Category | Status | Air Code | CashIn | CashOut
             colgroupHtml = `<colgroup>
                 <col style="width:4%">
                 <col style="width:10%">
                 <col style="width:20%">
-                <col style="width:10%">
+                <col style="width:8%">
                 <col style="width:12%">
                 <col style="width:8%">
-                <col style="width:18%">
-                <col style="width:18%">
+                <col style="width:10%">
+                <col style="width:14%">
+                <col style="width:14%">
             </colgroup>`;
         } else {
             // # | Date | Desc | Party | Bank | Category | Status | Air Code | Amount
