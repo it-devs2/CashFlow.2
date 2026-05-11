@@ -3775,7 +3775,7 @@ function exportMonthlySummaryPdf() {
   tbody td:first-child { text-align: left; }
   .modal-amount-income { color: #16a34a !important; font-weight: 700; }
   .modal-amount-expense { color: #dc2626 !important; font-weight: 700; }
-  @media print { @page { size: A4 landscape; margin: 1cm; } body { padding: 0; } }
+  @media print { @page { size: A4 portrait; margin: 1cm; } body { padding: 0; } }
 </style>
 </head>
 <body>
@@ -4207,9 +4207,9 @@ function exportDailyPdf() {
         .pdf-title { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #0f172a; }
         .pdf-table { width: 100%; border-collapse: collapse; font-size: 11px; color: #334155; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; word-wrap: break-word; line-height: 1.5; }
-        .pdf-table th { background: #1d4ed8; font-weight: 700; text-align: center; color: #ffffff; }
+        .pdf-table th { background: #1d4ed8; font-weight: 700; text-align: center; vertical-align: middle; color: #ffffff; }
         @media print { .pdf-table th { background: #1d4ed8 !important; color: #ffffff !important; } }
-        .numeric { text-align: right !important; }
+        .numeric { text-align: right !important; white-space: nowrap; }
         .income-text { color: #059669; font-weight: 600; }
         .expense-text { color: #dc2626; font-weight: 600; }
         .total-row { font-weight: 700; background: #f1f5f9; }
@@ -4240,7 +4240,7 @@ function exportDailyPdf() {
     
     const header = document.createElement('div');
     header.className = 'pdf-title';
-    header.innerHTML = `รายงานกระแสเงินสดประจำวันที่ ${displayDate}`;
+    header.innerHTML = `รายงานกระแสเงินสด ThaiDrill ประจำวันที่ ${displayDate}`;
     pdfContainer.appendChild(header);
 
     const table = document.createElement('table');
@@ -4250,9 +4250,9 @@ function exportDailyPdf() {
         <thead>
             <tr>
                 <th style="width: 3%;">#</th>
-                <th style="width: 8%;">วันที่</th>
+                <th style="width: 11%; white-space: nowrap;">วันที่</th>
                 <th style="width: 14%;">เจ้าหนี้/ลูกหนี้</th>
-                <th style="width: 20%;">คำอธิบาย</th>
+                <th style="width: 17%;">คำอธิบาย</th>
                 <th style="width: 7%;">Air Code</th>
                 <th style="width: 9%;">Category</th>
                 <th style="width: 6%;">Status</th>
@@ -4275,7 +4275,15 @@ function exportDailyPdf() {
         const dateDisplay = dateObj ? `${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}/${dateObj.getFullYear()+543}` : (rawDate || '-');
         const desc = row['Description'] || row.description || '-';
         const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
-        const aircode = row['Air Code'] || row['Aircode'] || row.aircode || '-';
+        const aircodeRaw = row['Air Code'] || row['Aircode'] || row.aircode || '-';
+        const aircodeList = String(aircodeRaw).split(/[,\s]+/).map(s => s.trim()).filter(Boolean);
+        let aircode = aircodeRaw;
+        if (aircodeList.length > 1) {
+            const half = Math.ceil(aircodeList.length / 2);
+            const line1 = aircodeList.slice(0, half).join(', ');
+            const line2 = aircodeList.slice(half).join(', ');
+            aircode = `${line1}<br>${line2}`;
+        }
         const category = row['Category'] || row.category || '-';
         const status = row['Status'] || row.status || 'Actual';
         const statusClass = status.toLowerCase().includes('plan') ? 'status-plan' : 'status-actual';
@@ -4291,7 +4299,7 @@ function exportDailyPdf() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align:center;">${i + 1}</td>
-            <td style="text-align:center;">${dateDisplay}</td>
+            <td style="text-align:center; white-space: nowrap;">${dateDisplay}</td>
             <td>${creditor}</td>
             <td>${desc}</td>
             <td style="text-align:center;">${aircode}</td>
@@ -4397,10 +4405,10 @@ function confirmExportPdf() {
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Daily_CashFlow_${dateInput}</title>
+<title> </title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-    @page { size: A4 landscape; margin: 10mm 8mm; }
+    @page { size: A4 portrait; margin: 12mm 8mm; }
     @media print {
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
     }
