@@ -4044,46 +4044,91 @@ function openDateExportModal() {
         if (monthSel && monthSel.options.length <= 1) {
             const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
             months.forEach((m, i) => {
-                const monthNum = String(i + 1).padStart(2, '0');
-                monthSel.add(new Option(`${monthNum} - ${m}`, i + 1));
+                monthSel.add(new Option(m, i + 1));
             });
-            
+
             const currentYear = new Date().getFullYear();
-            for(let y = currentYear - 3; y <= currentYear + 3; y++) {
-                yearSel.add(new Option(y, y));
+            for(let y = currentYear - 5; y <= currentYear + 10; y++) {
+                yearSel.add(new Option(y + 543, y));
             }
 
-            monthSel.addEventListener('change', renderExportDays);
-            yearSel.addEventListener('change', renderExportDays);
+            monthSel.addEventListener('change', () => renderExportDays(false));
+            yearSel.addEventListener('change', () => renderExportDays(false));
         }
 
-        // Set today's date as default
+        // เปิด modal ใหม่ → reset เป็นเดือน/ปีปัจจุบันเสมอ
         const today = new Date();
-        if (monthSel && !monthSel.value) monthSel.value = today.getMonth() + 1;
-        if (yearSel && !yearSel.value) yearSel.value = today.getFullYear();
-        
+        if (monthSel) monthSel.value = today.getMonth() + 1;
+        if (yearSel) yearSel.value = today.getFullYear();
+
         renderExportDays(true); // force today default
-        
+
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 }
+
+// คำนวณวันที่ของเดือน/ปีปัจจุบัน ที่มีข้อมูลในระบบ (ใช้ตี dot)
+function cf2GetDatesWithData(year, month) {
+    const set = new Set();
+    const sourceData = (typeof allPlans !== 'undefined' && allPlans && allPlans.length > 0)
+        ? allPlans
+        : (typeof allTransactions !== 'undefined' ? allTransactions : []);
+    if (!sourceData) return set;
+    sourceData.forEach(row => {
+        const d = parseDateSafe(row['Date'] || row.date);
+        if (!d) return;
+        if (d.getFullYear() === year && d.getMonth() + 1 === month) {
+            set.add(d.getDate());
+        }
+    });
+    return set;
+}
+
+window.cf2CalPrev = function() {
+    const monthSel = document.getElementById('export-month');
+    const yearSel = document.getElementById('export-year');
+    if (!monthSel || !yearSel) return;
+    let m = parseInt(monthSel.value) - 1;
+    let y = parseInt(yearSel.value);
+    if (m < 1) { m = 12; y--; }
+    monthSel.value = m;
+    yearSel.value = y;
+    renderExportDays(false);
+};
+
+window.cf2CalNext = function() {
+    const monthSel = document.getElementById('export-month');
+    const yearSel = document.getElementById('export-year');
+    if (!monthSel || !yearSel) return;
+    let m = parseInt(monthSel.value) + 1;
+    let y = parseInt(yearSel.value);
+    if (m > 12) { m = 1; y++; }
+    monthSel.value = m;
+    yearSel.value = y;
+    renderExportDays(false);
+};
 
 window.renderExportDays = function(setTodayDefault = false) {
     const daysContainer = document.getElementById('export-days-container');
     const monthSel = document.getElementById('export-month');
     const yearSel = document.getElementById('export-year');
     if (!daysContainer || !monthSel || !yearSel) return;
-    
+
     const today = new Date();
     const y = parseInt(yearSel.value) || today.getFullYear();
     const m = parseInt(monthSel.value) || today.getMonth() + 1;
     const daysInMonth = new Date(y, m, 0).getDate();
-    
+    const firstDay = new Date(y, m - 1, 1).getDay(); // 0 = Sunday
+
     // Save current selection if not forcing default
     const currentlySelected = new Set(Array.from(document.querySelectorAll('.export-day-cb:checked')).map(cb => parseInt(cb.value)));
+    const datesWithData = cf2GetDatesWithData(y, m);
 
-    daysContainer.innerHTML = '';
+    let html = '';
+    // ช่องว่างก่อนวันที่ 1
+    for (let i = 0; i < firstDay; i++) html += '<div class="cf2-cal-day empty"></div>';
+
     for (let i = 1; i <= daysInMonth; i++) {
         let isChecked = false;
         if (setTodayDefault) {
@@ -4091,20 +4136,40 @@ window.renderExportDays = function(setTodayDefault = false) {
         } else {
             isChecked = currentlySelected.has(i);
         }
-
-        daysContainer.innerHTML += `
-            <label style="display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 0; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s;">
-                <input type="checkbox" value="${i}" class="export-day-cb" onchange="updateExportDayCount()" ${isChecked ? 'checked' : ''} style="margin-bottom: 4px; accent-color: #38bdf8; width: 16px; height: 16px; cursor: pointer;">
-                <span style="color: #e2e8f0; font-size: 14px;">${i}</span>
-            </label>
-        `;
+        const cls = ['cf2-cal-day'];
+        if (datesWithData.has(i)) cls.push('has-data');
+        if (isChecked) cls.push('selected');
+        html += `
+            <div class="${cls.join(' ')}" data-day="${i}" onclick="cf2ToggleDay(this)">
+                <input type="checkbox" value="${i}" class="export-day-cb" ${isChecked ? 'checked' : ''}>
+                ${i}
+            </div>`;
     }
+    daysContainer.innerHTML = html;
     updateExportDayCount();
 }
 
+window.cf2ToggleDay = function(el) {
+    // วันที่ไม่มีข้อมูล → คลิกไม่ได้
+    if (!el.classList.contains('has-data')) return;
+    const cb = el.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    if (cb.checked) el.classList.add('selected');
+    else el.classList.remove('selected');
+    updateExportDayCount();
+};
+
 window.toggleAllExportDays = function(source) {
-    const cbs = document.querySelectorAll('.export-day-cb');
-    cbs.forEach(cb => cb.checked = source.checked);
+    // เลือกเฉพาะวันที่มีข้อมูล (.has-data)
+    const cells = document.querySelectorAll('.cf2-cal-day.has-data');
+    cells.forEach(cell => {
+        const cb = cell.querySelector('input[type="checkbox"]');
+        if (!cb) return;
+        cb.checked = !!source.checked;
+        if (cb.checked) cell.classList.add('selected');
+        else cell.classList.remove('selected');
+    });
     updateExportDayCount();
 }
 
@@ -4112,7 +4177,7 @@ window.updateExportDayCount = function() {
     const cbs = document.querySelectorAll('.export-day-cb');
     const checkedCount = document.querySelectorAll('.export-day-cb:checked').length;
     const el = document.getElementById('export-day-count');
-    if (el) el.textContent = `เลือก ${checkedCount} วัน`;
+    if (el) el.textContent = checkedCount === 0 ? 'ยังไม่ได้เลือกวันที่' : `เลือกแล้ว ${checkedCount} วัน`;
     const selectAllCb = document.getElementById('export-day-select-all');
     if (selectAllCb) selectAllCb.checked = (checkedCount === cbs.length && cbs.length > 0);
 }
@@ -4205,6 +4270,172 @@ function exportDailyPdf() {
     style.innerHTML = `
         * { font-family: 'Sarabun', sans-serif !important; }
         .pdf-title { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #0f172a; }
+
+        /* ========== THAIDRILL SIGNBOARD HEADER ========== */
+        .pdf-header-fancy { margin-bottom: 22px; position: relative; }
+
+        .pdf-signboard {
+            background: #e11d2e;
+            background-image: linear-gradient(180deg, #ef4444 0%, #e11d2e 55%, #b91c1c 100%);
+            padding: 4px 20px 8px;
+            position: relative;
+        }
+        @media print {
+            .pdf-signboard {
+                background: #e11d2e !important;
+                background-image: linear-gradient(180deg, #ef4444 0%, #e11d2e 55%, #b91c1c 100%) !important;
+            }
+        }
+
+        /* Finance tag มุมขวาล่างของป้าย */
+        .sign-finance-tag {
+            position: absolute;
+            right: 20px;
+            bottom: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            font-style: italic;
+            text-shadow: 1px 1px 0 rgba(127,29,29,0.55);
+            opacity: 0.95;
+        }
+        @media print {
+            .sign-finance-tag {
+                color: #ffffff !important;
+                text-shadow: 1px 1px 0 rgba(127,29,29,0.55) !important;
+            }
+        }
+
+        /* ชื่อบริษัทมุมขวาบน */
+        .sign-company-corner {
+            text-align: right;
+            font-size: 10px; font-weight: 700; color: #ffffff;
+            letter-spacing: 0.18em;
+            text-shadow: 1px 1px 0 rgba(127,29,29,0.6);
+            margin-bottom: 2px;
+        }
+        @media print {
+            .sign-company-corner { color: #ffffff !important; text-shadow: 1px 1px 0 rgba(127,29,29,0.6) !important; }
+        }
+
+        /* แถวกลาง: เส้นขาว — ThaiDrill — เส้นขาว */
+        .sign-main-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 18px; padding: 2px 0;
+        }
+
+        .sign-line {
+            flex: 1; height: 4px;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(203,213,225,0.6);
+            border-radius: 1px;
+        }
+        @media print {
+            .sign-line {
+                background: #ffffff !important;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(203,213,225,0.6) !important;
+            }
+        }
+
+        .sign-title-wrap {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .sign-title {
+            font-size: 30px; font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.01em; line-height: 1;
+            font-style: italic;
+            white-space: nowrap;
+            text-shadow:
+                -1px 0 0 #cbd5e1,
+                1px 0 0 #94a3b8,
+                0 1px 0 #94a3b8,
+                0 2px 0 #64748b,
+                0 3px 3px rgba(0,0,0,0.4);
+        }
+        .sign-title-underline {
+            width: 90%; height: 3px;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.25), inset 0 -1px 0 rgba(203,213,225,0.6);
+            border-radius: 1px;
+        }
+        @media print {
+            .sign-title-underline {
+                background: #ffffff !important;
+                box-shadow: 0 2px 3px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(203,213,225,0.6) !important;
+            }
+        }
+        @media print {
+            .sign-title {
+                color: #ffffff !important;
+                text-shadow:
+                    -1px 0 0 #cbd5e1,
+                    1px 0 0 #94a3b8,
+                    0 1px 0 #94a3b8,
+                    0 2px 0 #64748b,
+                    0 3px 3px rgba(0,0,0,0.4) !important;
+            }
+        }
+
+        .sign-subtitle {
+            text-align: center;
+            font-size: 11px; font-weight: 600; color: #ffffff;
+            letter-spacing: 0.08em; margin-top: 4px;
+            text-shadow: 1px 1px 0 rgba(127,29,29,0.5);
+        }
+        .sign-subtitle b { color: #ffffff; font-weight: 800; }
+        @media print {
+            .sign-subtitle { color: #ffffff !important; text-shadow: 1px 1px 0 rgba(127,29,29,0.5) !important; }
+            .sign-subtitle b { color: #ffffff !important; }
+        }
+
+        /* แถบเทาด้านล่างป้าย (เหมือนของจริง) */
+        .sign-blue-strip {
+            height: 8px;
+            background: #94a3b8;
+            background-image: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+        }
+        @media print {
+            .sign-blue-strip {
+                background: #94a3b8 !important;
+                background-image: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%) !important;
+            }
+        }
+
+        /* แถบโลหะ/เงา ใต้แถบเทา */
+        .sign-shadow-strip {
+            height: 4px;
+            background: #475569;
+            background-image: linear-gradient(180deg, #64748b 0%, #334155 100%);
+        }
+        @media print {
+            .sign-shadow-strip {
+                background: #475569 !important;
+                background-image: linear-gradient(180deg, #64748b 0%, #334155 100%) !important;
+            }
+        }
+
+        /* หัวข้อรายงานใต้ป้าย (ข้อความสีดำบนพื้นขาว) */
+        .sign-report-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            padding: 14px 16px 4px;
+            letter-spacing: 0.02em;
+        }
+        .sign-report-title b { color: #b91c1c; font-weight: 800; }
+        .sign-report-title .rpt-brand {
+            color: #b91c1c; font-weight: 800; font-style: italic;
+            letter-spacing: 0.02em;
+        }
+        @media print {
+            .sign-report-title { color: #0f172a !important; }
+            .sign-report-title b { color: #b91c1c !important; }
+            .sign-report-title .rpt-brand { color: #b91c1c !important; }
+        }
         .pdf-table { width: 100%; border-collapse: collapse; font-size: 10px; color: #334155; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; word-wrap: break-word; line-height: 1.5; }
         .pdf-table th { background: #1d4ed8; font-weight: 700; text-align: center; vertical-align: middle; color: #ffffff; }
@@ -4237,10 +4468,26 @@ function exportDailyPdf() {
 
     const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const displayDate = `${displayDayText} ${monthNames[parseInt(month)-1]} ${parseInt(year) + 543}`;
-    
+
     const header = document.createElement('div');
-    header.className = 'pdf-title';
-    header.innerHTML = `รายงานกระแสเงินสด ThaiDrill ประจำวันที่ ${displayDate}`;
+    header.className = 'pdf-header-fancy';
+    header.innerHTML = `
+        <div class="pdf-signboard">
+            <div class="sign-company-corner">บริษัท รถเจาะไทย จำกัด</div>
+            <div class="sign-main-row">
+                <div class="sign-line"></div>
+                <div class="sign-title-wrap">
+                    <div class="sign-title">ThaiDrill</div>
+                    <div class="sign-title-underline"></div>
+                </div>
+                <div class="sign-line"></div>
+            </div>
+            <div class="sign-finance-tag">Finance</div>
+        </div>
+        <div class="sign-blue-strip"></div>
+        <div class="sign-shadow-strip"></div>
+        <div class="sign-report-title">รายงานกระแสเงินสด <span class="rpt-brand">ThaiDrill</span> ประจำวันที่ <b>${displayDate}</b></div>
+    `;
     pdfContainer.appendChild(header);
 
     const table = document.createElement('table');
