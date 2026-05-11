@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CashFlow</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -33,10 +33,8 @@
                     <div class="brand-logo">💰</div>
                     <span class="brand-text">CASHFLOW</span>
                 </div>
-                <button class="sidebar-collapse-btn" onclick="toggleLeftSidebar()"
-                    title="&#3627;&#3640;&#3610;/&#3586;&#3618;&#3634;&#3618; &#3648;&#3617;&#3609;&#3641;">
-                    <svg class="collapse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.5">
+                <button class="sidebar-collapse-btn" onclick="toggleLeftSidebar()" title="ยุบ/ขยาย เมนู">
+                    <svg class="collapse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M15 18l-6-6 6-6" />
                     </svg>
                 </button>
@@ -58,6 +56,10 @@
             </nav>
 
             <div class="sidebar-footer-wrap">
+                <button class="btn-refresh-sidebar" onclick="openDateExportModal()" style="margin-bottom: 10px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); color: #38bdf8; transition: background 0.2s;" onmouseover="this.style.background='rgba(56, 189, 248, 0.15)'" onmouseout="this.style.background='rgba(56, 189, 248, 0.05)'">
+                    <span class="nav-icon">📄</span>
+                    <span class="nav-label">Daily PDF Report</span>
+                </button>
                 <a href="https://docs.google.com/spreadsheets/d/1DQ5cBiusMosPtpxOJeO_1lRyf19uvT9Le18__YucbKk/edit?gid=391257604#gid=391257604"
                     target="_blank" class="nav-link" style="margin-bottom: 15px; color: #38bdf8;">
                     <span class="nav-icon">📊</span>
@@ -584,6 +586,61 @@
                 <div class="modal-footer">
                     <div id="bank-modal-totals" class="modal-total">&#3618;&#3629;&#3604;&#3619;&#3623;&#3617;:
                         <span>&#3647;0.00</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Date Modal -->
+        <div id="export-date-modal" class="modal-overlay" onclick="closeExportDateModal(event)">
+            <div class="modal-box" style="max-width: 400px; padding: 20px;">
+                <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; color: #fff; font-size: 18px;">📄 ส่งออกรายงานประจำวัน</h2>
+                    <button class="modal-close" onclick="closeExportDateModal(null, true)" style="background:none; border:none; color:#94a3b8; font-size:24px; cursor:pointer;">×</button>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-size: 14px;">เลือกวันที่ต้องการออกรายงาน</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="export-day" style="flex: 1; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: inherit; appearance: auto;">
+                            <option value="">วัน</option>
+                        </select>
+                        <select id="export-month" style="flex: 1.5; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: inherit; appearance: auto;">
+                            <option value="">เดือน</option>
+                        </select>
+                        <select id="export-year" style="flex: 1; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: inherit; appearance: auto;">
+                            <option value="">ปี</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="exportDailyPdf()" style="width: 100%; padding: 12px; border-radius: 8px; background: #38bdf8; color: #0f172a; font-weight: bold; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                    <span id="export-btn-text">สร้าง PDF รายงาน</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- PDF Preview Modal -->
+        <div id="pdf-preview-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); overflow-y:auto; padding: 24px 16px;">
+            <div style="max-width:1100px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 25px 60px rgba(0,0,0,0.5); overflow:hidden;">
+                <!-- Preview Header -->
+                <div style="background:#0f172a; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:1;">
+                    <div style="display:flex; align-items:center; gap:10px; color:#fff;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span style="font-weight:700; font-size:16px;">ตัวอย่างรายงาน PDF</span>
+                        <span id="preview-badge" style="background:#1e3a5f; color:#7dd3fc; padding:3px 10px; border-radius:20px; font-size:12px; margin-left:4px;"></span>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="confirmExportPdf()" id="confirm-pdf-btn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; border-radius:8px; background:#22c55e; color:#fff; font-weight:700; border:none; cursor:pointer; font-size:14px; font-family:inherit;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            ดาวน์โหลด PDF
+                        </button>
+                        <button onclick="closePdfPreview()" style="display:flex; align-items:center; gap:6px; padding:10px 16px; border-radius:8px; background:rgba(255,255,255,0.1); color:#94a3b8; font-weight:600; border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:14px; font-family:inherit;">
+                            ← กลับแก้ไข
+                        </button>
+                    </div>
+                </div>
+                <!-- Preview Content -->
+                <div style="padding:32px; background:#f8fafc;">
+                    <div id="pdf-preview-content" style="background:#fff; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,0.08); padding:32px; overflow-x:auto;"></div>
                 </div>
             </div>
         </div>

@@ -4030,3 +4030,342 @@ document.addEventListener('click', (e) => {
         dayDrop.style.display = 'none';
     }
 });
+
+// -------------------------------------------------
+// EXPORT DAILY PDF REPORT
+// -------------------------------------------------
+function openDateExportModal() {
+    const modal = document.getElementById('export-date-modal');
+    if(modal) {
+        const daySel = document.getElementById('export-day');
+        const monthSel = document.getElementById('export-month');
+        const yearSel = document.getElementById('export-year');
+
+        // Populate dropdowns if empty
+        if (daySel && daySel.options.length <= 1) {
+            for(let i=1; i<=31; i++) {
+                daySel.add(new Option(i, i));
+            }
+            const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+            months.forEach((m, i) => {
+                const monthNum = String(i + 1).padStart(2, '0');
+                monthSel.add(new Option(`${monthNum} - ${m}`, i + 1));
+            });
+            
+            const currentYear = new Date().getFullYear();
+            for(let y = currentYear - 3; y <= currentYear + 3; y++) {
+                yearSel.add(new Option(y, y));
+            }
+        }
+
+        // Set today's date as default
+        const today = new Date();
+        if (daySel) daySel.value = today.getDate();
+        if (monthSel) monthSel.value = today.getMonth() + 1;
+        if (yearSel) yearSel.value = today.getFullYear();
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeExportDateModal(event, force = false) {
+    const modal = document.getElementById('export-date-modal');
+    if (force || (event && event.target === modal)) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function exportDailyPdf() {
+    const daySel = document.getElementById('export-day');
+    const monthSel = document.getElementById('export-month');
+    const yearSel = document.getElementById('export-year');
+
+    if (!daySel || !monthSel || !yearSel) return;
+
+    const day = daySel.value;
+    const month = monthSel.value;
+    const year = yearSel.value;
+
+    if (!day || !month || !year) {
+        alert('กรุณาเลือก วัน เดือน ปี ให้ครบถ้วน');
+        return;
+    }
+
+    const targetDate = new Date(year, month - 1, day);
+    if (isNaN(targetDate)) return;
+
+    const dateInput = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    // Close modal first so alerts are visible
+    closeExportDateModal(null, true);
+
+    // Use allPlans (Cash_Flow_Summary). Fall back to allTransactions if allPlans is empty.
+    const sourceData = (allPlans && allPlans.length > 0) ? allPlans : allTransactions;
+
+    const filteredRows = sourceData.filter(row => {
+        const d = parseDateSafe(row['Date'] || row.date);
+        if (!d) return false;
+        
+        const isMatchDate = d.getDate() === targetDate.getDate() && 
+                            d.getMonth() === targetDate.getMonth() && 
+                            d.getFullYear() === targetDate.getFullYear();
+        if (!isMatchDate) return false;
+        
+        // Filter out rows that have no money values at all
+        const inc = parseSafe(row['Incoming'] || row['Cash In'] || row.incoming);
+        const pay = parseSafe(row['Payment'] || row['Cash Out'] || row.payment);
+        const bal = parseSafe(row['Balance'] || row.balance);
+        
+        return !(inc === 0 && pay === 0 && bal === 0);
+    });
+
+    if (filteredRows.length === 0) {
+        const totalRows = sourceData.length;
+        alert(`ไม่พบรายการข้อมูลในวันที่ ${dateInput}\n\n(ข้อมูลใน dashboard มีทั้งหมด ${totalRows} รายการ)`);
+        return;
+    }
+
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.fontFamily = "'Sarabun', sans-serif";
+    pdfContainer.style.color = '#1e293b';
+    pdfContainer.style.background = '#ffffff';
+    pdfContainer.style.width = '100%';
+    pdfContainer.style.boxSizing = 'border-box';
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+        * { font-family: 'Sarabun', sans-serif !important; }
+        .pdf-title { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #0f172a; }
+        .pdf-table { width: 100%; border-collapse: collapse; font-size: 11px; color: #334155; table-layout: fixed; }
+        .pdf-table th, .pdf-table td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; word-wrap: break-word; line-height: 1.5; }
+        .pdf-table th { background: #1d4ed8; font-weight: 700; text-align: center; color: #ffffff; }
+        @media print { .pdf-table th { background: #1d4ed8 !important; color: #ffffff !important; } }
+        .numeric { text-align: right !important; }
+        .income-text { color: #059669; font-weight: 600; }
+        .expense-text { color: #dc2626; font-weight: 600; }
+        .total-row { font-weight: 700; background: #f1f5f9; }
+        .status-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+        .status-actual { background: #dcfce7; color: #166534; }
+        .status-plan { background: #fef9c3; color: #854d0e; }
+        .pdf-summary { display: flex; gap: 12px; margin-top: 14px; }
+        .pdf-summary-box { flex: 1; border-radius: 6px; padding: 10px 14px; }
+        .pdf-summary-box.income { background: #dcfce7; border: 1px solid #86efac; }
+        .pdf-summary-box.expense { background: #fee2e2; border: 1px solid #fca5a5; }
+        .pdf-summary-box.net { background: #eff6ff; border: 1px solid #93c5fd; }
+        .pdf-summary-label { font-size: 10px; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+        .pdf-summary-value { font-size: 15px; font-weight: 700; }
+        .pdf-summary-box.income .pdf-summary-value { color: #059669; }
+        .pdf-summary-box.expense .pdf-summary-value { color: #dc2626; }
+        .pdf-summary-box.net .pdf-summary-value { color: #1d4ed8; }
+        @media print {
+            .pdf-table th { background: #1d4ed8 !important; color: #ffffff !important; }
+            .pdf-summary-box.income { background: #dcfce7 !important; }
+            .pdf-summary-box.expense { background: #fee2e2 !important; }
+            .pdf-summary-box.net { background: #eff6ff !important; }
+        }
+    `;
+    pdfContainer.appendChild(style);
+
+    const displayDate = targetDate.toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' });
+    
+    const header = document.createElement('div');
+    header.className = 'pdf-title';
+    header.innerHTML = `รายงานกระแสเงินสดประจำวันที่ ${displayDate}`;
+    pdfContainer.appendChild(header);
+
+    const table = document.createElement('table');
+    table.className = 'pdf-table';
+    
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th style="width: 4%;">#</th>
+                <th style="width: 22%;">คำอธิบาย</th>
+                <th style="width: 15%;">เจ้าหนี้/ลูกหนี้</th>
+                <th style="width: 8%;">Bank</th>
+                <th style="width: 10%;">Category</th>
+                <th style="width: 7%;">Status</th>
+                <th class="numeric" style="width: 11%;">รับเข้า (฿)</th>
+                <th class="numeric" style="width: 11%;">จ่ายออก (฿)</th>
+                <th class="numeric" style="width: 12%;">คงเหลือ (฿)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    `;
+    
+    const tbody = table.querySelector('tbody');
+    let totalIn = 0;
+    let totalOut = 0;
+
+    filteredRows.forEach((row, i) => {
+        const desc = row['Description'] || row.description || '-';
+        const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
+        const bank = row['Bank'] || row.bank || '-';
+        const category = row['Category'] || row.category || '-';
+        const status = row['Status'] || row.status || 'Actual';
+        const statusClass = status.toLowerCase().includes('plan') ? 'status-plan' : 'status-actual';
+        
+        const cIn = parseFloat(row['Incoming'] || row['Cash In']) || 0;
+        const cOut = parseFloat(row['Payment'] || row['Cash Out']) || 0;
+        const bal = parseFloat(row['Balance']) || 0;
+        
+        totalIn += cIn;
+        totalOut += cOut;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="text-align:center;">${i + 1}</td>
+            <td>${desc}</td>
+            <td>${creditor}</td>
+            <td style="text-align:center;">${bank}</td>
+            <td>${category}</td>
+            <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
+            <td class="numeric ${cIn > 0 ? 'income-text' : ''}">${cIn > 0 ? checkValue(cIn) : '-'}</td>
+            <td class="numeric ${cOut > 0 ? 'expense-text' : ''}">${cOut > 0 ? checkValue(cOut) : '-'}</td>
+            <td class="numeric">${bal !== 0 ? checkValue(bal) : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const totalTr = document.createElement('tr');
+    totalTr.className = 'total-row';
+    totalTr.innerHTML = `
+        <td colspan="6" style="text-align: right; padding-right: 15px;">รวมยอดประจำวัน</td>
+        <td class="numeric income-text">${checkValue(totalIn)}</td>
+        <td class="numeric expense-text">${checkValue(totalOut)}</td>
+        <td></td>
+    `;
+    tbody.appendChild(totalTr);
+    pdfContainer.appendChild(table);
+
+    const net = totalIn - totalOut;
+    const summary = document.createElement('div');
+    summary.className = 'pdf-summary';
+    summary.innerHTML = `
+        <div class="pdf-summary-box income">
+            <div class="pdf-summary-label">รับเข้ารวม</div>
+            <div class="pdf-summary-value">${checkValue(totalIn)}</div>
+        </div>
+        <div class="pdf-summary-box expense">
+            <div class="pdf-summary-label">จ่ายออกรวม</div>
+            <div class="pdf-summary-value">${checkValue(totalOut)}</div>
+        </div>
+        <div class="pdf-summary-box net">
+            <div class="pdf-summary-label">ยอดสุทธิ</div>
+            <div class="pdf-summary-value">${net >= 0 ? '+' : ''}${checkValue(net)}</div>
+        </div>
+    `;
+    pdfContainer.appendChild(summary);
+
+    // ===== SHOW PREVIEW =====
+    // Store config for later use by confirmExportPdf
+    window._pendingPdfData = { pdfContainer, dateInput, displayDate, rowCount: filteredRows.length };
+
+    const previewModal = document.getElementById('pdf-preview-modal');
+    const previewContent = document.getElementById('pdf-preview-content');
+    const previewBadge = document.getElementById('preview-badge');
+
+    previewContent.innerHTML = '';
+    previewContent.appendChild(pdfContainer.cloneNode(true));
+    if (previewBadge) previewBadge.textContent = `${filteredRows.length} รายการ · ${displayDate}`;
+
+    // Close date-select modal, open preview
+    closeExportDateModal(null, true);
+    previewModal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closePdfPreview() {
+    const previewModal = document.getElementById('pdf-preview-modal');
+    if (previewModal) previewModal.style.display = 'none';
+    document.body.style.overflow = '';
+    window._pendingPdfData = null;
+    // Re-open the date picker if user wants to go back
+    openDateExportModal();
+}
+
+function confirmExportPdf() {
+    const pending = window._pendingPdfData;
+    if (!pending) return;
+
+    const { dateInput } = pending;
+    const btn = document.getElementById('confirm-pdf-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'กำลังเปิดหน้าต่างพิมพ์...'; }
+
+    const restoreBtn = () => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ดาวน์โหลด PDF';
+        }
+    };
+
+    try {
+        const previewContent = document.getElementById('pdf-preview-content');
+        const sourceEl = previewContent && previewContent.firstElementChild;
+        if (!sourceEl) { alert('ไม่พบเนื้อหารายงาน'); restoreBtn(); return; }
+
+        // Use the browser's native print engine — it renders Thai combining marks
+        // (ั ้ ่ ำ ๊ ฯลฯ) and ฿ correctly. html2canvas drops these.
+        const printWindow = window.open('', '_blank', 'width=1200,height=800');
+        if (!printWindow) {
+            alert('เบราว์เซอร์บล็อก popup กรุณาอนุญาต popup สำหรับเว็บไซต์นี้แล้วลองใหม่');
+            restoreBtn();
+            return;
+        }
+
+        const reportHTML = sourceEl.outerHTML;
+
+        printWindow.document.open();
+        printWindow.document.write(`<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Daily_CashFlow_${dateInput}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    @page { size: A4 landscape; margin: 10mm 8mm; }
+    @media print {
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+    }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', 'TH Sarabun New', sans-serif; padding: 12px; color: #1e293b; }
+    table { page-break-inside: auto; }
+    tr    { page-break-inside: avoid; page-break-after: auto; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+</style>
+</head>
+<body>${reportHTML}
+<script>
+(function(){
+    function doPrint(){
+        try { window.focus(); window.print(); } catch(e){ console.error(e); }
+    }
+    function ready(cb){
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function(){ setTimeout(cb, 250); });
+        } else {
+            setTimeout(cb, 600);
+        }
+    }
+    window.addEventListener('load', function(){ ready(doPrint); });
+    window.addEventListener('afterprint', function(){ setTimeout(function(){ window.close(); }, 300); });
+})();
+<\/script>
+</body>
+</html>`);
+        printWindow.document.close();
+
+        window._pendingPdfData = null;
+        document.getElementById('pdf-preview-modal').style.display = 'none';
+        document.body.style.overflow = '';
+        restoreBtn();
+    } catch (err) {
+        console.error('PDF Export Error:', err);
+        window._pendingPdfData = null;
+        restoreBtn();
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+}
