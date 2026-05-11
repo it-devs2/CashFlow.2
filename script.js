@@ -4037,15 +4037,11 @@ document.addEventListener('click', (e) => {
 function openDateExportModal() {
     const modal = document.getElementById('export-date-modal');
     if(modal) {
-        const daySel = document.getElementById('export-day');
         const monthSel = document.getElementById('export-month');
         const yearSel = document.getElementById('export-year');
 
         // Populate dropdowns if empty
-        if (daySel && daySel.options.length <= 1) {
-            for(let i=1; i<=31; i++) {
-                daySel.add(new Option(i, i));
-            }
+        if (monthSel && monthSel.options.length <= 1) {
             const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
             months.forEach((m, i) => {
                 const monthNum = String(i + 1).padStart(2, '0');
@@ -4056,17 +4052,69 @@ function openDateExportModal() {
             for(let y = currentYear - 3; y <= currentYear + 3; y++) {
                 yearSel.add(new Option(y, y));
             }
+
+            monthSel.addEventListener('change', renderExportDays);
+            yearSel.addEventListener('change', renderExportDays);
         }
 
         // Set today's date as default
         const today = new Date();
-        if (daySel) daySel.value = today.getDate();
-        if (monthSel) monthSel.value = today.getMonth() + 1;
-        if (yearSel) yearSel.value = today.getFullYear();
+        if (monthSel && !monthSel.value) monthSel.value = today.getMonth() + 1;
+        if (yearSel && !yearSel.value) yearSel.value = today.getFullYear();
+        
+        renderExportDays(true); // force today default
         
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
+}
+
+window.renderExportDays = function(setTodayDefault = false) {
+    const daysContainer = document.getElementById('export-days-container');
+    const monthSel = document.getElementById('export-month');
+    const yearSel = document.getElementById('export-year');
+    if (!daysContainer || !monthSel || !yearSel) return;
+    
+    const today = new Date();
+    const y = parseInt(yearSel.value) || today.getFullYear();
+    const m = parseInt(monthSel.value) || today.getMonth() + 1;
+    const daysInMonth = new Date(y, m, 0).getDate();
+    
+    // Save current selection if not forcing default
+    const currentlySelected = new Set(Array.from(document.querySelectorAll('.export-day-cb:checked')).map(cb => parseInt(cb.value)));
+
+    daysContainer.innerHTML = '';
+    for (let i = 1; i <= daysInMonth; i++) {
+        let isChecked = false;
+        if (setTodayDefault) {
+            isChecked = (i === today.getDate() && m === today.getMonth() + 1 && y === today.getFullYear());
+        } else {
+            isChecked = currentlySelected.has(i);
+        }
+
+        daysContainer.innerHTML += `
+            <label style="display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 0; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s;">
+                <input type="checkbox" value="${i}" class="export-day-cb" onchange="updateExportDayCount()" ${isChecked ? 'checked' : ''} style="margin-bottom: 4px; accent-color: #38bdf8; width: 16px; height: 16px; cursor: pointer;">
+                <span style="color: #e2e8f0; font-size: 14px;">${i}</span>
+            </label>
+        `;
+    }
+    updateExportDayCount();
+}
+
+window.toggleAllExportDays = function(source) {
+    const cbs = document.querySelectorAll('.export-day-cb');
+    cbs.forEach(cb => cb.checked = source.checked);
+    updateExportDayCount();
+}
+
+window.updateExportDayCount = function() {
+    const cbs = document.querySelectorAll('.export-day-cb');
+    const checkedCount = document.querySelectorAll('.export-day-cb:checked').length;
+    const el = document.getElementById('export-day-count');
+    if (el) el.textContent = `เลือก ${checkedCount} วัน`;
+    const selectAllCb = document.getElementById('export-day-select-all');
+    if (selectAllCb) selectAllCb.checked = (checkedCount === cbs.length && cbs.length > 0);
 }
 
 function closeExportDateModal(event, force = false) {
@@ -4078,25 +4126,33 @@ function closeExportDateModal(event, force = false) {
 }
 
 function exportDailyPdf() {
-    const daySel = document.getElementById('export-day');
     const monthSel = document.getElementById('export-month');
     const yearSel = document.getElementById('export-year');
+    const cbs = document.querySelectorAll('.export-day-cb:checked');
 
-    if (!daySel || !monthSel || !yearSel) return;
+    if (!monthSel || !yearSel) return;
 
-    const day = daySel.value;
     const month = monthSel.value;
     const year = yearSel.value;
 
-    if (!day || !month || !year) {
-        alert('กรุณาเลือก วัน เดือน ปี ให้ครบถ้วน');
+    if (!month || !year) {
+        alert('กรุณาเลือก เดือน และ ปี ให้ครบถ้วน');
+        return;
+    }
+    
+    if (cbs.length === 0) {
+        alert('กรุณาเลือกวันที่อย่างน้อย 1 วัน');
         return;
     }
 
-    const targetDate = new Date(year, month - 1, day);
-    if (isNaN(targetDate)) return;
+    const selectedDays = Array.from(cbs).map(cb => parseInt(cb.value)).sort((a, b) => a - b);
+    
+    let displayDayText = selectedDays.join(', ');
+    if (displayDayText.length > 20 || selectedDays.length > 5) {
+        displayDayText = `${selectedDays.length} วัน (${selectedDays[0]} ถึง ${selectedDays[selectedDays.length-1]})`;
+    }
 
-    const dateInput = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateInput = `${year}-${String(month).padStart(2, '0')} - [${selectedDays.length} Days]`;
 
     // Close modal first so alerts are visible
     closeExportDateModal(null, true);
@@ -4108,9 +4164,9 @@ function exportDailyPdf() {
         const d = parseDateSafe(row['Date'] || row.date);
         if (!d) return false;
         
-        const isMatchDate = d.getDate() === targetDate.getDate() && 
-                            d.getMonth() === targetDate.getMonth() && 
-                            d.getFullYear() === targetDate.getFullYear();
+        const isMatchDate = selectedDays.includes(d.getDate()) && 
+                            d.getMonth() === parseInt(month) - 1 && 
+                            d.getFullYear() === parseInt(year);
         if (!isMatchDate) return false;
         
         // Filter out rows that have no money values at all
@@ -4179,7 +4235,8 @@ function exportDailyPdf() {
     `;
     pdfContainer.appendChild(style);
 
-    const displayDate = targetDate.toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' });
+    const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    const displayDate = `${displayDayText} ${monthNames[parseInt(month)-1]} ${parseInt(year) + 543}`;
     
     const header = document.createElement('div');
     header.className = 'pdf-title';
@@ -4195,7 +4252,7 @@ function exportDailyPdf() {
                 <th style="width: 4%;">#</th>
                 <th style="width: 15%;">เจ้าหนี้/ลูกหนี้</th>
                 <th style="width: 22%;">คำอธิบาย</th>
-                <th style="width: 8%;">Bank</th>
+                <th style="width: 8%;">Air Code</th>
                 <th style="width: 10%;">Category</th>
                 <th style="width: 7%;">Status</th>
                 <th class="numeric" style="width: 11%;">รับเข้า (฿)</th>
@@ -4209,11 +4266,12 @@ function exportDailyPdf() {
     const tbody = table.querySelector('tbody');
     let totalIn = 0;
     let totalOut = 0;
+    let lastBalance = 0;
 
     filteredRows.forEach((row, i) => {
         const desc = row['Description'] || row.description || '-';
         const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
-        const bank = row['Bank'] || row.bank || '-';
+        const aircode = row['Air Code'] || row['Aircode'] || row.aircode || '-';
         const category = row['Category'] || row.category || '-';
         const status = row['Status'] || row.status || 'Actual';
         const statusClass = status.toLowerCase().includes('plan') ? 'status-plan' : 'status-actual';
@@ -4224,13 +4282,14 @@ function exportDailyPdf() {
         
         totalIn += cIn;
         totalOut += cOut;
+        if (bal !== 0) lastBalance = bal;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align:center;">${i + 1}</td>
             <td>${creditor}</td>
             <td>${desc}</td>
-            <td style="text-align:center;">${bank}</td>
+            <td style="text-align:center;">${aircode}</td>
             <td>${category}</td>
             <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
             <td class="numeric ${cIn > 0 ? 'income-text' : ''}">${cIn > 0 ? checkValue(cIn) : '-'}</td>
@@ -4251,7 +4310,7 @@ function exportDailyPdf() {
     tbody.appendChild(totalTr);
     pdfContainer.appendChild(table);
 
-    const net = totalIn - totalOut;
+    const net = lastBalance;
     const summary = document.createElement('div');
     summary.className = 'pdf-summary';
     summary.innerHTML = `
@@ -4264,8 +4323,8 @@ function exportDailyPdf() {
             <div class="pdf-summary-value">${checkValue(totalOut)}</div>
         </div>
         <div class="pdf-summary-box net">
-            <div class="pdf-summary-label">ยอดสุทธิ</div>
-            <div class="pdf-summary-value">${net >= 0 ? '+' : ''}${checkValue(net)}</div>
+            <div class="pdf-summary-label">คงเหลือ (แถวสุดท้าย)</div>
+            <div class="pdf-summary-value">${checkValue(net)}</div>
         </div>
     `;
     pdfContainer.appendChild(summary);
