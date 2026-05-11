@@ -4182,14 +4182,14 @@ function exportDailyPdf() {
         <thead>
             <tr>
                 <th style="width: 4%;">#</th>
-                <th style="width: 22%;">คำอธิบาย</th>
-                <th style="width: 15%;">เจ้าหนี้/ลูกหนี้</th>
+                <th class="numeric" style="width: 12%;">คงเหลือ (฿)</th>
+                <th style="width: 20%;">คำอธิบาย</th>
+                <th style="width: 14%;">เจ้าหนี้/ลูกหนี้</th>
                 <th style="width: 8%;">Bank</th>
                 <th style="width: 10%;">Category</th>
                 <th style="width: 7%;">Status</th>
                 <th class="numeric" style="width: 11%;">รับเข้า (฿)</th>
                 <th class="numeric" style="width: 11%;">จ่ายออก (฿)</th>
-                <th class="numeric" style="width: 12%;">คงเหลือ (฿)</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -4217,6 +4217,7 @@ function exportDailyPdf() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align:center;">${i + 1}</td>
+            <td class="numeric">${bal !== 0 ? checkValue(bal) : '-'}</td>
             <td>${desc}</td>
             <td>${creditor}</td>
             <td style="text-align:center;">${bank}</td>
@@ -4224,7 +4225,6 @@ function exportDailyPdf() {
             <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
             <td class="numeric ${cIn > 0 ? 'income-text' : ''}">${cIn > 0 ? checkValue(cIn) : '-'}</td>
             <td class="numeric ${cOut > 0 ? 'expense-text' : ''}">${cOut > 0 ? checkValue(cOut) : '-'}</td>
-            <td class="numeric">${bal !== 0 ? checkValue(bal) : '-'}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -4232,10 +4232,10 @@ function exportDailyPdf() {
     const totalTr = document.createElement('tr');
     totalTr.className = 'total-row';
     totalTr.innerHTML = `
-        <td colspan="6" style="text-align: right; padding-right: 15px;">รวมยอดประจำวัน</td>
+        <td colspan="2" style="text-align: right; padding-right: 15px;"></td>
+        <td colspan="5" style="text-align: right; padding-right: 15px;">รวมยอดประจำวัน</td>
         <td class="numeric income-text">${checkValue(totalIn)}</td>
         <td class="numeric expense-text">${checkValue(totalOut)}</td>
-        <td></td>
     `;
     tbody.appendChild(totalTr);
     pdfContainer.appendChild(table);
