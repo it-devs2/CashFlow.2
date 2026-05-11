@@ -4249,15 +4249,16 @@ function exportDailyPdf() {
     table.innerHTML = `
         <thead>
             <tr>
-                <th style="width: 4%;">#</th>
-                <th style="width: 15%;">เจ้าหนี้/ลูกหนี้</th>
-                <th style="width: 22%;">คำอธิบาย</th>
-                <th style="width: 8%;">Air Code</th>
-                <th style="width: 10%;">Category</th>
-                <th style="width: 7%;">Status</th>
+                <th style="width: 3%;">#</th>
+                <th style="width: 8%;">วันที่</th>
+                <th style="width: 14%;">เจ้าหนี้/ลูกหนี้</th>
+                <th style="width: 20%;">คำอธิบาย</th>
+                <th style="width: 7%;">Air Code</th>
+                <th style="width: 9%;">Category</th>
+                <th style="width: 6%;">Status</th>
                 <th class="numeric" style="width: 11%;">รับเข้า (฿)</th>
                 <th class="numeric" style="width: 11%;">จ่ายออก (฿)</th>
-                <th class="numeric" style="width: 12%;">คงเหลือ (฿)</th>
+                <th class="numeric" style="width: 11%;">คงเหลือ (฿)</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -4269,17 +4270,20 @@ function exportDailyPdf() {
     let lastBalance = 0;
 
     filteredRows.forEach((row, i) => {
+        const rawDate = row['Date'] || row.date || '';
+        const dateObj = parseDateSafe(rawDate);
+        const dateDisplay = dateObj ? `${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}/${dateObj.getFullYear()+543}` : (rawDate || '-');
         const desc = row['Description'] || row.description || '-';
         const creditor = row['Name'] || row.name || row['Customer/Vendor'] || row['Customer'] || row['Vendor'] || row['Party'] || row.customer || row.party || '-';
         const aircode = row['Air Code'] || row['Aircode'] || row.aircode || '-';
         const category = row['Category'] || row.category || '-';
         const status = row['Status'] || row.status || 'Actual';
         const statusClass = status.toLowerCase().includes('plan') ? 'status-plan' : 'status-actual';
-        
+
         const cIn = parseFloat(row['Incoming'] || row['Cash In']) || 0;
         const cOut = parseFloat(row['Payment'] || row['Cash Out']) || 0;
         const bal = parseFloat(row['Balance']) || 0;
-        
+
         totalIn += cIn;
         totalOut += cOut;
         if (bal !== 0) lastBalance = bal;
@@ -4287,6 +4291,7 @@ function exportDailyPdf() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align:center;">${i + 1}</td>
+            <td style="text-align:center;">${dateDisplay}</td>
             <td>${creditor}</td>
             <td>${desc}</td>
             <td style="text-align:center;">${aircode}</td>
@@ -4302,7 +4307,7 @@ function exportDailyPdf() {
     const totalTr = document.createElement('tr');
     totalTr.className = 'total-row';
     totalTr.innerHTML = `
-        <td colspan="6" style="text-align: right; padding-right: 15px;">รวมยอดประจำวัน</td>
+        <td colspan="7" style="text-align: right; padding-right: 15px;">รวมยอดประจำวัน</td>
         <td class="numeric income-text">${checkValue(totalIn)}</td>
         <td class="numeric expense-text">${checkValue(totalOut)}</td>
         <td></td>
