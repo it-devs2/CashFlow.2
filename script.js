@@ -4205,7 +4205,7 @@ function exportDailyPdf() {
     style.innerHTML = `
         * { font-family: 'Sarabun', sans-serif !important; }
         .pdf-title { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #0f172a; }
-        .pdf-table { width: 100%; border-collapse: collapse; font-size: 11px; color: #334155; table-layout: fixed; }
+        .pdf-table { width: 100%; border-collapse: collapse; font-size: 10px; color: #334155; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; word-wrap: break-word; line-height: 1.5; }
         .pdf-table th { background: #1d4ed8; font-weight: 700; text-align: center; vertical-align: middle; color: #ffffff; }
         @media print { .pdf-table th { background: #1d4ed8 !important; color: #ffffff !important; } }
